@@ -1,0 +1,221 @@
+{
+  "matchState": {
+    "id": "f2110b2f-b727-46d8-bb4a-55ac036dbb44",
+    "date": 1770576460232,
+    "isConfigured": true,
+    "halfDurationSeconds": 1500,
+    "homeTeam": {
+      "id": "HOME",
+      "name": "Home Team",
+      "color": "#2563eb",
+      "substitutionCount": 0,
+      "players": [
+        {
+          "id": "h1",
+          "number": 1,
+          "name": "Player 1",
+          "gender": "M",
+          "initialPosition": "ATTACK",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "h2",
+          "number": 2,
+          "name": "Player 2",
+          "gender": "F",
+          "initialPosition": "ATTACK",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "h3",
+          "number": 3,
+          "name": "Player 3",
+          "gender": "M",
+          "initialPosition": "ATTACK",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "h4",
+          "number": 4,
+          "name": "Player 4",
+          "gender": "F",
+          "initialPosition": "ATTACK",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "h5",
+          "number": 5,
+          "name": "Player 5",
+          "gender": "M",
+          "initialPosition": "DEFENSE",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "h6",
+          "number": 6,
+          "name": "Player 6",
+          "gender": "F",
+          "initialPosition": "DEFENSE",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "h7",
+          "number": 7,
+          "name": "Player 7",
+          "gender": "M",
+          "initialPosition": "DEFENSE",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "h8",
+          "number": 8,
+          "name": "Player 8",
+          "gender": "F",
+          "initialPosition": "DEFENSE",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "h9",
+          "number": 9,
+          "name": "Player 9",
+          "gender": "M",
+          "initialPosition": "DEFENSE",
+          "isStarter": false,
+          "onField": false
+        },
+        {
+          "id": "h10",
+          "number": 10,
+          "name": "Player 10",
+          "gender": "F",
+          "initialPosition": "DEFENSE",
+          "isStarter": false,
+          "onField": false
+        }
+      ]
+    },
+    "awayTeam": {
+      "id": "AWAY",
+      "name": "Away Team",
+      "color": "#dc2626",
+      "substitutionCount": 0,
+      "players": [
+        {
+          "id": "a1",
+          "number": 1,
+          "name": "Player 1",
+          "gender": "M",
+          "initialPosition": "ATTACK",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "a2",
+          "number": 2,
+          "name": "Player 2",
+          "gender": "F",
+          "initialPosition": "ATTACK",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "a3",
+          "number": 3,
+          "name": "Player 3",
+          "gender": "M",
+          "initialPosition": "ATTACK",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "a4",
+          "number": 4,
+          "name": "Player 4",
+          "gender": "F",
+          "initialPosition": "ATTACK",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "a5",
+          "number": 5,
+          "name": "Player 5",
+          "gender": "M",
+          "initialPosition": "DEFENSE",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "a6",
+          "number": 6,
+          "name": "Player 6",
+          "gender": "F",
+          "initialPosition": "DEFENSE",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "a7",
+          "number": 7,
+          "name": "Player 7",
+          "gender": "M",
+          "initialPosition": "DEFENSE",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "a8",
+          "number": 8,
+          "name": "Player 8",
+          "gender": "F",
+          "initialPosition": "DEFENSE",
+          "isStarter": true,
+          "onField": true
+        },
+        {
+          "id": "a9",
+          "number": 9,
+          "name": "Player 9",
+          "gender": "M",
+          "initialPosition": "DEFENSE",
+          "isStarter": false,
+          "onField": false
+        },
+        {
+          "id": "a10",
+          "number": 10,
+          "name": "Player 10",
+          "gender": "F",
+          "initialPosition": "DEFENSE",
+          "isStarter": false,
+          "onField": false
+        }
+      ]
+    },
+    "events": [],
+    "currentHalf": 1,
+    "possession": "HOME",
+    "timer": {
+      "elapsedSeconds": 0,
+      "isRunning": false
+    },
+    "shotClock": {
+      "seconds": 25,
+      "isRunning": false
+    },
+    "timeout": {
+      "isActive": false,
+      "startTime": 0,
+      "remainingSeconds": 60
+    }
+  },
+  "savedMatches": []
+}

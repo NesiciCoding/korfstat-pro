@@ -36,19 +36,19 @@ export interface MatchEvent {
   id: string;
   timestamp: number;
   realTime: number;
-  half: 1 | 2;
+  half: number;
   teamId: TeamId;
   playerId?: string;
   type: ActionType;
-  
+
   // Shot specific
   location?: { x: number; y: number };
   shotType?: ShotType;
   result?: ShotResult;
-  
+
   // Rebound specific
   reboundType?: 'OFFENSIVE' | 'DEFENSIVE';
-  
+
   // Substitution specific
   subInId?: string;
   subOutId?: string;
@@ -56,30 +56,42 @@ export interface MatchEvent {
 
   // Card specific
   cardType?: CardType;
+
+  // Undo tracking
+  previousPossession?: TeamId | null;
 }
 
 export interface MatchState {
   id?: string;   // Unique ID for persistence
   date?: number; // Timestamp for persistence
+  halfDurationSeconds: number; // Duration of a half in seconds (e.g. 1500 for 25m)
   isConfigured: boolean;
   homeTeam: Team;
   awayTeam: Team;
   events: MatchEvent[];
-  currentHalf: 1 | 2;
+  currentHalf: number;
   possession: TeamId | null;
   timer: {
     elapsedSeconds: number;
     isRunning: boolean;
+    lastStartTime?: number; // Timestamp when it started running
   };
   shotClock: {
     seconds: number;
     isRunning: boolean;
+    lastStartTime?: number; // Timestamp when it started running
   };
   timeout: {
     isActive: boolean;
     startTime: number;
     remainingSeconds: number;
     teamId?: TeamId; // Team that called the timeout
+    lastStartTime?: number; // Timestamp if we need to pause/resume timeout (rare but consistent)
+  };
+  break?: {
+    isActive: boolean;
+    startTime: number;
+    durationSeconds: number;
   };
 }
 

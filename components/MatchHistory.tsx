@@ -1,6 +1,7 @@
 import React from 'react';
 import { MatchState } from '../types';
-import { ArrowLeft, Calendar, ChevronRight, Trash2 } from 'lucide-react';
+import { ArrowLeft, Calendar, ChevronRight, Trash2, FileJson, FileText } from 'lucide-react';
+import { generatePDF, generateJSON } from '../services/reportGenerator';
 
 interface MatchHistoryProps {
   matches: MatchState[];
@@ -10,7 +11,7 @@ interface MatchHistoryProps {
 }
 
 const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onDeleteMatch, onBack }) => {
-  const getScore = (match: MatchState, teamId: 'HOME' | 'AWAY') => 
+  const getScore = (match: MatchState, teamId: 'HOME' | 'AWAY') =>
     match.events.filter(e => e.teamId === teamId && e.result === 'GOAL').length;
 
   return (
@@ -32,15 +33,15 @@ const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onD
         ) : (
           <div className="space-y-4">
             {matches.sort((a, b) => (b.date || 0) - (a.date || 0)).map((match) => (
-              <div 
-                key={match.id} 
+              <div
+                key={match.id}
                 className="group bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-500 transition-all cursor-pointer flex items-center justify-between"
                 onClick={() => onSelectMatch(match)}
               >
                 <div className="flex-1">
                   <div className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-2">
                     <Calendar size={12} />
-                    {new Date(match.date || Date.now()).toLocaleDateString()} &bull; {new Date(match.date || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    {new Date(match.date || Date.now()).toLocaleDateString()} &bull; {new Date(match.date || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right flex-1">
@@ -54,16 +55,30 @@ const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onD
                     </div>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-4 ml-6 pl-6 border-l border-gray-100">
-                   <ChevronRight className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
-                   <button 
-                     onClick={(e) => { e.stopPropagation(); if(match.id) onDeleteMatch(match.id); }}
-                     className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                     title="Delete Match"
-                   >
-                       <Trash2 size={18} />
-                   </button>
+
+                <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-100">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); generatePDF(match); }}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Export PDF"
+                  >
+                    <FileText size={18} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); generateJSON(match); }}
+                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                    title="Export JSON"
+                  >
+                    <FileJson size={18} />
+                  </button>
+                  <div className="w-px h-6 bg-gray-200 mx-2"></div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); if (match.id) onDeleteMatch(match.id); }}
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete Match"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
             ))}

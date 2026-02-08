@@ -2,7 +2,7 @@ import React from 'react';
 import { PlayCircle, History, BarChart2, BrainCircuit } from 'lucide-react';
 
 interface HomePageProps {
-  onNavigate: (view: 'SETUP' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY') => void;
+  onNavigate: (view: 'SETUP' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'LIVE' | 'JURY') => void;
 }
 
 const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
@@ -14,7 +14,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
-        <button 
+        <button
           onClick={() => onNavigate('SETUP')}
           className="group relative overflow-hidden bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:border-indigo-500 transition-all duration-300 text-left"
         >
@@ -30,7 +30,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           </div>
         </button>
 
-        <button 
+        <button
           onClick={() => onNavigate('MATCH_HISTORY')}
           className="group relative overflow-hidden bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:border-blue-500 transition-all duration-300 text-left"
         >
@@ -38,7 +38,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <History size={120} className="text-blue-600" />
           </div>
           <div className="relative z-10">
-             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600">
               <History size={28} />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">Previous Matches</h3>
@@ -46,7 +46,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           </div>
         </button>
 
-        <button 
+        <button
           onClick={() => onNavigate('OVERALL_STATS')}
           className="group relative overflow-hidden bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:border-emerald-500 transition-all duration-300 text-left"
         >
@@ -62,7 +62,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           </div>
         </button>
 
-        <button 
+        <button
           onClick={() => onNavigate('STRATEGY')}
           className="group relative overflow-hidden bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:border-purple-500 transition-all duration-300 text-left"
         >
@@ -77,6 +77,21 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <p className="text-gray-500">AI-powered insights to form strategies based on historical matchups.</p>
           </div>
         </button>
+      </div>
+
+      <div className="mt-12 w-full max-w-4xl">
+        <h2 className="text-xl font-bold text-gray-400 uppercase tracking-widest mb-6 text-center">Join Active Match</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button onClick={() => onNavigate('LIVESTREAM_STATS')} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:border-indigo-500 hover:shadow-md transition-all font-bold text-gray-700 flex items-center justify-center gap-2">
+            Livestream Stats
+          </button>
+          <button onClick={() => onNavigate('LIVE')} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:border-green-500 hover:shadow-md transition-all font-bold text-gray-700 flex items-center justify-center gap-2">
+            Live Screen
+          </button>
+          <button onClick={() => onNavigate('JURY')} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:border-blue-500 hover:shadow-md transition-all font-bold text-gray-700 flex items-center justify-center gap-2">
+            Jury Interface
+          </button>
+        </div>
       </div>
     </div>
   );
