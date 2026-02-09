@@ -345,6 +345,25 @@ function AppContent() {
     }
   };
 
+  const handleExitToHome = () => {
+    // Completely reset match state to allow new match
+    const resetState: MatchState = {
+      isConfigured: false,
+      halfDurationSeconds: 1500,
+      homeTeam: { id: 'HOME', name: '', players: [], color: '', substitutionCount: 0 },
+      awayTeam: { id: 'AWAY', name: '', players: [], color: '', substitutionCount: 0 },
+      events: [],
+      currentHalf: 1,
+      possession: null,
+      timer: { elapsedSeconds: 0, isRunning: false },
+      shotClock: { seconds: 25, isRunning: false },
+      timeout: { isActive: false, startTime: 0, remainingSeconds: 60 },
+    };
+    setMatchState(resetState);
+    localStorage.removeItem('korfstat_current_match');
+    setView('HOME');
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 font-sans transition-colors duration-300">
 
@@ -387,7 +406,7 @@ function AppContent() {
         <StatsView
           matchState={derivedMatchState}
           onBack={handleBackNavigation}
-          onHome={() => setView('HOME')}
+          onHome={handleExitToHome}
         />
       )}
 
