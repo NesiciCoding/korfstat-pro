@@ -93,6 +93,7 @@ export interface MatchState {
     startTime: number;
     durationSeconds: number;
   };
+  overlayOverride?: OverlayMessage | null;
 }
 
 export const SHOT_TYPES: { value: ShotType; label: string; isStatic: boolean }[] = [
@@ -103,3 +104,19 @@ export const SHOT_TYPES: { value: ShotType; label: string; isStatic: boolean }[]
   { value: 'MEDIUM', label: 'Medium', isStatic: false },
   { value: 'FAR', label: 'Long', isStatic: false },
 ];
+
+export interface SavedTeam {
+  id: string; // Unique ID
+  name: string;
+  color: string;
+  players: Player[]; // Complete roster including default numbers/positions
+}
+
+export interface OverlayMessage {
+  id: string;
+  text: string;
+  subText?: string;
+  type: 'SCROLL' | 'POPUP' | 'FULLSCREEN';
+  color?: string;
+  visible: boolean;
+}

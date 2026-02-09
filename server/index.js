@@ -1,165 +1,69 @@
 import express from 'express';
 import { createServer } from 'http';
-import { WebSocketServer, WebSocket } from 'ws';
+import { Server } from 'socket.io';
 import cors from 'cors';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
-app.use(express.json());
 
 const server = createServer(app);
-const wss = new WebSocketServer({ server });
-
-const DATA_FILE = path.join(__dirname, 'data.json');
-
-// --- STATE ---
-let matchState = null;
-let savedMatches = [];
-
-// Load from disk
-try {
-    if (fs.existsSync(DATA_FILE)) {
-        const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-        matchState = data.matchState || null;
-        savedMatches = data.savedMatches || [];
-        console.log('Loaded data from disk.');
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Allow any origin for local dev
+        methods: ["GET", "POST"]
     }
-} catch (e) {
-    console.error('Failed to load data:', e);
-}
+});
 
-const saveData = () => {
-    try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify({ matchState, savedMatches }, null, 2));
-    } catch (e) {
-        console.error('Failed to save data:', e);
-    }
-};
+const connectedClients = new Map(); // socketId -> { id, view, ip, userAgent, connectedAt }
 
-// Locks: ViewName -> ClientID
-const viewLocks = new Map();
-const clients = new Map();
+io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
 
-const broadcast = (message, excludeClientId = null) => {
-    const data = JSON.stringify(message);
-    clients.forEach((client, id) => {
-        if (id !== excludeClientId && client.readyState === WebSocket.OPEN) {
-            client.send(data);
-        }
+    // Get IP - messy in Node/Express/Socket.io behind proxies sometimes, but valid for local
+    const clientIp = socket.handshake.address;
+    const userAgent = socket.handshake.headers['user-agent'];
+
+    // Default entry
+    connectedClients.set(socket.id, {
+        id: socket.id,
+        view: 'Unknown',
+        ip: clientIp,
+        userAgent: userAgent,
+        connectedAt: Date.now()
     });
-};
 
-wss.on('connection', (ws) => {
-    const clientId = crypto.randomUUID();
-    clients.set(clientId, ws);
+    // Broadcast list immediately (so they show up as "Unknown" or just connected)
+    io.emit('active-sessions', Array.from(connectedClients.values()));
 
-    console.log(`Client connected: ${clientId}`);
+    // Send current state to new client if available
+    if (currentState) {
+        socket.emit('match-update', currentState);
+    }
 
-    // Send initial sync
-    ws.send(JSON.stringify({
-        type: 'SYNC_STATE',
-        payload: { matchState, savedMatches }
-    }));
-
-    // Send current locks
-    ws.send(JSON.stringify({
-        type: 'LOCK_UPDATE',
-        payload: Array.from(viewLocks.entries())
-    }));
-
-    ws.on('message', (message) => {
-        try {
-            const parsed = JSON.parse(message);
-            const { type, payload } = parsed;
-
-            switch (type) {
-                case 'REGISTER_VIEW': {
-                    const { view } = payload;
-                    if (view === 'LIVESTREAM_STATS' || view === 'LIVE' || view === 'STATS') {
-                        return;
-                    }
-                    const currentLock = viewLocks.get(view);
-                    if (currentLock && currentLock !== clientId) {
-                        ws.send(JSON.stringify({
-                            type: 'LOCK_ERROR',
-                            payload: { view, lockedBy: currentLock }
-                        }));
-                    } else {
-                        viewLocks.set(view, clientId);
-                        broadcast({
-                            type: 'LOCK_UPDATE',
-                            payload: Array.from(viewLocks.entries())
-                        });
-                        ws.send(JSON.stringify({ type: 'LOCK_SUCCESS', payload: { view } }));
-                    }
-                    break;
-                }
-
-                case 'UNLOCK_VIEW': {
-                    const { view } = payload;
-                    if (viewLocks.get(view) === clientId) {
-                        viewLocks.delete(view);
-                        broadcast({
-                            type: 'LOCK_UPDATE',
-                            payload: Array.from(viewLocks.entries())
-                        });
-                    }
-                    break;
-                }
-
-                case 'UPDATE_STATE': {
-                    matchState = payload;
-                    saveData();
-                    broadcast({
-                        type: 'UPDATE_STATE',
-                        payload: matchState
-                    }, clientId);
-                    break;
-                }
-
-                case 'UPDATE_HISTORY': {
-                    savedMatches = payload;
-                    saveData();
-                    broadcast({
-                        type: 'UPDATE_HISTORY',
-                        payload: savedMatches
-                    }, clientId);
-                    break;
-                }
-            }
-        } catch (e) {
-            console.error('Error processing message:', e);
+    socket.on('register-view', (viewName) => {
+        const client = connectedClients.get(socket.id);
+        if (client) {
+            client.view = viewName;
+            connectedClients.set(socket.id, client); // Update
+            io.emit('active-sessions', Array.from(connectedClients.values()));
         }
     });
 
-    ws.on('close', () => {
-        console.log(`Client disconnected: ${clientId}`);
-        clients.delete(clientId);
+    socket.on('match-update', (state) => {
+        // console.log('Received match update from', socket.id);
+        currentState = state;
+        // Broadcast to all other clients
+        socket.broadcast.emit('match-update', state);
+    });
 
-        let locksChanged = false;
-        for (const [view, owner] of viewLocks.entries()) {
-            if (owner === clientId) {
-                viewLocks.delete(view);
-                locksChanged = true;
-            }
-        }
-
-        if (locksChanged) {
-            broadcast({
-                type: 'LOCK_UPDATE',
-                payload: Array.from(viewLocks.entries())
-            });
-        }
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+        connectedClients.delete(socket.id);
+        io.emit('active-sessions', Array.from(connectedClients.values()));
     });
 });
 
 const PORT = 3001;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`KorfStat Pro Server running on port ${PORT}`);
+server.listen(PORT, () => {
+    console.log(`WebSocket server running on port ${PORT}`);
 });

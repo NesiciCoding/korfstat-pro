@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, MouseEvent } from 'react';
 import { MatchState, TeamId } from '../types';
-import { ArrowLeft, Save, Trash2, Undo, Circle, Hexagon, Eraser, Pen, MousePointer2, Move, Download, Upload, RefreshCw } from 'lucide-react';
+import { useSettings } from '../contexts/SettingsContext';
+import { ArrowLeft, Save, Trash2, Undo, Circle, Hexagon, Eraser, Pen, MousePointer2, Move, Download, Upload, RefreshCw, X } from 'lucide-react';
 
 interface StrategyPlannerProps {
   matches: MatchState[];
@@ -29,9 +30,18 @@ interface DrawingPath {
   width: number;
 }
 
+interface SavedPlay {
+  id: string;
+  name: string;
+  tokens: Token[];
+  drawings: DrawingPath[];
+  date: number;
+}
+
 const KORFBALL_FIELD_RATIO = 2; // 40m / 20m = 2
 
 const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) => {
+  const { settings } = useSettings();
   // ----- State -----
   const [tokens, setTokens] = useState<Token[]>([]);
   const [drawings, setDrawings] = useState<DrawingPath[]>([]);
@@ -40,6 +50,8 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
   const [isDragging, setIsDragging] = useState<string | null>(null);
   const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
   const [currentPath, setCurrentPath] = useState<DrawingPath | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [savedPlays, setSavedPlays] = useState<SavedPlay[]>([]);
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
@@ -51,7 +63,53 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
   // ----- Initialization -----
   useEffect(() => {
     resetBoard();
+    loadSavedPlays();
   }, []);
+
+  const loadSavedPlays = () => {
+    const saved = localStorage.getItem('korfstat_strategies');
+    if (saved) {
+      try {
+        setSavedPlays(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to load plays", e);
+      }
+    }
+  };
+
+  const savePlay = () => {
+    const name = prompt("Enter a name for this play:");
+    if (!name) return;
+
+    const newPlay: SavedPlay = {
+      id: Date.now().toString(),
+      name,
+      tokens,
+      drawings,
+      date: Date.now()
+    };
+
+    const newSaved = [...savedPlays, newPlay];
+    setSavedPlays(newSaved);
+    localStorage.setItem('korfstat_strategies', JSON.stringify(newSaved));
+  };
+
+  const loadPlay = (play: SavedPlay) => {
+    if (window.confirm(`Load play "${play.name}"? Unsaved changes will be lost.`)) {
+      setTokens(play.tokens);
+      setDrawings(play.drawings);
+      addToHistory(play.tokens, play.drawings);
+    }
+  };
+
+  const deletePlay = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this play?")) {
+      const newSaved = savedPlays.filter(p => p.id !== id);
+      setSavedPlays(newSaved);
+      localStorage.setItem('korfstat_strategies', JSON.stringify(newSaved));
+    }
+  };
 
   const resetBoard = () => {
     // Initial Setup: 4 Attackers (Home), 4 Defenders (Away)
@@ -80,9 +138,7 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
 
   const undo = () => {
     if (history.length <= 1) return;
-    const confirm = window.confirm("Undo last action?"); // Simple confirmation for now or just undo
-    // Actually standard undo logic implies popping state.
-    // Let's implement simpler: Just set state to prev.
+    // const confirm = window.confirm("Undo last action?"); // Removing confirm for smoother UX
     const newHistory = [...history];
     newHistory.pop(); // Remove current state
     const prevState = newHistory[newHistory.length - 1];
@@ -110,12 +166,15 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
     const w = canvas.width;
     const h = canvas.height;
 
+    // Check for dark mode
+    const isDark = document.documentElement.classList.contains('dark');
+
     // Background color roughly matching image
-    ctx.fillStyle = '#e0f2fe'; // Light blue
+    ctx.fillStyle = isDark ? '#1e293b' : '#e0f2fe'; // Slate 800 vs Light blue
     ctx.fillRect(0, 0, w, h);
 
     // Lines
-    ctx.strokeStyle = '#0369a1'; // Darker blue lines
+    ctx.strokeStyle = isDark ? '#94a3b8' : '#0369a1'; // Slate 400 vs Darker blue lines
     ctx.lineWidth = 2;
 
     // Border
@@ -165,7 +224,7 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
       // --- Penalty Spot ---
       ctx.beginPath();
       ctx.fillRect(penaltyX - (0.2 * m), postY - (0.1 * m), 0.4 * m, 0.2 * m);
-      ctx.fillStyle = '#0369a1';
+      ctx.fillStyle = isDark ? '#38bdf8' : '#0369a1';
       ctx.fill();
     };
 
@@ -180,7 +239,7 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
       drawPath(ctx, currentPath);
     }
 
-  }, [drawings, currentPath, containerRef.current?.clientWidth]); // Re-render on resize or data change
+  }, [drawings, currentPath, containerRef.current?.clientWidth, settings.theme]); // Re-render on resize or data change or theme change
 
   const drawPath = (ctx: CanvasRenderingContext2D, path: DrawingPath) => {
     if (path.points.length < 2) return;
@@ -230,8 +289,10 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
 
     if (activeTool === 'SELECT') {
       // Check if clicked on token? (Handled by token's own event)
-      // Background click -> deselect
+      // Background click -> deselect or stop editing
+      if (editingId) setEditingId(null);
     } else if (activeTool === 'PEN' || activeTool === 'ARROW') {
+      if (editingId) setEditingId(null);
       setCurrentPath({
         id: Date.now().toString(),
         type: activeTool,
@@ -280,10 +341,10 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
 
   // ----- UI Component -----
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col h-screen overflow-hidden">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col h-screen overflow-hidden transition-colors duration-300">
 
       {/* Header */}
-      <div className="h-16 border-b border-gray-800 flex items-center justify-between px-6 bg-gray-900 z-10">
+      <div className="h-16 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 bg-white dark:bg-gray-900 z-10 transition-colors">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="p-2 hover:bg-gray-800 rounded-lg"><ArrowLeft /></button>
           <h1 className="font-bold text-xl">Strategy Whiteboard</h1>
@@ -291,29 +352,36 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
 
         <div className="flex items-center gap-2">
           <button onClick={resetBoard} className="p-2 hover:bg-gray-800 rounded text-sm flex items-center gap-2"><RefreshCw size={16} /> Reset</button>
-          {/* <button className="p-2 hover:bg-gray-800 rounded text-sm flex items-center gap-2"><Save size={16}/> Save</button> */}
+          <button onClick={savePlay} className="p-2 hover:bg-gray-800 rounded text-sm flex items-center gap-2"><Save size={16} /> Save Play</button>
         </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
 
-        {/* Left Sidebar: Saved Plays (Placeholder) */}
-        <div className="w-64 bg-gray-800 border-r border-gray-700 p-4 hidden md:flex flex-col gap-4">
+        {/* Left Sidebar: Saved Plays */}
+        <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 hidden md:flex flex-col gap-4 transition-colors">
           <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider">Saved Plays</h3>
           <div className="flex-1 overflow-y-auto space-y-2">
-            <div className="p-3 bg-gray-700/50 rounded-lg border border-gray-600 hover:border-indigo-500 cursor-pointer transition-colors">
-              <div className="text-sm font-bold">Standard Attack</div>
-              <div className="text-xs text-gray-400">4-0 Setup</div>
-            </div>
-            {/* Add more placeholders or real list */}
+            {savedPlays.length === 0 && <div className="text-gray-500 text-sm text-center italic mt-4">No saved plays yet.</div>}
+            {savedPlays.map(play => (
+              <div key={play.id} onClick={() => loadPlay(play)} className="group p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-indigo-500 cursor-pointer transition-colors flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold">{play.name}</div>
+                  <div className="text-xs text-gray-400">{new Date(play.date).toLocaleDateString()}</div>
+                </div>
+                <button onClick={(e) => deletePlay(e, play.id)} className="p-1 text-gray-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Main Content: Field */}
-        <div className="flex-1 relative bg-gray-900 p-4 flex items-center justify-center overflow-hidden">
+        <div className="flex-1 relative bg-gray-100 dark:bg-gray-900 p-4 flex items-center justify-center overflow-hidden transition-colors">
           <div
             ref={containerRef}
-            className="relative w-full shadow-2xl rounded-xl overflow-hidden bg-white select-none touch-none"
+            className="relative w-full shadow-2xl rounded-xl overflow-hidden bg-white dark:bg-gray-800 select-none touch-none transition-colors"
             style={{ aspectRatio: `${KORFBALL_FIELD_RATIO}/1`, maxWidth: '1200px' }} // 2:1 Ratio
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -352,9 +420,38 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
                   e.stopPropagation();
                   setIsDragging(token.id);
                 }}
+                onDoubleClick={(e) => {
+                  if (activeTool !== 'SELECT') return;
+                  e.stopPropagation();
+                  setEditingId(token.id);
+                }}
               >
-                {/* For hexagon/female token, we need inner content to not be clipped if we want text centered perfectly */}
-                <span className="text-white drop-shadow-md">{token.label}</span>
+                {/* Editable Input or Label */}
+                {editingId === token.id ? (
+                  <input
+                    autoFocus
+                    className="w-full h-full bg-transparent text-white text-center font-bold outline-none"
+                    style={{ textShadow: '0 1px 2px black' }}
+                    value={token.label}
+                    onChange={(e) => {
+                      const val = e.target.value.slice(0, 3); // Limit length
+                      setTokens(prev => prev.map(t => t.id === token.id ? { ...t, label: val } : t));
+                    }}
+                    onBlur={() => {
+                      setEditingId(null);
+                      addToHistory(tokens, drawings);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setEditingId(null);
+                        addToHistory(tokens, drawings);
+                      }
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className="text-white drop-shadow-md select-none">{token.label}</span>
+                )}
               </div>
             ))}
 
@@ -362,7 +459,7 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
         </div>
 
         {/* Right Sidebar: Tools */}
-        <div className="w-20 bg-gray-800 border-l border-gray-700 p-2 flex flex-col items-center gap-4 py-6 z-20">
+        <div className="w-20 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 p-2 flex flex-col items-center gap-4 py-6 z-20 transition-colors">
 
           <ToolButton
             active={activeTool === 'SELECT'}
@@ -427,7 +524,7 @@ const ToolButton = ({ active, onClick, icon, label }: any) => (
   <button
     onClick={onClick}
     className={`p-3 rounded-xl flex flex-col items-center gap-1 w-full transition-all
-                  ${active ? 'bg-indigo-600 text-white shadow-lg scale-105' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`}
+                  ${active ? 'bg-indigo-600 text-white shadow-lg scale-105' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'}`}
   >
     {icon}
     <span className="text-[10px] font-bold">{label}</span>

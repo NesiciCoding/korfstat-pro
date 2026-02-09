@@ -1,8 +1,7 @@
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { useRef, useCallback } from 'react';
 
-export const useGameAudio = () => {
+export const useGameAudio = (muted: boolean = false) => {
     const audioContextRef = useRef<AudioContext | null>(null);
-    const [isMuted, setIsMuted] = useState(false);
 
     // Initialize AudioContext on user interaction if needed (browser policy),
     // but we can try lazily.
@@ -17,7 +16,7 @@ export const useGameAudio = () => {
     }, []);
 
     const playTone = useCallback((freq: number, type: OscillatorType, duration: number, startTime: number = 0) => {
-        if (isMuted) return;
+        if (muted) return;
         const ctx = getAudioContext();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -35,19 +34,19 @@ export const useGameAudio = () => {
         gain.gain.setValueAtTime(0.5, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
         osc.stop(now + duration);
-    }, [getAudioContext, isMuted]);
+    }, [getAudioContext, muted]);
 
     const playShotClockBuzzer = useCallback(() => {
-        if (isMuted) return;
+        if (muted) return;
         // Pattern: Beep - Beep - Beep (High pitch)
         // 880Hz (A5), Square wave for "buzzer" feel
         playTone(880, 'square', 0.2, 0);
         playTone(880, 'square', 0.2, 0.4);
         playTone(880, 'square', 0.4, 0.8);
-    }, [playTone, isMuted]);
+    }, [playTone, muted]);
 
     const playGameEndHorn = useCallback(() => {
-        if (isMuted) return;
+        if (muted) return;
         // Pattern: LOOOONG Horn (Low pitch)
         // 150Hz, Sawtooth for "horn" feel
         const ctx = getAudioContext();
@@ -76,14 +75,10 @@ export const useGameAudio = () => {
 
         osc1.stop(now + duration);
         osc2.stop(now + duration);
-    }, [getAudioContext, isMuted]);
-
-    const toggleMute = () => setIsMuted(prev => !prev);
+    }, [getAudioContext, muted]);
 
     return {
         playShotClockBuzzer,
-        playGameEndHorn,
-        isMuted,
-        toggleMute
+        playGameEndHorn
     };
 };

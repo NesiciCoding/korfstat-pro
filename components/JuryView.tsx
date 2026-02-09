@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MatchState, TeamId, CardType, MatchEvent } from '../types';
 import { Clock, Play, Pause, AlertTriangle, AlertOctagon, Repeat, ArrowLeft, Timer, RotateCcw, Edit, X } from 'lucide-react';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 interface JuryViewProps {
     matchState: MatchState;
@@ -13,6 +14,13 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack }
     const [newShotClockTime, setNewShotClockTime] = useState(25);
     const [showGameClockEdit, setShowGameClockEdit] = useState(false);
     const [newGameClockTime, setNewGameClockTime] = useState<{ m: number, s: number }>({ m: 25, s: 0 });
+
+    // Shortcuts
+    useKeyboardShortcuts([
+        { key: ' ', action: () => toggleTimer(), preventDefault: true },
+        { key: 's', action: () => toggleShotClock(), preventDefault: true },
+        { key: 'r', action: () => resetShotClock(25), preventDefault: true },
+    ]);
 
     // Discipline State
     const [disciplinaryFlow, setDisciplinaryFlow] = useState<{
@@ -127,7 +135,7 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack }
                                 onClick={toggleTimer}
                                 className={`w-full py-4 rounded-xl text-xl font-bold shadow-lg flex items-center justify-center gap-4 transition-all mb-4 ${matchState.timer.isRunning ? 'bg-yellow-500 hover:bg-yellow-600 text-black' : 'bg-green-600 hover:bg-green-700 text-white'}`}
                             >
-                                {matchState.timer.isRunning ? <><Pause size={24} /> PAUSE</> : <><Play size={24} /> START</>}
+                                {matchState.timer.isRunning ? <><Pause size={24} /> PAUSE <kbd className="hidden lg:inline ml-2 text-xs bg-black/20 px-2 py-1 rounded">SPACE</kbd></> : <><Play size={24} /> START <kbd className="hidden lg:inline ml-2 text-xs bg-white/20 px-2 py-1 rounded">SPACE</kbd></>}
                             </button>
                             <button onClick={() => {
                                 const remaining = Math.max(0, matchState.halfDurationSeconds - matchState.timer.elapsedSeconds);
@@ -182,10 +190,10 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack }
                                     className={`py-3 rounded-lg font-bold flex items-center justify-center gap-2 ${matchState.shotClock.isRunning ? 'bg-yellow-600' : 'bg-green-600'}`}
                                 >
                                     {matchState.shotClock.isRunning ? <Pause size={20} /> : <Play size={20} />}
-                                    {matchState.shotClock.isRunning ? 'STOP' : 'START'}
+                                    {matchState.shotClock.isRunning ? 'STOP' : 'START'} <kbd className="hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded">S</kbd>
                                 </button>
                                 <button onClick={() => resetShotClock(25)} className="py-3 bg-slate-600 hover:bg-slate-500 rounded-lg font-bold flex items-center justify-center gap-2">
-                                    <RotateCcw size={20} /> RESET 25
+                                    <RotateCcw size={20} /> RESET 25 <kbd className="hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded">R</kbd>
                                 </button>
                                 <button onClick={() => setShowShotClockEdit(true)} className="col-span-2 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
                                     <Edit size={16} /> CHANGE TIME

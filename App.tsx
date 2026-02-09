@@ -10,20 +10,27 @@ import OverallStats from './components/OverallStats';
 import StrategyPlanner from './components/StrategyPlanner';
 import LivestreamView from './components/LivestreamView';
 import StreamOverlay from './components/StreamOverlay';
-import { useMatchSync } from './hooks/useMatchSync';
+import DirectorDashboard from './components/DirectorDashboard';
+import ShotClockView from './components/ShotClockView';
+import SettingsModal from './components/SettingsModal';
+import { SettingsProvider } from './contexts/SettingsContext';
 import { MatchState, Team } from './types';
+import { Settings } from 'lucide-react';
+import { useBroadcastSync } from './hooks/useBroadcastSync';
 
-function App() {
+function AppContent() {
   // Initialize view from URL parameter
-  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY'>(() => {
+  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK'>(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
-    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY'];
+    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK'];
     if (viewParam && validViews.includes(viewParam)) {
       return viewParam as any;
     }
     return 'HOME';
   });
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Base Match State (Persistent Source of Truth)
   const [matchState, setMatchState] = useState<MatchState>(() => {
@@ -49,35 +56,30 @@ function App() {
     };
   });
 
-  const [savedMatches, setSavedMatches] = useState<MatchState[]>([]);
+  // const [savedMatches, setSavedMatches] = useState<MatchState[]>([]); // Replaced by Dexie
+  // Helper to ensure we have a valid array even during loading
+  // const [savedMatches, setSavedMatches] = useState<MatchState[]>([]); // Replaced by Dexie
+  // Helper to ensure we have a valid array even during loading
+  const [savedMatches, setSavedMatches] = useState<MatchState[]>(() => {
+    try {
+      const saved = localStorage.getItem('korfstat_matches');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to load match history", e);
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('korfstat_matches', JSON.stringify(savedMatches));
+  }, [savedMatches]);
+
   const [tick, setTick] = useState(0); // Force re-render for timer updates
 
-  // Load match history
-  useEffect(() => {
-    const saved = localStorage.getItem('korfstat_matches');
-    if (saved) {
-      try {
-        setSavedMatches(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to load matches", e);
-      }
-    }
-  }, []);
+  // Load match history (Legacy localStorage migration could go here)
 
-  // --- SYNC ---
-  const {
-    isConnected,
-    isLocked,
-    lockedBy,
-    sendStateUpdate,
-    sendHistoryUpdate
-  } = useMatchSync(
-    matchState,
-    savedMatches,
-    view,
-    setMatchState,   // Hook calls this on update
-    setSavedMatches  // Hook calls this on update
-  );
+
+
 
   // Clean up legacy listeners if necessary, but we replaced the useEffect blocks.
 
@@ -196,7 +198,22 @@ function App() {
     }
 
     return derived;
-  }, [matchState, tick]); // Re-calculate on tick or base change
+  }, [matchState, tick]);
+  // --- SYNC ---
+  // Re-implemented with BroadcastChannel for Local Tab Sync
+  const handleRemoteUpdate = useCallback((remoteState: MatchState) => {
+    // When we receive an update from another tab
+    setMatchState(remoteState);
+  }, []);
+
+  const { broadcastUpdate, activeSessions, registerView } = useBroadcastSync(matchState, handleRemoteUpdate);
+
+  // Register View on Change
+  useEffect(() => {
+    if (registerView) {
+      registerView(view);
+    }
+  }, [view, registerView]);
 
   // Smart Update Handler
   const handleUpdateMatch = useCallback((newState: MatchState) => {
@@ -259,50 +276,11 @@ function App() {
     // So if I wait 1 min in timeout, the Game Clock jumps 1 min when I resume?
     // YES. THIS IS BAD.
     // Fix: When Timeout STARTS:
-    //  - We must "Pause" the game clock (set isRunning=false? OR capture accumulated time and unset lastStartTime?)
-    //  - If we want to resume automatically, we need a separate "wasRunning" flag.
-    // Better User Experience:
-    // When Timeout starts, explicitly PAUSE the game clock (set `starting=false`).
-    // The user has to manually start it again?
-    // Previous code: `if (current.timer.isRunning && !current.timeout.isActive)`
-    // This implies it automatically resumes?
-    // No, if `isRunning` stayed true, it resumed.
-    // If I want to keep that behavior:
-    // If Timeout is Active, I need to "shift" `lastStartTime` forward by the duration of the timeout.
-    // That's messy.
-    // SAFE APPROACH: When timeout starts, we explicitly PAUSE game clock and shot clock.
-    // User must manually resume. Korfball rules usually imply time stops.
-    // Let's assume explicit pause is fine.
-    // Update: If `newState.timeout.isActive` becomes true, force others to false.
-
-    if (adjustedState.timeout.isActive && !matchState.timeout.isActive) {
-      // Timeout just started. Pause others.
-      if (adjustedState.timer.isRunning) {
-        adjustedState.timer.isRunning = false;
-        adjustedState.timer.lastStartTime = undefined;
-        // elapsedSeconds is already up to date from the derived passed in
-      }
-      if (adjustedState.shotClock.isRunning) {
-        adjustedState.shotClock.isRunning = false;
-        adjustedState.shotClock.lastStartTime = undefined;
-      }
-    }
-
-    // 5. Handle Break Start
-    if (adjustedState.break?.isActive && !matchState.break?.isActive) {
-      // Break just started. Pause others.
-      if (adjustedState.timer.isRunning) {
-        adjustedState.timer.isRunning = false;
-        adjustedState.timer.lastStartTime = undefined;
-      }
-      if (adjustedState.shotClock.isRunning) {
-        adjustedState.shotClock.isRunning = false;
-        adjustedState.shotClock.lastStartTime = undefined;
-      }
-    }
-
+    // Fix: Update local state!
     setMatchState(adjustedState);
-    sendStateUpdate(adjustedState);
+
+    // Broadcast change
+    broadcastUpdate(adjustedState);
 
     // Log actions (simple diff logging could be enhanced, but logging the state update is a start)
     console.log('[Match Update]', {
@@ -310,7 +288,7 @@ function App() {
       eventCount: adjustedState.events.length,
       lastEvent: adjustedState.events[adjustedState.events.length - 1]
     });
-  }, [matchState, sendStateUpdate]);
+  }, [matchState]);
 
   const handleStartMatch = (home: Team, away: Team, durationSeconds: number) => {
     const newState: MatchState = {
@@ -328,7 +306,7 @@ function App() {
       timeout: { isActive: false, startTime: 0, remainingSeconds: 60 },
     };
     setMatchState(newState);
-    sendStateUpdate(newState);
+    setMatchState(newState);
     // localStorage.setItem('korfstat_current_match', JSON.stringify(newState)); // Legacy backup optional
     setView('TRACK');
   };
@@ -343,14 +321,13 @@ function App() {
     };
 
     setMatchState(finalState);
-    sendStateUpdate(finalState);
+    setMatchState(finalState);
 
-    const newHistory = [...savedMatches, finalState];
-    setSavedMatches(newHistory);
-    sendHistoryUpdate(newHistory);
+    // Save to localStorage
+    const newHistory = [finalState, ...savedMatches];
+    setSavedMatches(newHistory); // Triggers useEffect to save to localStorage
 
-    // localStorage.setItem('korfstat_matches', JSON.stringify(newHistory));
-    // localStorage.removeItem('korfstat_current_match');
+    console.log('Match saved to local storage');
 
     setView('STATS');
   };
@@ -358,8 +335,6 @@ function App() {
   const handleDeleteMatch = (id: string) => {
     const newHistory = savedMatches.filter(m => m.id !== id);
     setSavedMatches(newHistory);
-    sendHistoryUpdate(newHistory);
-    // localStorage.setItem('korfstat_matches', JSON.stringify(newHistory));
   };
 
   const handleBackNavigation = () => {
@@ -371,38 +346,28 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 font-sans transition-colors duration-300">
+
+      {/* Settings Floater */}
+      <button
+        onClick={() => setIsSettingsOpen(true)}
+        className="fixed top-4 right-4 z-[90] p-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all"
+        title="Settings"
+      >
+        <Settings size={20} />
+      </button>
+
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
       {/* Locked Screen */}
-      {isLocked && (
-        <div className="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-8 max-w-md w-full text-center shadow-2xl">
-            <div className="mb-4 text-red-500 flex justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">View Locked</h2>
-            <p className="text-gray-600 mb-6">
-              This view is currently being used by another device.
-              <br /><span className="text-xs font-mono bg-gray-100 p-1 rounded mt-2 inline-block">Locked by: {lockedBy}</span>
-            </p>
-            <p className="text-sm text-gray-500">
-              Only one device can control the Tracker or Jury view at a time.
-              You can still use Livestream views.
-            </p>
-            <div className="mt-6">
-              <button onClick={() => setView('HOME')} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-bold">
-                Return Home
-              </button>
-              <button onClick={() => setView('LIVESTREAM_STATS')} className="block w-full mt-3 px-4 py-2 text-indigo-600 font-bold hover:bg-gray-50 rounded">
-                Go to Livestream Stats
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {view === 'HOME' && (
-        <HomePage onNavigate={setView} />
+        <HomePage
+          onNavigate={setView}
+          activeSessions={activeSessions}
+          matchState={derivedMatchState}
+        />
       )}
 
       {view === 'SETUP' && (
@@ -473,8 +438,28 @@ function App() {
           matchState={derivedMatchState}
         />
       )}
+
+      {view === 'DIRECTOR' && (
+        <DirectorDashboard
+          matchState={derivedMatchState}
+          setMatchState={handleUpdateMatch}
+          broadcastUpdate={broadcastUpdate}
+        />
+      )}
+
+      {view === 'SHOT_CLOCK' && (
+        <ShotClockView
+          matchState={derivedMatchState}
+        />
+      )}
     </div>
   );
-}
+};
 
-export default App;
+export default function App() {
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
+  );
+};

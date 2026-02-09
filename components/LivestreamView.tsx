@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { MatchState, Player, ShotType, TeamId } from '../types';
 import KorfballField from './KorfballField';
+import PlayerProfileModal from './PlayerProfileModal';
 import { TrendingUp, Target, History, Filter } from 'lucide-react';
 
 interface LivestreamViewProps {
@@ -12,6 +13,10 @@ type ViewTab = 'HEATMAP' | 'CURRENT_STATS' | 'HISTORIC_STATS';
 
 const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatches }) => {
     const [activeTab, setActiveTab] = useState<ViewTab>('HEATMAP');
+
+    // --- STATE ---
+    const [selectedPlayer, setSelectedPlayer] = useState<{ player: Player, teamId: TeamId } | null>(null);
+    const [showZoneStats, setShowZoneStats] = useState(false);
 
     // --- HEATMAP STATE ---
     const [filterPlayerId, setFilterPlayerId] = useState<string>('ALL');
@@ -29,6 +34,45 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
         });
     }, [matchState.events, filterPlayerId, filterShotType]);
 
+    // --- Plus/Minus Calculation ---
+    // We need to replay events to know who was on field at time of goal
+    // This logic is duplicated from StatsView - consider moving to a helper utility
+    const plusMinusMap = useMemo(() => {
+        const map = new Map<string, number>();
+        const currentHomeLineup = new Set<string>();
+        const currentAwayLineup = new Set<string>();
+
+        matchState.homeTeam.players.forEach(p => { if (p.isStarter) currentHomeLineup.add(p.id); map.set(p.id, 0); });
+        matchState.awayTeam.players.forEach(p => { if (p.isStarter) currentAwayLineup.add(p.id); map.set(p.id, 0); });
+
+        const sortedEvents = [...matchState.events].sort((a, b) => a.timestamp - b.timestamp);
+
+        sortedEvents.forEach(e => {
+            if (e.type === 'SUBSTITUTION' && e.subInId && e.subOutId) {
+                if (e.teamId === 'HOME') {
+                    currentHomeLineup.delete(e.subOutId);
+                    currentHomeLineup.add(e.subInId);
+                    if (!map.has(e.subInId)) map.set(e.subInId, 0);
+                } else {
+                    currentAwayLineup.delete(e.subOutId);
+                    currentAwayLineup.add(e.subInId);
+                    if (!map.has(e.subInId)) map.set(e.subInId, 0);
+                }
+            }
+
+            if (e.type === 'SHOT' && e.result === 'GOAL') {
+                if (e.teamId === 'HOME') {
+                    currentHomeLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) + 1));
+                    currentAwayLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) - 1));
+                } else {
+                    currentAwayLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) + 1));
+                    currentHomeLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) - 1));
+                }
+            }
+        });
+        return map;
+    }, [matchState.events, matchState.homeTeam, matchState.awayTeam]);
+
     // 2. Current Match Player Stats
     const getCurrentPlayerStats = (teamId: TeamId) => {
         const team = teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
@@ -38,6 +82,11 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
             const goals = shots.filter(e => e.result === 'GOAL');
             const rebounds = events.filter(e => e.type === 'REBOUND');
             const fouls = events.filter(e => e.type === 'FOUL');
+            const turnovers = events.filter(e => e.type === 'TURNOVER');
+
+            // Calculate Rating
+            const misses = shots.length - goals.length;
+            const rating = (goals.length * 5) + (rebounds.length * 2) - (misses * 1) - (turnovers.length * 3) - (fouls.length * 2);
 
             return {
                 ...player,
@@ -45,9 +94,11 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                 goals: goals.length,
                 percentage: shots.length > 0 ? Math.round((goals.length / shots.length) * 100) : 0,
                 rebounds: rebounds.length,
-                fouls: fouls.length
+                fouls: fouls.length,
+                rating,
+                plusMinus: plusMinusMap.get(player.id) || 0
             };
-        }).sort((a, b) => b.goals - a.goals);
+        }).sort((a, b) => b.rating - a.rating);
     };
 
     // 3. Historic Player Stats (Only for players in CURRENT match)
@@ -192,9 +243,25 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                     </select>
                                 </div>
 
-                                <div className="flex bg-slate-900 p-1 rounded">
-                                    <button onClick={() => setHeatmapMode(true)} className={`flex-1 py-1.5 text-xs font-bold rounded ${heatmapMode ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Heatmap</button>
-                                    <button onClick={() => setHeatmapMode(false)} className={`flex-1 py-1.5 text-xs font-bold rounded ${!heatmapMode ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Precise</button>
+                                <div className="flex bg-slate-900 p-1 rounded gap-1">
+                                    <button
+                                        onClick={() => { setHeatmapMode(false); setShowZoneStats(false); }}
+                                        className={`flex-1 py-1.5 text-xs font-bold rounded transition-colors ${!heatmapMode && !showZoneStats ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                                    >
+                                        Precise
+                                    </button>
+                                    <button
+                                        onClick={() => { setHeatmapMode(true); setShowZoneStats(false); }}
+                                        className={`flex-1 py-1.5 text-xs font-bold rounded transition-colors ${heatmapMode && !showZoneStats ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                                    >
+                                        Heatmap
+                                    </button>
+                                    <button
+                                        onClick={() => { setShowZoneStats(true); }}
+                                        className={`flex-1 py-1.5 text-xs font-bold rounded transition-colors ${showZoneStats ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                                    >
+                                        Zone Eff
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -203,7 +270,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                         <div className="flex-1 bg-white rounded-xl shadow-lg border border-slate-700 overflow-hidden relative flex items-center justify-center p-4">
                             {/* Using white bg for field because KorfballField is light-themed usually, or ensure it handles dark mode? 
                           Field usually has white background in code. Let's keep container white for contrast.*/}
-                            <KorfballField mode="view" events={filteredEvents} heatmapMode={heatmapMode} />
+                            <KorfballField mode="view" events={filteredEvents} heatmapMode={heatmapMode} showZoneEfficiency={showZoneStats} />
                         </div>
                     </div>
                 )}
@@ -231,11 +298,17 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                                     <th className="px-4 py-3 text-center">%</th>
                                                     <th className="px-4 py-3 text-center">Reb</th>
                                                     <th className="px-4 py-3 text-center">Foul</th>
+                                                    <th className="px-4 py-3 text-center" title="Player Valuation Rating">VAL</th>
+                                                    <th className="px-4 py-3 text-center" title="Plus / Minus">+/-</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-700">
                                                 {stats.map(p => (
-                                                    <tr key={p.id} className="hover:bg-slate-700/50 transition-colors">
+                                                    <tr
+                                                        key={p.id}
+                                                        className="hover:bg-slate-700/50 transition-colors cursor-pointer"
+                                                        onClick={() => setSelectedPlayer({ player: p, teamId: teamId as TeamId })}
+                                                    >
                                                         <td className="px-4 py-3 font-bold">
                                                             <span className="inline-block w-6 text-slate-500">{p.number}</span>
                                                             {p.name}
@@ -250,6 +323,10 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                                         </td>
                                                         <td className="px-4 py-3 text-center text-slate-300">{p.rebounds}</td>
                                                         <td className="px-4 py-3 text-center text-slate-300">{p.fouls}</td>
+                                                        <td className={`px-4 py-3 text-center font-bold ${p.rating >= 15 ? 'text-green-400' : p.rating < 5 ? 'text-slate-500' : 'text-slate-300'}`}>{p.rating}</td>
+                                                        <td className={`px-4 py-3 text-center font-mono font-bold ${p.plusMinus > 0 ? 'text-green-400' : p.plusMinus < 0 ? 'text-red-400' : 'text-slate-500'}`}>
+                                                            {p.plusMinus > 0 ? '+' : ''}{p.plusMinus}
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -283,35 +360,50 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-700 font-medium">
-                                    {historicStats.map((p, i) => (
-                                        <tr key={i} className="hover:bg-slate-700/50 transition-colors">
-                                            <td className="px-6 py-4 font-bold text-white flex items-center gap-3">
-                                                <div className="w-6 text-center text-slate-600 text-xs">{i + 1}</div>
-                                                {p.name}
-                                            </td>
-                                            <td className="px-6 py-4 text-slate-400">{p.teamName}</td>
-                                            <td className="px-6 py-4 text-center text-slate-300">{p.matches}</td>
-                                            <td className="px-6 py-4 text-center font-bold text-indigo-400 text-lg">{p.goals}</td>
-                                            <td className="px-6 py-4 text-center text-slate-400">{p.shots}</td>
-                                            <td className="px-6 py-4 text-center">
-                                                {p.shots > 0 ? (
-                                                    <div className="flex flex-col items-center">
-                                                        <span className={`${(p.goals / p.shots) >= 0.25 ? 'text-green-400' : 'text-slate-300'}`}>
-                                                            {Math.round((p.goals / p.shots) * 100)}%
-                                                        </span>
-                                                        {/* Simple bar for visual */}
-                                                        <div className="w-16 h-1 bg-slate-700 rounded-full mt-1 overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-indigo-500"
-                                                                style={{ width: `${Math.min(100, (p.goals / p.shots) * 100)}%` }}
-                                                            ></div>
+                                    {historicStats.map((stat, i) => {
+                                        // Try to find player in current match to open profile
+                                        // This only works for players currently on the roster, which fits the requirement "historic stats (Only for players in CURRENT match)" logic used above
+                                        const homeP = matchState.homeTeam.players.find(p => p.name === stat.name);
+                                        const awayP = matchState.awayTeam.players.find(p => p.name === stat.name);
+                                        const playerObj = homeP || awayP;
+                                        const teamId = homeP ? 'HOME' : 'AWAY';
+
+                                        return (
+                                            <tr
+                                                key={i}
+                                                className="hover:bg-slate-700/50 transition-colors cursor-pointer"
+                                                onClick={() => {
+                                                    if (playerObj) setSelectedPlayer({ player: playerObj, teamId: teamId as TeamId });
+                                                }}
+                                            >
+                                                <td className="px-6 py-4 font-bold text-white flex items-center gap-3">
+                                                    <div className="w-6 text-center text-slate-600 text-xs">{i + 1}</div>
+                                                    {stat.name}
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-400">{stat.teamName}</td>
+                                                <td className="px-6 py-4 text-center text-slate-300">{stat.matches}</td>
+                                                <td className="px-6 py-4 text-center font-bold text-indigo-400 text-lg">{stat.goals}</td>
+                                                <td className="px-6 py-4 text-center text-slate-400">{stat.shots}</td>
+                                                <td className="px-6 py-4 text-center">
+                                                    {stat.shots > 0 ? (
+                                                        <div className="flex flex-col items-center">
+                                                            <span className={`${(stat.goals / stat.shots) >= 0.25 ? 'text-green-400' : 'text-slate-300'}`}>
+                                                                {Math.round((stat.goals / stat.shots) * 100)}%
+                                                            </span>
+                                                            {/* Simple bar for visual */}
+                                                            <div className="w-16 h-1 bg-slate-700 rounded-full mt-1 overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-indigo-500"
+                                                                    style={{ width: `${Math.min(100, (stat.goals / stat.shots) * 100)}%` }}
+                                                                ></div>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ) : <span className="text-slate-600">-</span>}
-                                            </td>
-                                            <td className="px-6 py-4 text-center text-blue-400">{p.rebounds}</td>
-                                        </tr>
-                                    ))}
+                                                    ) : <span className="text-slate-600">-</span>}
+                                                </td>
+                                                <td className="px-6 py-4 text-center text-blue-400">{stat.rebounds}</td>
+                                            </tr>
+                                        );
+                                    })}
                                     {historicStats.length === 0 && (
                                         <tr><td colSpan={7} className="p-8 text-center text-slate-500 italic">No historic data found for current players</td></tr>
                                     )}
@@ -321,6 +413,21 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                     </div>
                 )}
             </div>
+
+            {/* Player Profile Modal */}
+            {selectedPlayer && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <PlayerProfileModal
+                            player={selectedPlayer.player}
+                            teamName={selectedPlayer.teamId === 'HOME' ? matchState.homeTeam.name : matchState.awayTeam.name}
+                            teamColor={selectedPlayer.teamId === 'HOME' ? matchState.homeTeam.color : matchState.awayTeam.color}
+                            events={matchState.events}
+                            onClose={() => setSelectedPlayer(null)}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
