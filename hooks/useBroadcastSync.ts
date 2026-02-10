@@ -17,8 +17,8 @@ export const useBroadcastSync = (
     useEffect(() => {
         // Connect to WebSocket Server
         // Use hostname to support mobile devices on same network
-        const host = window.location.hostname;
-        const socket = io(`http://${host}:3001`);
+        const SOCKET_SERVER_URL = 'http://localhost:3002';
+        const socket = io(SOCKET_SERVER_URL);
         socketRef.current = socket;
 
         socket.on('connect', () => {

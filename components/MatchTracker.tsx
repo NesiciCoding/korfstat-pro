@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MatchState, TeamId, MatchEvent, SHOT_TYPES, ActionType, CardType, ShotType } from '../types';
 import KorfballField, { getShotDistanceType } from './KorfballField';
-import { PieChart, Clock, Target, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, Shirt, AlertOctagon, Monitor, Gavel, Undo2, Volume2, VolumeX } from 'lucide-react';
+import { PieChart, Clock, Target, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, Shirt, AlertOctagon, Monitor, Gavel, Undo2, Volume2, VolumeX, CheckCircle, XCircle } from 'lucide-react';
 
 import { useSettings } from '../contexts/SettingsContext';
 import { useGameAudio } from '../hooks/useGameAudio';
@@ -46,9 +46,6 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     // Shot Clock Check
     const currentShotClock = matchState.shotClock.seconds;
     if (prevShotClockRef.current > 0 && currentShotClock <= 0 && matchState.shotClock.lastStartTime) {
-      // Only play if it was running down naturally? Or just anytime it hits 0?
-      // Ideally when it *transitions* provided it's "live".
-      // We check lastStartTime to ensure it wasn't just *set* to 0 manually while paused (though that might be fine too).
       playShotClockBuzzer();
     }
     prevShotClockRef.current = currentShotClock;
@@ -76,15 +73,21 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
       if (action === 'GOAL') addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location });
       else if (action === 'MISS') addEvent({ teamId, playerId, type: 'SHOT', result: 'MISS', shotType: 'RUNNING_IN', location });
-      else if (action === 'FREE_THROW') addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'FREE_THROW', location }); // K
-      else if (action === 'PENALTY') addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'PENALTY', location });
+      else if (action === 'FREE_THROW') {
+        // Auto-position 2.5m in front
+        // Left Korf (Home) -> 22.9%, Right Korf (Away) -> 77.1%
+        const autoLoc = teamId === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+        addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'FREE_THROW', location: autoLoc });
+      }
+      else if (action === 'PENALTY') {
+        const autoLoc = teamId === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+        addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'PENALTY', location: autoLoc });
+      }
       else if (action === 'TURNOVER') addEvent({ teamId, playerId, type: 'TURNOVER', location }); // O
       else if (action === 'FOUL') addEvent({ teamId, playerId, type: 'FOUL', location }); // F
       else if (action === 'REBOUND') addEvent({ teamId, playerId, type: 'REBOUND', reboundType: 'OFFENSIVE', location }); // R
       else if (action === 'CARD') {
-        // Card requires color selection, stay in menu or open card specific?
-        // Since we have specific card logic in menu, let's just ignore for now or show alert?
-        // For now, do nothing or let manual selection happen.
+        // Card requires color selection
       }
 
       if (action !== 'CARD' && action !== 'SUB' && action !== 'TIMEOUT') {
@@ -101,8 +104,6 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     }
 
     // 3. Default Flow: Start a new action (opens Select Player)
-    // Only if menu is CLOSED or we are in 'SELECT_PLAYER' (switching intent?)
-    // If we are in 'SELECT_PLAYER' with a pending action, we can switch the pending action.
 
     const teamId = contextMenu?.selectedTeam || matchState.possession || 'HOME';
 
@@ -144,8 +145,10 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
     // LOGIC DEPENDS ON STEP
     if (currentStep === 'SELECT_PLAYER' || currentStep === 'SELECT_SUB_OUT') {
-      // Select from ON FIELD players
-      const onFieldPlayers = team.players.filter(p => p.onField);
+      // Select from ON FIELD players - SORTED by Number to match UI
+      const onFieldPlayers = team.players
+        .filter(p => p.onField)
+        .sort((a, b) => parseInt(a.number) - parseInt(b.number));
       const player = onFieldPlayers[numberIndex];
       if (player) {
         if (currentStep === 'SELECT_PLAYER') {
@@ -154,8 +157,14 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             const location = { x: 50, y: 50 };
             if (pendingShortcutAction === 'GOAL') addEvent({ teamId: team.id, playerId: player.id, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location });
             else if (pendingShortcutAction === 'MISS') addEvent({ teamId: team.id, playerId: player.id, type: 'SHOT', result: 'MISS', shotType: 'RUNNING_IN', location });
-            else if (pendingShortcutAction === 'FREE_THROW') addEvent({ teamId: team.id, playerId: player.id, type: 'SHOT', result: 'GOAL', shotType: 'FREE_THROW', location });
-            else if (pendingShortcutAction === 'PENALTY') addEvent({ teamId: team.id, playerId: player.id, type: 'SHOT', result: 'GOAL', shotType: 'PENALTY', location });
+            else if (pendingShortcutAction === 'FREE_THROW') {
+              setContextMenu({ ...contextMenu, selectedPlayerId: player.id, step: 'SELECT_RESULT', calculatedShotType: 'FREE_THROW' });
+              return; // Wait for result
+            }
+            else if (pendingShortcutAction === 'PENALTY') {
+              setContextMenu({ ...contextMenu, selectedPlayerId: player.id, step: 'SELECT_RESULT', calculatedShotType: 'PENALTY' });
+              return; // Wait for result
+            }
             else if (pendingShortcutAction === 'TURNOVER') addEvent({ teamId: team.id, playerId: player.id, type: 'TURNOVER', location });
             else if (pendingShortcutAction === 'FOUL') addEvent({ teamId: team.id, playerId: player.id, type: 'FOUL', location });
             else if (pendingShortcutAction === 'REBOUND') addEvent({ teamId: team.id, playerId: player.id, type: 'REBOUND', reboundType: 'OFFENSIVE', location });
@@ -203,9 +212,11 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
       if (numberIndex === 0) { // 1 -> Running In
         addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'RUNNING_IN', result: 'GOAL', location });
       } else if (numberIndex === 1) { // 2 -> Penalty
-        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'PENALTY', result: 'GOAL', location });
+        const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'PENALTY', result: 'GOAL', location: autoLoc });
       } else if (numberIndex === 2) { // 3 -> Free Throw
-        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'FREE_THROW', result: 'GOAL', location });
+        const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'FREE_THROW', result: 'GOAL', location: autoLoc });
       } else if (numberIndex === 3) { // 4 -> Miss
         addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: contextMenu.calculatedShotType, result: 'MISS', location });
       }
@@ -539,7 +550,9 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     if (!contextMenu?.visible) return null;
 
     const activeTeam = contextMenu.selectedTeam === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
-    const onFieldPlayers = activeTeam?.players.filter(p => p.onField) || [];
+    // Sort players by number to ensure keyboard shortcuts correspond to visual order logically (1, 2, 3...)
+    const onFieldPlayers = (activeTeam?.players.filter(p => p.onField) || [])
+      .sort((a, b) => parseInt(a.number) - parseInt(b.number));
     const benchPlayers = activeTeam?.players.filter(p => !p.onField) || [];
 
     return (
@@ -565,19 +578,68 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
           </div>
 
           <div className="space-y-4">
+            {contextMenu.step === 'SELECT_RESULT' && (
+              <div className="space-y-4">
+                <div className="text-center font-bold text-lg mb-4">
+                  Result for {contextMenu.calculatedShotType === 'FREE_THROW' ? 'Free Pass' : 'Penalty'}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <button onClick={() => {
+                    const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+                    addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', result: 'GOAL', shotType: contextMenu.calculatedShotType, location: autoLoc });
+                    setPendingShortcutAction(null);
+                  }} className="p-6 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg flex flex-col items-center gap-2 border-2 border-green-300">
+                    <CheckCircle size={48} />
+                    <span className="font-black text-2xl">GOAL</span>
+                  </button>
+                  <button onClick={() => {
+                    const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+                    addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', result: 'MISS', shotType: contextMenu.calculatedShotType, location: autoLoc });
+                    setPendingShortcutAction(null);
+                  }} className="p-6 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex flex-col items-center gap-2 border-2 border-red-300">
+                    <XCircle size={48} />
+                    <span className="font-black text-2xl">MISS</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {contextMenu.step === 'SELECT_PLAYER' && (
               <>
                 <div className="grid grid-cols-4 gap-3 mb-4">
                   {onFieldPlayers.map(p => (
                     <button
                       key={p.id}
-                      onClick={() => setContextMenu({ ...contextMenu, selectedPlayerId: p.id, step: 'SELECT_ACTION' })}
-                      className="aspect-square rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-transparent hover:border-indigo-500 flex flex-col items-center justify-center font-bold text-gray-700 transition-all shadow-sm"
+                      onClick={() => {
+                        if (pendingShortcutAction) {
+                          // Execute Pending Action Immediately
+                          const location = { x: 50, y: 50 };
+                          if (pendingShortcutAction === 'GOAL') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location });
+                          else if (pendingShortcutAction === 'MISS') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'SHOT', result: 'MISS', shotType: 'RUNNING_IN', location });
+                          else if (pendingShortcutAction === 'FREE_THROW') {
+                            setContextMenu({ ...contextMenu, selectedPlayerId: p.id, step: 'SELECT_RESULT', calculatedShotType: 'FREE_THROW' });
+                            return; // Wait
+                          }
+                          else if (pendingShortcutAction === 'PENALTY') {
+                            setContextMenu({ ...contextMenu, selectedPlayerId: p.id, step: 'SELECT_RESULT', calculatedShotType: 'PENALTY' });
+                            return; // Wait
+                          }
+                          else if (pendingShortcutAction === 'TURNOVER') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'TURNOVER', location });
+                          else if (pendingShortcutAction === 'FOUL') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'FOUL', location });
+                          else if (pendingShortcutAction === 'REBOUND') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'REBOUND', reboundType: 'OFFENSIVE', location });
+
+                          setPendingShortcutAction(null);
+                          setContextMenu(null);
+                        } else {
+                          setContextMenu({ ...contextMenu, selectedPlayerId: p.id, step: 'SELECT_ACTION' })
+                        }
+                      }}
+                      className="aspect-square rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-transparent hover:border-indigo-500 flex flex-col items-center justify-center font-bold text-gray-700 transition-all shadow-sm relative"
                     >
                       <span className="text-lg">{p.number}</span>
                       <span className="text-[10px] text-gray-500">{p.gender}</span>
-                      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center opacity-0 hover:opacity-100 bg-black/10 rounded-full transition-opacity">
-                        <kbd className="bg-white/80 text-black text-xs px-1 rounded font-mono">{onFieldPlayers.indexOf(p) + 1}</kbd>
+                      <div className="absolute top-1 left-1 flex items-center justify-center bg-black/20 rounded-md px-1.5 py-0.5">
+                        <kbd className="text-[10px] font-black text-gray-600 font-mono">{onFieldPlayers.indexOf(p) + 1}</kbd>
                       </div>
                     </button>
                   ))}
@@ -661,9 +723,18 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                   Goal ({contextMenu.calculatedShotType}) <kbd className="text-xs bg-white/20 px-1 rounded text-white">Enter</kbd>
                 </button>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'RUNNING_IN', result: 'GOAL', location: { x: contextMenu.x, y: contextMenu.y } })} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">Running In <kbd className="text-[10px] bg-black/10 px-1 rounded">1</kbd></button>
-                  <button onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'PENALTY', result: 'GOAL', location: { x: contextMenu.x, y: contextMenu.y } })} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">Penalty <kbd className="text-[10px] bg-black/10 px-1 rounded">2</kbd></button>
-                  <button onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'FREE_THROW', result: 'GOAL', location: { x: contextMenu.x, y: contextMenu.y } })} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">Free Pass <kbd className="text-[10px] bg-black/10 px-1 rounded">3</kbd></button>
+                  <button onClick={() => {
+                    const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+                    addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'RUNNING_IN', result: 'GOAL', location: { x: contextMenu.x, y: contextMenu.y } })
+                  }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">Running In <kbd className="text-[10px] bg-black/10 px-1 rounded">1</kbd></button>
+                  <button onClick={() => {
+                    const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+                    addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'PENALTY', result: 'GOAL', location: autoLoc });
+                  }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">Penalty <kbd className="text-[10px] bg-black/10 px-1 rounded">2</kbd></button>
+                  <button onClick={() => {
+                    const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+                    addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'FREE_THROW', result: 'GOAL', location: autoLoc });
+                  }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">Free Pass <kbd className="text-[10px] bg-black/10 px-1 rounded">3</kbd></button>
                   <button onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: contextMenu.calculatedShotType, result: 'MISS', location: { x: contextMenu.x, y: contextMenu.y } })} className="px-3 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200 font-bold flex flex-col items-center">Miss <kbd className="text-[10px] bg-black/10 px-1 rounded">4</kbd></button>
                 </div>
               </div>
@@ -776,10 +847,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             >
               <Repeat size={16} /> <span className="hidden lg:inline ml-1 font-mono text-[10px]">S</span>
             </button>
-            <button onClick={() => openExternalView('JURY')} className="p-2 bg-gray-700 hover:bg-blue-600 rounded text-xs font-bold" title="Jury View (New Window)"><Gavel size={16} /></button>
-            <button onClick={() => openExternalView('LIVE')} className="p-2 bg-gray-700 hover:bg-green-600 rounded text-xs font-bold" title="Live Screen (New Window)"><Monitor size={16} /></button>
-            <button onClick={() => openExternalView('LIVESTREAM_STATS')} className="p-2 bg-gray-700 hover:bg-indigo-600 rounded text-xs font-bold" title="Stream Stats (New Window)"><Target size={16} /></button>
-            <button onClick={() => openExternalView('STREAM_OVERLAY')} className="p-2 bg-gray-700 hover:bg-teal-600 rounded text-xs font-bold" title="Stream Overlay (For OBS)"><Monitor size={16} className="text-teal-400" /></button>
+            {/* Navigation buttons removed as per user request */}
             <button onClick={handlePhaseEnd} className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg ml-2 font-bold text-xs"><PieChart size={16} /> End Period</button>
           </div>
         </div>
@@ -795,7 +863,15 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                 <div key={event.id} className="text-xs p-2 rounded border-l-4 bg-gray-50 dark:bg-gray-700/50" style={{ borderLeftColor: team.color }}>
                   <div className="flex justify-between text-gray-500 dark:text-gray-400 mb-1">
                     <span>{formatTime(event.timestamp)}</span>
-                    <span className="font-bold">{event.type}</span>
+                    <div className="text-right">
+                      <span className="font-bold">{event.type}</span>
+                      {event.type === 'SHOT' && (
+                        <span className="ml-1 text-[10px] uppercase opacity-70">
+                          {event.shotType === 'FREE_THROW' ? '(Free Pass)' : event.shotType === 'PENALTY' ? '(Penalty)' : ''}
+                          {event.result === 'MISS' ? ' (MISS)' : ''}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {player && <div className="dark:text-gray-200">{player.name}</div>}
                   {event.type === 'CARD' && <div className={`font-bold ${event.cardType === 'RED' ? 'text-red-600' : 'text-yellow-600'}`}>{event.cardType} CARD</div>}
@@ -867,6 +943,36 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
           </div>
         </div>
       )}
+      {/* Quick Actions Menu (Restored) */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 px-6 py-3 rounded-full shadow-xl border border-gray-200 dark:border-gray-700 flex items-center gap-6 z-40 transform transition-all hover:scale-105">
+        <button onClick={() => handleShortcutAction('GOAL')} className="flex flex-col items-center gap-1 text-green-600 hover:text-green-700 font-bold group">
+          <Target size={24} className="group-hover:scale-110 transition-transform" />
+          <span className="text-[10px]">Goal</span>
+        </button>
+        <button onClick={() => handleShortcutAction('MISS')} className="flex flex-col items-center gap-1 text-red-500 hover:text-red-700 font-bold group">
+          <Target size={24} className="opacity-70 group-hover:scale-110 transition-transform" />
+          <span className="text-[10px]">Miss</span>
+        </button>
+        <div className="w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
+        <button onClick={() => handleShortcutAction('PENALTY')} className="flex flex-col items-center gap-1 text-yellow-600 hover:text-yellow-700 font-bold group">
+          <AlertOctagon size={24} className="group-hover:scale-110 transition-transform" />
+          <span className="text-[10px]">Penalty</span>
+        </button>
+        <button onClick={() => handleShortcutAction('FREE_THROW')} className="flex flex-col items-center gap-1 text-blue-600 hover:text-blue-700 font-bold group">
+          <Target size={24} className="group-hover:scale-110 transition-transform" />
+          <span className="text-[10px]">Free Pass</span>
+        </button>
+        <div className="w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
+        <button onClick={() => handleShortcutAction('TURNOVER')} className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 font-bold group">
+          <ArrowRightLeft size={24} className="group-hover:scale-110 transition-transform" />
+          <span className="text-[10px]">Turnover</span>
+        </button>
+        <button onClick={() => handleShortcutAction('REBOUND')} className="flex flex-col items-center gap-1 text-orange-500 hover:text-orange-700 font-bold group">
+          <Shield size={24} className="group-hover:scale-110 transition-transform" />
+          <span className="text-[10px]">Rebound</span>
+        </button>
+      </div>
+
       {renderPhaseModals()}
       {renderContextMenu()}
     </div>

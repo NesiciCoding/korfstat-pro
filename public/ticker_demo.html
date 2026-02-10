@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KorfStat Pro Ticker Demo</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+
+        .ticker-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 15px;
+            background: #111827;
+            color: white;
+            text-align: center;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .scoreboard {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 30px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .team {
+            text-align: center;
+            flex: 1;
+        }
+
+        .team-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #374151;
+        }
+
+        .score {
+            font-size: 3em;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .vs {
+            font-size: 0.8em;
+            color: #9ca3af;
+            padding: 0 20px;
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 30px;
+            background: #f9fafb;
+            font-size: 0.9em;
+            color: #6b7280;
+        }
+
+        .event-log {
+            padding: 20px 30px;
+        }
+
+        .last-event {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: flash 1s;
+        }
+
+        .event-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .disclaimer {
+            margin-top: 20px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.8em;
+        }
+
+        @keyframes flash {
+            0% {
+                background-color: #fff;
+            }
+
+            50% {
+                background-color: #eff6ff;
+            }
+
+            100% {
+                background-color: #fff;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="ticker-container">
+        <div class="header">Live Match Ticker</div>
+
+        <div class="scoreboard">
+            <div class="team">
+                <div class="team-name" id="homeName">Home</div>
+                <div class="score" id="homeScore" style="color: #2563eb">0</div>
+            </div>
+            <div class="vs">
+                <div id="timer">00:00</div>
+                <div>vs</div>
+            </div>
+            <div class="team">
+                <div class="team-name" id="awayName">Away</div>
+                <div class="score" id="awayScore" style="color: #dc2626">0</div>
+            </div>
+        </div>
+
+        <div class="meta">
+            <span id="matchStatus">WAITING FOR DATA...</span>
+            <span id="period">Period 1</span>
+        </div>
+
+        <div class="event-log">
+            <div id="lastEvent" class="last-event" style="opacity: 0.5;">
+                <span class="event-badge">INFO</span>
+                <span>Waiting for match events...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="disclaimer">
+        ⚠️ <strong>Public Data Disclaimer:</strong> This ticker displays live match data from KorfStat Pro.
+        By embedding this, you agree that this match data is public.
+    </div>
+
+    <script>
+        const SOCKET_URL = 'http://localhost:3002';
+        const socket = io(SOCKET_URL, {
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000,
+        });
+
+        let isLive = false;
+
+        socket.on('connect', () => {
+            console.log('Connected to ticker API via WebSocket');
+            updateStatus('LIVE', true);
+            isLive = true;
+        });
+
+        socket.on('ticker-update', (data) => {
+            console.log('WebSocket Update:', data);
+            updateTicker(data);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('WebSocket Disconnected');
+            updateStatus('CONNECTING...', false);
+            isLive = false;
+        });
+
+        socket.on('connect_error', (err) => {
+            console.log('WebSocket Connection Error:', err);
+            isLive = false;
+        });
+
+        function updateTicker(data) {
+            if (!data) return;
+
+            // Update details
+            document.getElementById('homeName').textContent = data.score.homeTeam;
+            document.getElementById('awayName').textContent = data.score.awayTeam;
+            document.getElementById('homeScore').textContent = data.score.home;
+            document.getElementById('awayScore').textContent = data.score.away;
+
+            // Colors
+            document.getElementById('homeScore').style.color = data.score.homeColor === 'red' ? '#dc2626' : '#2563eb';
+            document.getElementById('awayScore').style.color = data.score.awayColor === 'red' ? '#dc2626' : '#2563eb';
+
+            // Timer - Show Current Minute (e.g. 12')
+            const minute = data.clock.currentMinute;
+            // Handle edge cases like Overtime later if needed, but for now 1-50 is standard
+            // If match hasn't started or is paused at 25:00, minute might be 0 or 1.
+            document.getElementById('timer').textContent = `${Math.max(0, minute)}'`;
+
+            // Status & Period
+            const periodText = data.clock.period === 1 ? '1st Half' :
+                data.clock.period === 2 ? '2nd Half' :
+                    `Period ${data.clock.period}`; // Fallback/Overtime
+
+            document.getElementById('period').textContent = `${periodText}`;
+
+            // Last Event
+            if (data.lastEvent) {
+                const badge = document.querySelector('.event-badge');
+                const text = document.querySelector('.last-event span:last-child');
+                const container = document.getElementById('lastEvent');
+
+                // Only animate if content changed
+                if (text.textContent !== data.lastEvent.description) {
+                    badge.textContent = data.lastEvent.type;
+                    text.textContent = data.lastEvent.description;
+                    container.style.opacity = '1';
+
+                    // Trigger flash
+                    container.style.animation = 'none';
+                    container.offsetHeight; /* trigger reflow */
+                    container.style.animation = 'flash 1s';
+                }
+            }
+        }
+
+        function updateStatus(msg, live) {
+            const statusEl = document.getElementById('matchStatus');
+            statusEl.textContent = msg;
+            statusEl.style.color = live ? '#059669' : '#dc2626'; // Green for Live, Red for issues
+            statusEl.style.fontWeight = 'bold';
+        }
+
+        // Fallback polling for REST API
+        async function fetchTickerData() {
+            try {
+                const res = await fetch(`${SOCKET_URL}/api/ticker`);
+                if (res.ok) {
+                    const data = await res.json();
+                    updateTicker(data);
+                    // If socket is disconnected, show we got data via polling
+                    if (!isLive) {
+                        updateStatus('LIVE (POLLING)', false);
+                        // Use orange/warning color for polling would be better but keeping simple boolean logic above for now
+                        document.getElementById('matchStatus').style.color = '#d97706';
+                    }
+                }
+            } catch (e) {
+                console.log('Rest API unavailable', e);
+                if (!isLive) {
+                    updateStatus('OFFLINE', false);
+                }
+            }
+        }
+
+        // Initial fetch
+        fetchTickerData();
+
+        // Poll every 30 seconds as fallback
+        setInterval(() => {
+            console.log('Polling check...');
+            // Unconditional polling ensures sync even if socket is "connected" but silent (zombie connection).
+            fetchTickerData();
+        }, 15000); // Poll every 15 seconds to be safe
+    </script>
+</body>
+
+</html>

@@ -149,10 +149,6 @@ const KorfballField: React.FC<KorfballFieldProps> = ({
       );
     } else {
       // Annulus (Ring)
-      // SVG doesn't have native annulus, use path: two arcs connected
-      // However, standard CSS/SVG stroke hack is easier: thick stroke with no fill? 
-      // No, fill allows hover. Let's use mask or simple difference?
-      // Actually, stick to simple <circle> with no fill and thick stroke?
       // Stroke is centered on radius. 
       // r = (rOuter + rInner) / 2. width = rOuter - rInner.
       const r = (rOuter + rInner) / 2;
@@ -198,28 +194,23 @@ const KorfballField: React.FC<KorfballFieldProps> = ({
         {/* Center Spot */}
         <circle cx="100" cy="50" r="1" fill="#4b5563" />
 
-        {/* Penalty Spots */}
-        <circle cx="33.3" cy="50" r="0.8" fill="#4b5563" />
-        <circle cx="166.7" cy="50" r="0.8" fill="#4b5563" />
+        {/* Penalty Spots (2.5m in front of post) */}
+        {/* Post at 33.3 (Left) and 166.7 (Right). 2.5m = 12.5 units. */}
+        {/* Left Spot: 33.3 + 12.5 = 45.8 */}
+        {/* Right Spot: 166.7 - 12.5 = 154.2 */}
+        <circle cx="45.8" cy="50" r="0.6" fill="#4b5563" />
+        <circle cx="154.2" cy="50" r="0.6" fill="#4b5563" />
 
+        {/* Penalty Area / Free Pass Zone (Capsule Shape) */}
+        {/* Left Side: Post 33.3, Spot 45.8 */}
+        <path d="M 33.3 37.5 L 45.8 37.5 A 12.5 12.5 0 1 1 45.8 62.5 L 33.3 62.5 A 12.5 12.5 0 1 1 33.3 37.5 Z" fill="none" stroke="#4b5563" strokeWidth="0.5" strokeDasharray="2 2" opacity="0.6" />
+        {/* Left: Penalty Circle (Full) */}
+        <circle cx="45.8" cy="50" r="12.5" fill="none" stroke="#4b5563" strokeWidth="0.5" strokeDasharray="2 2" opacity="0.6" />
 
-        {/* --- ZONE EFFICIENCY OVERLAYS --- */}
-        {showZoneEfficiency && zoneStats && (
-          <>
-            {/* Left Side */}
-            <ZoneOverlay x={33.3} y={50} rInner={50} rOuter={65} stats={zoneStats.left.long} label="Long" />
-            <ZoneOverlay x={33.3} y={50} rInner={30} rOuter={50} stats={zoneStats.left.mid} label="Mid" />
-            <ZoneOverlay x={33.3} y={50} rInner={15} rOuter={30} stats={zoneStats.left.short} label="Short" />
-            <ZoneOverlay x={33.3} y={50} rInner={0} rOuter={15} stats={zoneStats.left.post} label="Post" />
-
-            {/* Right Side */}
-            <ZoneOverlay x={166.7} y={50} rInner={50} rOuter={65} stats={zoneStats.right.long} label="Long" />
-            <ZoneOverlay x={166.7} y={50} rInner={30} rOuter={50} stats={zoneStats.right.mid} label="Mid" />
-            <ZoneOverlay x={166.7} y={50} rInner={15} rOuter={30} stats={zoneStats.right.short} label="Short" />
-            <ZoneOverlay x={166.7} y={50} rInner={0} rOuter={15} stats={zoneStats.right.post} label="Post" />
-          </>
-        )}
-
+        {/* Right Side: Spot 154.2, Post 166.7 */}
+        <path d="M 166.7 37.5 L 154.2 37.5 A 12.5 12.5 0 1 0 154.2 62.5 L 166.7 62.5 A 12.5 12.5 0 1 0 166.7 37.5 Z" fill="none" stroke="#4b5563" strokeWidth="0.5" strokeDasharray="2 2" opacity="0.6" />
+        {/* Right: Penalty Circle (Full) */}
+        <circle cx="154.2" cy="50" r="12.5" fill="none" stroke="#4b5563" strokeWidth="0.5" strokeDasharray="2 2" opacity="0.6" />
 
         {/* Baskets (Korfs) - On top of overlays */}
         {/* Left Korf */}

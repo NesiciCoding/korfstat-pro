@@ -15,6 +15,7 @@ const io = new Server(server, {
 });
 
 const connectedClients = new Map(); // socketId -> { id, view, ip, userAgent, connectedAt }
+let currentState = null;
 
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
@@ -38,6 +39,8 @@ io.on('connection', (socket) => {
     // Send current state to new client if available
     if (currentState) {
         socket.emit('match-update', currentState);
+        const tickerData = getTickerData(currentState);
+        socket.emit('ticker-update', tickerData);
     }
 
     socket.on('register-view', (viewName) => {
@@ -54,6 +57,10 @@ io.on('connection', (socket) => {
         currentState = state;
         // Broadcast to all other clients
         socket.broadcast.emit('match-update', state);
+
+        // Broadcast simplified ticker data to all clients (including external tickers)
+        const tickerData = getTickerData(state);
+        io.emit('ticker-update', tickerData);
     });
 
     socket.on('disconnect', () => {
@@ -63,7 +70,92 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = 3001;
+// Helper to extract simplified ticker data
+function getTickerData(state) {
+    if (!state) return null;
+
+    // Calculate simple score from event log if running sum not explicitly stored, 
+    // but usually matchState has scores. If not, let's look at logic.
+    // The client sends the full state. Let's assume it has team names and we can derive score if needed
+    // or if the client sends score.
+    // Looking at previous code, matchState has `homeTeam` and `awayTeam` but score is often derived from events.
+    // Let's derive it safely here to be sure.
+    let homeScore = 0;
+    let awayScore = 0;
+    let lastEvent = null;
+
+    if (state.events) {
+        state.events.forEach(e => {
+            if (e.type === 'SHOT' && e.result === 'GOAL') {
+                if (e.teamId === 'HOME') homeScore++;
+                else awayScore++;
+            }
+        });
+        // Find last significant event
+        const significantEvents = state.events.filter(e => ['SHOT', 'SUBSTITUTION', 'TIMEOUT', 'CARD'].includes(e.type));
+        if (significantEvents.length > 0) {
+            lastEvent = significantEvents[significantEvents.length - 1]; // Last one
+        }
+    }
+
+    return {
+        matchId: state.matchId,
+        status: state.status || 'IN_PROGRESS',
+        clock: {
+            period: state.period || 1, // Default to 1 if undefined
+            timerRunning: state.timerRunning,
+            timeRemaining: state.timeRemaining,
+            // Calculate current minute of play (1 - 50) based on last known state
+            // Korfball: 2 halves of 25 mins. 
+            // If Period 1: (25 - timeRemaining/60)
+            // If Period 2: 25 + (25 - timeRemaining/60)
+            // Note: If timer is running, this snapshot might be slightly stale by the time it reaches client,
+            // but for minute-level granularity it's fine.
+            currentMinute: Math.ceil(((state.period || 1) - 1) * 25 + (25 - (state.timeRemaining / 60)))
+        },
+        score: {
+            home: homeScore,
+            away: awayScore,
+            homeTeam: state.homeTeam?.name || 'Home',
+            awayTeam: state.awayTeam?.name || 'Away',
+            homeColor: state.homeTeam?.color || 'blue',
+            awayColor: state.awayTeam?.color || 'red'
+        },
+        lastEvent: lastEvent ? {
+            type: lastEvent.type,
+            description: getEventDescription(lastEvent, state),
+            timestamp: lastEvent.timestamp
+        } : null
+    };
+}
+
+function getEventDescription(event, state) {
+    if (!event) return '';
+    const player = event.playerId ? (
+        state.homeTeam.players.find(p => p.id === event.playerId) ||
+        state.awayTeam.players.find(p => p.id === event.playerId)
+    ) : null;
+    const playerName = player ? player.name : 'Unknown Player';
+
+    switch (event.type) {
+        case 'SHOT': return `${event.result === 'GOAL' ? 'GOAL' : 'Miss'} by ${playerName}`;
+        case 'SUBSTITUTION': return `Sub: ${playerName} ${event.subType === 'IN' ? 'In' : 'Out'}`; // Simplify
+        case 'CARD': return `${event.cardType} Card for ${playerName}`;
+        default: return event.type;
+    }
+}
+
+// REST API Endpoints
+app.get('/api/match', (req, res) => {
+    res.json(currentState || { message: "No active match" });
+});
+
+app.get('/api/ticker', (req, res) => {
+    if (!currentState) return res.status(404).json({ message: "No active match" });
+    res.json(getTickerData(currentState));
+});
+
+const PORT = 3002;
 server.listen(PORT, () => {
     console.log(`WebSocket server running on port ${PORT}`);
 });

@@ -3,9 +3,10 @@ import { MatchState, TeamId, Player, ShotType } from '../types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import KorfballField from './KorfballField';
 import PlayerProfileModal from './PlayerProfileModal';
-import { Download, BrainCircuit, ArrowLeft, Loader2, Home } from 'lucide-react';
-import { generateMatchReport } from '../services/geminiService';
+import { Download, ArrowLeft, Home, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import { generatePDF, generateJSON } from '../services/reportGenerator';
+import { generateExcel } from '../services/excelGenerator';
+import { generateMatchInsights } from '../services/analysisService';
 
 interface StatsViewProps {
   matchState: MatchState;
@@ -14,8 +15,8 @@ interface StatsViewProps {
 }
 
 const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome }) => {
-  const [aiReport, setAiReport] = useState<string | null>(null);
-  const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<{ player: Player, teamId: TeamId } | null>(null);
 
   // Filters
@@ -24,14 +25,20 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome }) => 
   const [heatmapMode, setHeatmapMode] = useState(true);
   const [showZoneStats, setShowZoneStats] = useState(false);
 
+  // Guard clause for missing data
+  if (!matchState) return <div className="p-6 text-center">Loading match data...</div>;
+  const events = matchState.events || [];
+
   // --- Derived Stats ---
   const filteredEvents = useMemo(() => {
-    return matchState.events.filter(e => {
+    return events.filter(e => {
       if (filterPlayerId !== 'ALL' && e.playerId !== filterPlayerId) return false;
       if (filterShotType !== 'ALL' && e.shotType !== filterShotType) return false;
       return true;
     });
-  }, [matchState.events, filterPlayerId, filterShotType]);
+  }, [events, filterPlayerId, filterShotType]);
+
+  const insights = useMemo(() => generateMatchInsights(matchState), [matchState]);
 
   // --- Plus/Minus Calculation ---
   // We need to replay events to know who was on field at time of goal
@@ -115,7 +122,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome }) => 
     const data = [{ time: '0:00', home: 0, away: 0, timestamp: 0 }];
 
     // Sort events by time
-    const sortedEvents = [...matchState.events]
+    const sortedEvents = [...events]
       .filter(e => e.type === 'SHOT' && e.result === 'GOAL')
       .sort((a, b) => a.timestamp - b.timestamp);
 
@@ -142,21 +149,14 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome }) => 
     });
 
     return data;
-  }, [matchState.events]);
-
-  const handleGenerateReport = async () => {
-    setIsLoadingAi(true);
-    const report = await generateMatchReport(matchState);
-    setAiReport(report);
-    setIsLoadingAi(false);
-  };
+  }, [events]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 transition-colors duration-300">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Header */}
-        <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 relative z-50">
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-600 dark:text-gray-400">
               <ArrowLeft size={24} />
@@ -171,38 +171,72 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome }) => 
               <p className="text-gray-500 dark:text-gray-400 text-sm">Detailed breakdown and analysis</p>
             </div>
           </div>
-          <div className="flex gap-3">
+
+          <div className="flex gap-3 relative">
             <button
-              onClick={handleGenerateReport}
-              disabled={isLoadingAi}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+              onClick={() => setShowInsights(!showInsights)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium border ${showInsights ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700'}`}
             >
-              {isLoadingAi ? <Loader2 className="animate-spin" size={18} /> : <BrainCircuit size={18} />}
-              Match Analysis
+              <span>📊</span>
+              Analyze Match
             </button>
+
             <button
-              onClick={() => generatePDF(matchState)}
-              className="flex items-center gap-2 px-4 py-2 border border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-md transition-all font-medium"
             >
-              <Download size={18} /> Export PDF
+              <Download size={18} />
+              Export
+              <ChevronDown size={16} className={`transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} />
             </button>
-            <button
-              onClick={() => generateJSON(matchState)}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-            >
-              <Download size={18} /> Export JSON
-            </button>
+
+            {showExportMenu && (
+              <div className="absolute right-0 top-12 mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
+                <button
+                  onClick={() => { generatePDF(matchState); setShowExportMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  <Download size={16} /> PDF Report
+                </button>
+                <button
+                  onClick={() => { generateExcel(matchState); setShowExportMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-green-600 dark:hover:text-green-400 transition-colors border-t border-gray-100 dark:border-gray-700"
+                >
+                  <FileSpreadsheet size={16} /> Excel Spreadsheet
+                </button>
+                <button
+                  onClick={() => { generateJSON(matchState); setShowExportMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-t border-gray-100 dark:border-gray-700"
+                >
+                  <div className="font-mono text-xs border border-current rounded px-1">JSON</div> Raw Data
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* AI Report Section */}
-        {aiReport && (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-purple-200 dark:border-purple-800 ring-4 ring-purple-50 dark:ring-purple-900/20">
-            <h2 className="text-xl font-bold text-purple-900 dark:text-purple-300 mb-4 flex items-center gap-2">
-              <BrainCircuit size={24} /> Match Insights
+        {/* Deterministic Insights Section */}
+        {showInsights && insights.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-indigo-100 dark:border-indigo-900/30 animate-in fade-in slide-in-from-top-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <span>📊</span>
+              Key Insights
             </h2>
-            <div className="prose prose-purple dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 whitespace-pre-line">
-              {aiReport}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {insights.map((insight, idx) => (
+                <div key={idx} className={`p-4 rounded-lg border flex items-start gap-3 ${insight.type === 'POSITIVE' ? 'bg-green-50 border-green-100 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200' :
+                    insight.type === 'NEGATIVE' ? 'bg-red-50 border-red-100 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200' :
+                      'bg-gray-50 border-gray-100 text-gray-800 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200'
+                  }`}>
+                  {insight.type === 'POSITIVE' ? <span>✅</span> :
+                    insight.type === 'NEGATIVE' ? <span>⚠️</span> :
+                      <span>ℹ️</span>}
+                  <div>
+                    <h4 className="font-bold text-sm">{insight.title}</h4>
+                    <p className="text-xs opacity-90 mt-1">{insight.description}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
