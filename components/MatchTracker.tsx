@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { MatchState, TeamId, MatchEvent, SHOT_TYPES, ActionType, CardType, ShotType } from '../types';
+
 import KorfballField, { getShotDistanceType } from './KorfballField';
-import { PieChart, Clock, Target, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, Shirt, AlertOctagon, Monitor, Gavel, Undo2, Volume2, VolumeX, CheckCircle, XCircle } from 'lucide-react';
+import { PieChart, Clock, Target, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, Shirt, AlertOctagon, Monitor, Gavel, Undo2, Volume2, VolumeX, CheckCircle, XCircle, Share2, Mic, MicOff } from 'lucide-react';
 
 import { useSettings } from '../contexts/SettingsContext';
 import { useGameAudio } from '../hooks/useGameAudio';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+
+import { getScore, formatTime } from '../utils/matchUtils';
+import SocialShareModal from './SocialShareModal';
+import { useVoiceCommands, VoiceCommandAction } from '../hooks/useVoiceCommands';
 
 interface MatchTrackerProps {
   matchState: MatchState;
@@ -35,6 +40,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
   const [activeModal, setActiveModal] = useState<'END_HALF' | 'END_MATCH' | 'BREAK_SETUP' | 'OT_SETUP'>('END_HALF');
   const [showModal, setShowModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [customDuration, setCustomDuration] = useState(10); // Minutes
   const [pendingShortcutAction, setPendingShortcutAction] = useState<'GOAL' | 'MISS' | 'FREE_THROW' | 'PENALTY' | 'CARD' | 'TURNOVER' | 'FOUL' | 'REBOUND' | null>(null);
 
@@ -57,6 +63,14 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     }
     prevGameTimeRef.current = currentGameTime;
   }, [matchState.shotClock.seconds, matchState.timer.elapsedSeconds, matchState.halfDurationSeconds, matchState.shotClock.lastStartTime, playShotClockBuzzer, playGameEndHorn]);
+
+  // --- Socket Listener for Spotter ---
+  // Moved to App.tsx via useBroadcastSync to prevent duplicate connections.
+  // MatchTracker now receives updates via props.matchState.
+
+
+
+
 
   // --- Keyboard Shortcuts Logic ---
 
@@ -452,13 +466,62 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     onUpdateMatch({ ...matchState, ...updates });
   };
 
-  const getScore = (teamId: TeamId) => matchState.events.filter(e => e.teamId === teamId && e.result === 'GOAL').length;
+  // --- Voice Command Handler ---
+  const handleVoiceCommand = (action: VoiceCommandAction) => {
+    console.log("Voice Action:", action);
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    if (action.type === 'UNDO') {
+      handleUndo();
+      return;
+    }
+
+    if (action.type === 'TIMEOUT') {
+      startTimeout();
+      return;
+    }
+
+    if (action.type === 'UNKNOWN') return;
+
+    // Determine Team
+    let teamId: TeamId = matchState.possession || 'HOME';
+    if ('team' in action && action.team) teamId = action.team;
+
+    const team = teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
+
+    // Determine Player
+    let playerId = team.players[0]?.id; // Default fallback
+    if ('playerNumber' in action && action.playerNumber !== undefined) {
+      const found = team.players.find(p => parseInt(p.number) === action.playerNumber);
+      if (found) playerId = found.id;
+    }
+
+    const location = { x: 50, y: 50 }; // Default center
+
+    if (action.type === 'GOAL') {
+      addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location });
+    } else if (action.type === 'MISS') {
+      addEvent({ teamId, playerId, type: 'SHOT', result: 'MISS', shotType: 'RUNNING_IN', location });
+    } else if (action.type === 'TURNOVER') {
+      addEvent({ teamId, playerId, type: 'TURNOVER', location });
+    } else if (action.type === 'FOUL') {
+      addEvent({ teamId, playerId, type: 'FOUL', location });
+    } else if (action.type === 'FREE_THROW') {
+      const autoLoc = teamId === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+      addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'FREE_THROW', location: autoLoc });
+    } else if (action.type === 'PENALTY') {
+      const autoLoc = teamId === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+      addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'PENALTY', location: autoLoc });
+    }
+    // Add other types as needed
   };
+
+  const { isListening, toggleListening, transcript } = useVoiceCommands({
+    onCommand: handleVoiceCommand,
+    homeName: matchState.homeTeam.name,
+    awayName: matchState.awayTeam.name
+  });
+
+
 
   const openExternalView = (view: 'JURY' | 'LIVE' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY') => {
     const url = `${window.location.origin}${window.location.pathname}?view=${view}`;
@@ -607,13 +670,18 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             {contextMenu.step === 'SELECT_PLAYER' && (
               <>
                 <div className="grid grid-cols-4 gap-3 mb-4">
+                  {onFieldPlayers.length === 0 && (
+                    <div className="col-span-4 text-center py-4 text-gray-500 italic">
+                      No players on field. Please substitute players in.
+                    </div>
+                  )}
                   {onFieldPlayers.map(p => (
                     <button
                       key={p.id}
                       onClick={() => {
                         if (pendingShortcutAction) {
                           // Execute Pending Action Immediately
-                          const location = { x: 50, y: 50 };
+                          const location = { x: 50, y: 50 }; // Default center if shortcut triggered menu
                           if (pendingShortcutAction === 'GOAL') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location });
                           else if (pendingShortcutAction === 'MISS') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'SHOT', result: 'MISS', shotType: 'RUNNING_IN', location });
                           else if (pendingShortcutAction === 'FREE_THROW') {
@@ -657,6 +725,9 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
             {contextMenu.step === 'SELECT_SUB_OUT' && (
               <div className="grid grid-cols-4 gap-3">
+                {onFieldPlayers.length === 0 && (
+                  <div className="col-span-4 text-center py-4 text-gray-500 italic">No players to substitute out.</div>
+                )}
                 {onFieldPlayers.map(p => (
                   <button key={p.id} onClick={() => setContextMenu({ ...contextMenu, subOutId: p.id, step: 'SELECT_SUB_IN' })} className="aspect-square rounded-full bg-red-50 hover:bg-red-100 border-red-200 border flex items-center justify-center font-bold">{p.number}</button>
                 ))}
@@ -785,7 +856,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             <div className={`flex flex-col items-center p-3 rounded-lg transition-colors ${matchState.possession === 'HOME' ? 'bg-gray-800 ring-2 ring-yellow-500' : ''}`}>
               <div className="w-3 h-3 rounded-full mb-1" style={{ backgroundColor: matchState.homeTeam.color }}></div>
               <h2 className="font-bold text-gray-400 text-xs md:text-sm uppercase">{matchState.homeTeam.name}</h2>
-              <div className="text-5xl font-black font-mono text-white leading-none">{getScore('HOME')}</div>
+              <div className="text-5xl font-black font-mono text-white leading-none">{getScore(matchState, 'HOME')}</div>
             </div>
             <div className="flex flex-col items-center">
               <div className="bg-black/50 px-6 py-2 rounded-t-lg border-b border-gray-700 w-48 text-center relative">
@@ -809,7 +880,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             <div className={`flex flex-col items-center p-3 rounded-lg transition-colors ${matchState.possession === 'AWAY' ? 'bg-gray-800 ring-2 ring-yellow-500' : ''}`}>
               <div className="w-3 h-3 rounded-full mb-1" style={{ backgroundColor: matchState.awayTeam.color }}></div>
               <h2 className="font-bold text-gray-400 text-xs md:text-sm uppercase">{matchState.awayTeam.name}</h2>
-              <div className="text-5xl font-black font-mono text-white leading-none">{getScore('AWAY')}</div>
+              <div className="text-5xl font-black font-mono text-white leading-none">{getScore(matchState, 'AWAY')}</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -830,23 +901,25 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
               <Undo2 size={20} /> <span className="hidden lg:inline ml-1 text-[10px] opacity-70">DEL</span>
             </button>
             <div className="w-px h-8 bg-gray-700 mx-1"></div>
+            <button
+              onClick={toggleListening}
+              className={`p-2 rounded text-xs font-bold transition-all ${isListening ? 'bg-red-600 animate-pulse text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'}`}
+              title={isListening ? "Stop Voice Control" : "Start Voice Control"}
+            >
+              {isListening ? <Mic size={20} /> : <MicOff size={20} />}
+            </button>
+            {isListening && <span className="text-[10px] text-red-400 font-mono animate-pulse uppercase tracking-wider">Listening</span>}
+            <div className="w-px h-8 bg-gray-700 mx-1"></div>
             <button onClick={startTimeout} className="p-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white shadow flex items-center gap-1" title="Time-out"><Clock size={20} /><span className="hidden lg:inline font-mono text-[10px]">T</span></button>
             <div className="w-px h-8 bg-gray-700 mx-2"></div>
             <button
-              onClick={() => setContextMenu({
-                visible: true,
-                x: window.innerWidth / 2, // Centerish
-                y: window.innerHeight / 2,
-                step: 'SELECT_TEAM_FOR_SUB', // New step needed or reuse logic?
-                // Reuse SELECT_PLAYER logic but force a team?
-                // No, UI needs to ask "Which Team?".
-                // Let's modify step: 'SELECT_TEAM' first.
-              } as any)}
-              className="p-2 bg-gray-700 hover:bg-orange-600 rounded text-xs font-bold"
-              title="Substitution"
+              onClick={() => setShowShareModal(true)}
+              className="p-2 bg-gray-700 hover:bg-indigo-600 rounded text-xs font-bold"
+              title="Share Result"
             >
-              <Repeat size={16} /> <span className="hidden lg:inline ml-1 font-mono text-[10px]">S</span>
+              <Share2 size={16} /> <span className="hidden lg:inline ml-1 font-mono text-[10px]">Share</span>
             </button>
+            <div className="w-px h-8 bg-gray-700 mx-2"></div>
             {/* Navigation buttons removed as per user request */}
             <button onClick={handlePhaseEnd} className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg ml-2 font-bold text-xs"><PieChart size={16} /> End Period</button>
           </div>
@@ -975,6 +1048,13 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
       {renderPhaseModals()}
       {renderContextMenu()}
+
+      {showShareModal && (
+        <SocialShareModal
+          matchState={matchState}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </div>
   );
 };

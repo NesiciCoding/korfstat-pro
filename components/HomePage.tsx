@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import {
   PlayCircle, History, BarChart2, BrainCircuit,
   Monitor, Video, Tv, LayoutTemplate, Clock,
-  Wifi, Users, Activity, Play, Globe
+  Wifi, Users, Activity, Play, Globe, Trophy
 } from 'lucide-react';
 import { MatchState } from '../types';
 
@@ -252,6 +252,7 @@ const NavCard = ({ title, desc, icon, color, onClick }: any) => {
     orange: 'hover:border-orange-500/50 hover:bg-orange-500/10 text-orange-400',
     cyan: 'hover:border-cyan-500/50 hover:bg-cyan-500/10 text-cyan-400',
     slate: 'hover:border-slate-500/50 hover:bg-slate-500/10 text-slate-400',
+    yellow: 'hover:border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500',
   };
 
   const bgStep = color === 'slate' ? 'bg-slate-800' : 'bg-slate-900';

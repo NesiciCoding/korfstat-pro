@@ -6,6 +6,20 @@ export interface Settings {
     theme: Theme;
     soundEnabled: boolean;
     defaultHalfDuration: number; // Minutes
+    matchType: 'indoor' | 'beach';
+
+    // Integrations
+    geminiApiKey?: string;
+    geminiModel: string; // 'gemini-1.5-flash', etc.
+
+    // UI Preferences
+    showTimerInTitle: boolean;
+
+    // Match Defaults
+    defaultHomeName: string;
+    defaultAwayName: string;
+    defaultHomeColor: string;
+    defaultAwayColor: string;
 }
 
 interface SettingsContextType {
@@ -19,6 +33,13 @@ const defaultSettings: Settings = {
     theme: 'system',
     soundEnabled: true,
     defaultHalfDuration: 25,
+    matchType: 'indoor',
+    geminiModel: 'gemini-2.0-flash',
+    showTimerInTitle: false,
+    defaultHomeName: 'Home',
+    defaultAwayName: 'Away',
+    defaultHomeColor: '#EF4444', // Red-500
+    defaultAwayColor: '#3B82F6', // Blue-500
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

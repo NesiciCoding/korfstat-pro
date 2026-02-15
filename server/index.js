@@ -63,10 +63,27 @@ io.on('connection', (socket) => {
         io.emit('ticker-update', tickerData);
     });
 
-    socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
-        connectedClients.delete(socket.id);
-        io.emit('active-sessions', Array.from(connectedClients.values()));
+    socket.on('request-active-sessions', () => {
+        socket.emit('active-sessions', Array.from(connectedClients.values()));
+    });
+
+    // Handle Spotter Actions (Relay to Tracker)
+    socket.on('spotter-action', (action) => {
+        console.log('Spotter action received:', action.type);
+        // Broadcast to all clients (Tracker will pick this up)
+        socket.broadcast.emit('spotter-action', action);
+    });
+
+    socket.on('disconnect', (reason) => {
+        console.log('Client disconnected:', socket.id, 'Reason:', reason);
+        if (connectedClients.has(socket.id)) {
+            connectedClients.delete(socket.id);
+            const remaining = Array.from(connectedClients.values());
+            console.log('Broadcasting active sessions update. Remaining:', remaining.length);
+            io.emit('active-sessions', remaining);
+        } else {
+            console.log('Client not found in connectedClients map during disconnect');
+        }
     });
 });
 

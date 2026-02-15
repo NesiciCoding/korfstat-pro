@@ -63,6 +63,7 @@ export interface MatchEvent {
 
 export interface MatchState {
   id?: string;   // Unique ID for persistence
+  seasonId?: string; // Link to a season
   date?: number; // Timestamp for persistence
   halfDurationSeconds: number; // Duration of a half in seconds (e.g. 1500 for 25m)
   isConfigured: boolean;

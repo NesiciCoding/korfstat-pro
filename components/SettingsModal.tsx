@@ -37,7 +37,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
 
                     <>
-                        {/* Theme Section */}
+                        {/* Appearance Section */}
                         <div className="space-y-3">
                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Appearance</label>
                             <div className="grid grid-cols-3 gap-2">
@@ -60,11 +60,27 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                     label="System"
                                 />
                             </div>
+
+                            {/* Show Timer in Title */}
+                            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 mt-2">
+                                <span className="text-gray-900 dark:text-gray-100">Show Timer in Tab Title</span>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={settings.showTimerInTitle}
+                                        onChange={(e) => updateSettings({ showTimerInTitle: e.target.checked })}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
                         </div>
 
-                        {/* Audio Section */}
+                        {/* Match Settings Section */}
                         <div className="space-y-3">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Sound</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Match Functions</label>
+
+                            {/* Sound */}
                             <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center gap-3">
                                     <div className={`p-2 rounded-full ${settings.soundEnabled ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
@@ -82,25 +98,96 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
                                 </label>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 px-1">Controls buzzer and horn sounds during match.</p>
+
+                            {/* Match Type */}
+                            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                <span className="text-gray-900 dark:text-gray-100">Match Type (Korfball)</span>
+                                <select
+                                    value={settings.matchType}
+                                    onChange={(e) => updateSettings({ matchType: e.target.value as any })}
+                                    className="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2"
+                                >
+                                    <option value="indoor">Indoor (Standard)</option>
+                                    <option value="beach">Beach Korfball</option>
+                                </select>
+                            </div>
                         </div>
 
                         {/* Match Defaults */}
                         <div className="space-y-3">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Match Defaults</label>
-                            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                                <span className="text-gray-900 dark:text-gray-100">Default Half Duration</span>
-                                <select
-                                    value={settings.defaultHalfDuration}
-                                    onChange={(e) => updateSettings({ defaultHalfDuration: Number(e.target.value) })}
-                                    className="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2"
-                                >
-                                    <option value={10}>10 Minutes</option>
-                                    <option value={15}>15 Minutes</option>
-                                    <option value={20}>20 Minutes</option>
-                                    <option value={25}>25 Minutes</option>
-                                    <option value={30}>30 Minutes</option>
-                                </select>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Default Configurations</label>
+
+                            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-900 dark:text-gray-100 text-sm">Half Duration</span>
+                                    <select
+                                        value={settings.defaultHalfDuration}
+                                        onChange={(e) => updateSettings({ defaultHalfDuration: Number(e.target.value) })}
+                                        className="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2"
+                                    >
+                                        <option value={10}>10 Minutes</option>
+                                        <option value={12.5}>12.5 Minutes (Beach)</option>
+                                        <option value={15}>15 Minutes</option>
+                                        <option value={20}>20 Minutes</option>
+                                        <option value={25}>25 Minutes</option>
+                                        <option value={30}>30 Minutes</option>
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Home Team</label>
+                                        <input
+                                            type="text"
+                                            value={settings.defaultHomeName}
+                                            onChange={(e) => updateSettings({ defaultHomeName: e.target.value })}
+                                            className="w-full bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg p-2"
+                                            placeholder="Home"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Away Team</label>
+                                        <input
+                                            type="text"
+                                            value={settings.defaultAwayName}
+                                            onChange={(e) => updateSettings({ defaultAwayName: e.target.value })}
+                                            className="w-full bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg p-2"
+                                            placeholder="Away"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Integrations */}
+                        <div className="space-y-3">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Integrations</label>
+
+                            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
+                                <div>
+                                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Google Gemini API Key</label>
+                                    <input
+                                        type="password"
+                                        value={settings.geminiApiKey || ''}
+                                        onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
+                                        className="w-full bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg p-2"
+                                        placeholder="AI Studio API Key"
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1">Required for AI commentary and tactical analysis.</p>
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">AI Model</label>
+                                    <select
+                                        value={settings.geminiModel}
+                                        onChange={(e) => updateSettings({ geminiModel: e.target.value })}
+                                        className="w-full bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg p-2"
+                                    >
+                                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
+                                        <option value="gemini-2.0-flash">Gemini 2.0 Flash (Stable)</option>
+                                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fallback)</option>
+                                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (High Intelligence)</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 

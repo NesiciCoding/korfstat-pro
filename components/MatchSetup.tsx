@@ -3,7 +3,7 @@ import { Team, TeamId, Player, Gender, Position, SavedTeam } from '../types';
 import { Plus, Trash2, PlayCircle, User, Users, Shield, Sword, Paintbrush, Save, Download, ChevronDown } from 'lucide-react';
 
 interface MatchSetupProps {
-  onStartMatch: (home: Team, away: Team, durationSeconds: number) => void;
+  onStartMatch: (home: Team, away: Team, durationSeconds: number, seasonId?: string) => void;
   savedMatches: any[]; // Using any[] to avoid circular dependency import issues if simple
 }
 
@@ -323,6 +323,15 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
     return result;
   }, [savedMatches]);
 
+  // Season State
+  const [seasons] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('korfstat_seasons');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
+
   const createInitialRoster = (prefix: string): Player[] => Array.from({ length: 10 }).map((_, i) => ({
     id: `${prefix}${i + 1}`,
     number: i + 1,
@@ -396,7 +405,8 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
     onStartMatch(
       prepareTeam('HOME', homeName, homePlayers, homeColor),
       prepareTeam('AWAY', awayName, awayPlayers, awayColor),
-      duration * 60
+      duration * 60,
+      selectedSeasonId || undefined
     );
   };
 
@@ -423,6 +433,24 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
           />
           <span className="text-sm text-gray-500 dark:text-gray-400">mins</span>
         </div>
+
+        {seasons.length > 0 && (
+          <div className="mt-4 flex justify-center">
+            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <span className="text-sm font-bold text-gray-500 dark:text-gray-400">Season:</span>
+              <select
+                className="bg-transparent font-bold text-gray-900 dark:text-white outline-none cursor-pointer"
+                value={selectedSeasonId}
+                onChange={(e) => setSelectedSeasonId(e.target.value)}
+              >
+                <option value="">-- None --</option>
+                {seasons.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 mb-8 max-w-7xl mx-auto w-full flex-1">

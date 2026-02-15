@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { MatchState, OverlayMessage, TeamId } from '../types';
 import StreamOverlay from './StreamOverlay'; // For Preview
-import { Monitor, Type, MessageSquare, Zap, Play, Square, LayoutTemplate, ALargeSmall, Maximize } from 'lucide-react';
+import CommentaryFeed from './CommentaryFeed';
+import { Monitor, Type, MessageSquare, Zap, Play, Square, LayoutTemplate, ALargeSmall, Maximize, History } from 'lucide-react';
 
 interface DirectorDashboardProps {
     matchState: MatchState;
@@ -82,6 +83,11 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
 
                 {/* LEFT: CONTROLS */}
                 <div className="w-1/3 min-w-[400px] border-r border-slate-800 bg-slate-900/50 flex flex-col p-6 gap-6 overflow-y-auto">
+
+                    {/* AI Commentary Feed */}
+                    <div className="mb-2">
+                        <CommentaryFeed matchState={matchState} compact />
+                    </div>
 
                     {/* Live Status Card */}
                     <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg relative overflow-hidden group">

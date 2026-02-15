@@ -12,24 +12,28 @@ import LivestreamView from './components/LivestreamView';
 import StreamOverlay from './components/StreamOverlay';
 import DirectorDashboard from './components/DirectorDashboard';
 import ShotClockView from './components/ShotClockView';
+import SpotterView from './components/SpotterView';
 import SettingsModal from './components/SettingsModal';
-import { SettingsProvider } from './contexts/SettingsContext';
+import SeasonManager from './components/SeasonManager';
+import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { MatchState, Team } from './types';
 import { Settings } from 'lucide-react';
 import { useBroadcastSync } from './hooks/useBroadcastSync';
+import { calculateDerivedMatchState } from './utils/matchLogic';
 
 function AppContent() {
   // Initialize view from URL parameter
-  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK'>(() => {
+  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'SPOTTER'>(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
-    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK'];
+    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'SPOTTER'];
     if (viewParam && validViews.includes(viewParam)) {
       return viewParam as any;
     }
     return 'HOME';
   });
 
+  const { settings } = useSettings();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Base Match State (Persistent Source of Truth)
@@ -42,6 +46,8 @@ function AppContent() {
     } catch (e) {
       console.error("Failed to load active match state", e);
     }
+    // We can't access 'settings' here in the callback easily for initial state if it's not passed in props (which it isn't yet, as we are in AppContent)
+    // But since this runs only on mount, we can rely on handleExitToHome for resets.
     return {
       isConfigured: false,
       halfDurationSeconds: 1500, // Default 25m
@@ -58,8 +64,6 @@ function AppContent() {
 
   // const [savedMatches, setSavedMatches] = useState<MatchState[]>([]); // Replaced by Dexie
   // Helper to ensure we have a valid array even during loading
-  // const [savedMatches, setSavedMatches] = useState<MatchState[]>([]); // Replaced by Dexie
-  // Helper to ensure we have a valid array even during loading
   const [savedMatches, setSavedMatches] = useState<MatchState[]>(() => {
     try {
       const saved = localStorage.getItem('korfstat_matches');
@@ -73,6 +77,17 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('korfstat_matches', JSON.stringify(savedMatches));
   }, [savedMatches]);
+
+  // Persist Current Match State
+  useEffect(() => {
+    if (matchState.isConfigured) {
+      localStorage.setItem('korfstat_current_match', JSON.stringify(matchState));
+    } else {
+      // If not configured (e.g. at home), maybe we don't clear it immediately to avoid accidental loss?
+      // But handleExitToHome clears it.
+      // So if it's not configured, it's safe to assume we don't need to save it, or it is the empty state.
+    }
+  }, [matchState]);
 
   const [tick, setTick] = useState(0); // Force re-render for timer updates
 
@@ -115,90 +130,20 @@ function AppContent() {
   // Derived State Calculation
   // This calculates the "Display Time" based on "Base Time + (Now - StartTime)"
   const derivedMatchState = useMemo(() => {
-    const now = Date.now();
-    const derived = { ...matchState };
-
-    // Game Timer
-    if (derived.timer.isRunning && derived.timer.lastStartTime && !derived.timeout.isActive) {
-      const delta = (now - derived.timer.lastStartTime) / 1000;
-      derived.timer = {
-        ...derived.timer,
-        elapsedSeconds: derived.timer.elapsedSeconds + delta
-      };
-    }
-
-    // Shot Clock
-    if (derived.shotClock.isRunning && derived.shotClock.lastStartTime && !derived.timeout.isActive) {
-      const delta = (now - derived.shotClock.lastStartTime) / 1000;
-      derived.shotClock = {
-        ...derived.shotClock,
-        seconds: Math.max(0, derived.shotClock.seconds - delta)
-      };
-      // Auto-stop logic for display could happen here,
-      // but strictly we wait for user to acknowledge or stoppage?
-      // For visual, we clamp at 0.
-    }
-
-    // Timeout
-    if (derived.timeout.isActive) {
-      // Timeout uses startTime which is set when timeout starts
-      // But we need to handle if it was Paused/Resumed?
-      // Logic: If active, we calculate remaining from ... ?
-      // If we used `lastStartTime` logic for timeout:
-      if (derived.timeout.lastStartTime) {
-        const delta = (now - derived.timeout.lastStartTime) / 1000;
-        derived.timeout = {
-          ...derived.timeout,
-          remainingSeconds: Math.max(0, derived.timeout.remainingSeconds - delta)
-        }
-      } else {
-        // Fallback/Legacy if lastStartTime specific to timeout isn't set but isActive is true
-        // (Shouldn't happen with new logic, but safe fallback: don't animate)
-        // Actually, line 32 of MatchTracker sets `startTime`.
-        // We should align Timeout to use the same `lastStartTime` pattern.
-        // Or just use `startTime` as the Anchor.
-        // Problem: If we pause timeout?
-        // If we don't support pausing timeout (UI has "Resume Match" which ends it),
-        // then simple `startTime` check is enough.
-        // Let's assume standard Timeout runs continuously until Cancel.
-        const elapsedSinceStart = (now - derived.timeout.startTime) / 1000;
-        // But wait, `remainingSeconds` in base state is 60.
-        // So `current = 60 - elapsedSinceStart`.
-        // BUT if we refreshed page? `startTime` is persisted. `remainingSeconds` is persisted (as 60).
-        // So this logic works.
-        // Warning: If `remainingSeconds` was somehow decremented in base state, we double count.
-        // Reset `remainingSeconds` to 60 in base state when starting? Yes.
-        // So derived calculation:
-        // derived.timeout.remainingSeconds = 60 - (now - derived.timeout.startTime) / 1000;
-        // But what if we want to "pause" it?
-        // The current App doesn't seem to support pausing timeout, only "Resume Match" (End).
-        // So we use the simple logic:
-        derived.timeout.remainingSeconds = Math.max(0, 60 - (now - derived.timeout.startTime) / 1000);
-      }
-    }
-
-    // Break
-    if (derived.break && derived.break.isActive) {
-      const elapsedSinceStart = (now - derived.break.startTime) / 1000;
-      derived.break = {
-        ...derived.break,
-        durationSeconds: Math.max(0, derived.break.durationSeconds - elapsedSinceStart) // Reuse durationSeconds field for remaining? Or keep it as "total duration"?
-        // Actually, for consistency with Timeout (where remainingSeconds is updated), let's abuse durationSeconds OR better:
-        // `durationSeconds` in base state is usually the "Setting".
-        // `remainingSeconds` isn't in the type definition yet.
-        // Let's modify the TYPE to include `remainingSeconds` OR just dynamically calculate it for display.
-        // Wait, I didn't add `remainingSeconds` to `break` in types.ts.
-        // Let's assume `durationSeconds` in derived state IS the remaining time for display purposes,
-        // reducing complexity. We don't save "original duration" in derived state usually.
-      };
-      // Correction: If I modify durationSeconds here, does it affect the "Length of break" reference?
-      // Yes. But for display, `derived` is what matters.
-      // So:
-      derived.break.durationSeconds = Math.max(0, derived.break.durationSeconds - elapsedSinceStart);
-    }
-
-    return derived;
+    return calculateDerivedMatchState(matchState, tick ? Date.now() : Date.now());
   }, [matchState, tick]);
+
+  // Update Page Title with Timer
+  useEffect(() => {
+    if (settings.showTimerInTitle && derivedMatchState.timer.isRunning) {
+      const minutes = Math.floor(derivedMatchState.timer.elapsedSeconds / 60);
+      const seconds = Math.floor(derivedMatchState.timer.elapsedSeconds % 60);
+      document.title = `${minutes}:${seconds.toString().padStart(2, '0')} - KorfStat Pro`;
+    } else {
+      document.title = 'KorfStat Pro';
+    }
+  }, [derivedMatchState.timer.elapsedSeconds, derivedMatchState.timer.isRunning, settings.showTimerInTitle]);
+
   // --- SYNC ---
   // Re-implemented with BroadcastChannel for Local Tab Sync
   const handleRemoteUpdate = useCallback((remoteState: MatchState) => {
@@ -206,7 +151,13 @@ function AppContent() {
     setMatchState(remoteState);
   }, []);
 
-  const { broadcastUpdate, activeSessions, registerView } = useBroadcastSync(matchState, handleRemoteUpdate);
+  const handleSpotterAction = useCallback((action: any) => {
+    console.log('[App] Received Spotter Action via Sync:', action);
+    // TODO: Implement actual logic to update matchState based on spotter action
+    // For now, we just log it, matching previous behavior in MatchTracker
+  }, []);
+
+  const { broadcastUpdate, activeSessions, registerView } = useBroadcastSync(matchState, handleRemoteUpdate, handleSpotterAction);
 
   // Register View on Change
   useEffect(() => {
@@ -262,17 +213,6 @@ function AppContent() {
     // This implies `isRunning` stays true, but time doesn't add up.
     // This is TRICKY with timestamps.
     // If `isRunning` is true, strict timestamp math adds time.
-    // So if Timeout is active, we must effectively "Stop" the timestamp accumulation.
-    // Solution: If timeout is Active, we shift `lastStartTime` forward?
-    // Or simpler: Pause the timers when timeout starts?
-    // Let's stick to the previous behavior: Time stops accumulating.
-    // To achieve this with timestamps, we must STOP/PAUSE the underlying timers when Timeout starts.
-    // And RESUME them when Timeout ends?
-    // That's complex state management.
-    // Alternative:
-    // Update `derivedMatchState` logic:
-    // `if (isRunning && !timeout.isActive)` -> add delta.
-    // BUT `lastStartTime` is fixed. So delta keeps growing.
     // So if I wait 1 min in timeout, the Game Clock jumps 1 min when I resume?
     // YES. THIS IS BAD.
     // Fix: When Timeout STARTS:
@@ -290,9 +230,10 @@ function AppContent() {
     });
   }, [matchState]);
 
-  const handleStartMatch = (home: Team, away: Team, durationSeconds: number) => {
+  const handleStartMatch = (home: Team, away: Team, durationSeconds: number, seasonId?: string) => {
     const newState: MatchState = {
       id: crypto.randomUUID(),
+      seasonId,
       date: Date.now(),
       isConfigured: true,
       halfDurationSeconds: durationSeconds,
@@ -306,8 +247,7 @@ function AppContent() {
       timeout: { isActive: false, startTime: 0, remainingSeconds: 60 },
     };
     setMatchState(newState);
-    setMatchState(newState);
-    // localStorage.setItem('korfstat_current_match', JSON.stringify(newState)); // Legacy backup optional
+    broadcastUpdate(newState);
     setView('TRACK');
   };
 
@@ -321,7 +261,7 @@ function AppContent() {
     };
 
     setMatchState(finalState);
-    setMatchState(finalState);
+    broadcastUpdate(finalState);
 
     // Save to localStorage
     const newHistory = [finalState, ...savedMatches];
@@ -349,9 +289,9 @@ function AppContent() {
     // Completely reset match state to allow new match
     const resetState: MatchState = {
       isConfigured: false,
-      halfDurationSeconds: 1500,
-      homeTeam: { id: 'HOME', name: '', players: [], color: '', substitutionCount: 0 },
-      awayTeam: { id: 'AWAY', name: '', players: [], color: '', substitutionCount: 0 },
+      halfDurationSeconds: settings.defaultHalfDuration * 60 || 1500,
+      homeTeam: { id: 'HOME', name: settings.defaultHomeName || 'Home', players: [], color: settings.defaultHomeColor || '', substitutionCount: 0 },
+      awayTeam: { id: 'AWAY', name: settings.defaultAwayName || 'Away', players: [], color: settings.defaultAwayColor || '', substitutionCount: 0 },
       events: [],
       currentHalf: 1,
       possession: null,
@@ -360,6 +300,7 @@ function AppContent() {
       timeout: { isActive: false, startTime: 0, remainingSeconds: 60 },
     };
     setMatchState(resetState);
+    broadcastUpdate(resetState);
     localStorage.removeItem('korfstat_current_match');
     setView('HOME');
   };
@@ -370,7 +311,7 @@ function AppContent() {
       {/* Settings Floater */}
       <button
         onClick={() => setIsSettingsOpen(true)}
-        className="fixed top-4 right-4 z-[90] p-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all"
+        className="fixed bottom-4 left-4 z-[90] p-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all"
         title="Settings"
       >
         <Settings size={20} />
@@ -469,6 +410,20 @@ function AppContent() {
       {view === 'SHOT_CLOCK' && (
         <ShotClockView
           matchState={derivedMatchState}
+        />
+      )}
+
+      {view === 'SEASON_MANAGER' && (
+        <SeasonManager
+          matches={savedMatches}
+          onBack={() => setView('HOME')}
+        />
+      )}
+
+      {view === 'SPOTTER' && (
+        <SpotterView
+          matchState={derivedMatchState}
+          onBack={() => setView('HOME')}
         />
       )}
     </div>

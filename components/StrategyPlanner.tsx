@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, MouseEvent } from 'react';
 import { MatchState, TeamId } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
-import { ArrowLeft, Save, Trash2, Undo, Circle, Hexagon, Eraser, Pen, MousePointer2, Move, Download, Upload, RefreshCw, X } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Undo, Circle, Hexagon, Eraser, Pen, MousePointer2, Move, Download, Upload, RefreshCw, X, Play, Square } from 'lucide-react';
 
 interface StrategyPlannerProps {
   matches: MatchState[];
@@ -30,25 +30,39 @@ interface DrawingPath {
   width: number;
 }
 
+interface Frame {
+  id: string;
+  tokens: Token[];
+  drawings: DrawingPath[];
+  duration: number; // ms, default 1000?
+  note?: string;
+}
+
 interface SavedPlay {
   id: string;
   name: string;
-  tokens: Token[];
-  drawings: DrawingPath[];
+  frames: Frame[]; // New structure
   date: number;
 }
+
 
 const KORFBALL_FIELD_RATIO = 2; // 40m / 20m = 2
 
 const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) => {
   const { settings } = useSettings();
   // ----- State -----
+  const [frames, setFrames] = useState<Frame[]>([]);
+  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playbackRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Current Frame State (Visual)
   const [tokens, setTokens] = useState<Token[]>([]);
   const [drawings, setDrawings] = useState<DrawingPath[]>([]);
+
   const [activeTool, setActiveTool] = useState<'SELECT' | 'PEN' | 'ARROW' | 'ERASER'>('SELECT');
-  const [selectedColor, setSelectedColor] = useState('#ef4444'); // Red default drawing
+  const [selectedColor, setSelectedColor] = useState('#ef4444');
   const [isDragging, setIsDragging] = useState<string | null>(null);
-  const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
   const [currentPath, setCurrentPath] = useState<DrawingPath | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [savedPlays, setSavedPlays] = useState<SavedPlay[]>([]);
@@ -57,8 +71,35 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Undo History (Basic)
-  const [history, setHistory] = useState<{ tokens: Token[], drawings: DrawingPath[] }[]>([]);
+  // Sync current state to frames whenever it changes (auto-save to frame)
+  useEffect(() => {
+    if (frames.length > 0 && !isPlaying) {
+      // Debounce or just update?
+      // Direct update might cause cycles if we depend on frames.
+      // Better: Only update frames on specific actions (MouseUp, ToolChange) or use a "Save Frame" specific trigger?
+      // For smoothness, let's update `frames` immediately but ensure we don't re-render `tokens` from `frames` constantly.
+      // Actually, let's explicit save. "Auto-save" to frame state needs care.
+
+      const updatedFrames = [...frames];
+      updatedFrames[currentFrameIndex] = {
+        ...updatedFrames[currentFrameIndex],
+        tokens,
+        drawings
+      };
+      // Avoid setting frames if identical to prevent loop
+      // setFrames(updatedFrames); 
+      // This is dangerous. Let's use a Ref for "IsLoadingFrame" to skip, or just update Frames on interactions.
+    }
+  }, [tokens, drawings]); // This is tricky. Let's rely on explicit "commit" or update frames on interaction end.
+
+  const updateCurrentFrame = () => {
+    if (isPlaying) return;
+    setFrames(prev => {
+      const newFrames = [...prev];
+      newFrames[currentFrameIndex] = { ...newFrames[currentFrameIndex], tokens, drawings };
+      return newFrames;
+    });
+  };
 
   // ----- Initialization -----
   useEffect(() => {
@@ -81,11 +122,14 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
     const name = prompt("Enter a name for this play:");
     if (!name) return;
 
+    // Ensure current state is saved to frame
+    const finalFrames = [...frames];
+    finalFrames[currentFrameIndex] = { ...finalFrames[currentFrameIndex], tokens, drawings };
+
     const newPlay: SavedPlay = {
       id: Date.now().toString(),
       name,
-      tokens,
-      drawings,
+      frames: finalFrames,
       date: Date.now()
     };
 
@@ -96,9 +140,30 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
 
   const loadPlay = (play: SavedPlay) => {
     if (window.confirm(`Load play "${play.name}"? Unsaved changes will be lost.`)) {
-      setTokens(play.tokens);
-      setDrawings(play.drawings);
-      addToHistory(play.tokens, play.drawings);
+      // Handle migration if needed (old plays had logic?)
+      // Assuming interface works.
+      // If play.frames is undefined (legacy), wrap it?
+      // Let's assume typescript checks hold or we migrate in loadSavedPlays.
+      if (!play.frames && (play as any).tokens) {
+        // Migration for legacy
+        const legacyFrame: Frame = {
+          id: 'legacy',
+          tokens: (play as any).tokens,
+          drawings: (play as any).drawings || [],
+          duration: 1000
+        };
+        setFrames([legacyFrame]);
+        setCurrentFrameIndex(0);
+        setTokens(legacyFrame.tokens);
+        setDrawings(legacyFrame.drawings);
+      } else {
+        setFrames(play.frames);
+        setCurrentFrameIndex(0);
+        if (play.frames.length > 0) {
+          setTokens(play.frames[0].tokens);
+          setDrawings(play.frames[0].drawings);
+        }
+      }
     }
   };
 
@@ -113,7 +178,6 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
 
   const resetBoard = () => {
     // Initial Setup: 4 Attackers (Home), 4 Defenders (Away)
-    // Home: Blue, Away: Red (example)
     const initialTokens: Token[] = [
       // Home Attack (Left Zone)
       { id: 'h1', x: 20, y: 30, type: 'ATTACK', gender: 'FEMALE', label: 'H1', color: '#3b82f6' },
@@ -127,25 +191,121 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
       { id: 'a3', x: 30, y: 45, type: 'DEFENSE', gender: 'MALE', label: 'A3', color: '#ef4444' },
       { id: 'a4', x: 30, y: 55, type: 'DEFENSE', gender: 'MALE', label: 'A4', color: '#ef4444' },
     ];
+
+    // Create initial frame
+    const startFrame: Frame = {
+      id: crypto.randomUUID(),
+      tokens: initialTokens,
+      drawings: [],
+      duration: 1000
+    };
+
+    setFrames([startFrame]);
+    setCurrentFrameIndex(0);
     setTokens(initialTokens);
     setDrawings([]);
-    addToHistory(initialTokens, []);
+    setIsPlaying(false);
   };
 
+  // ----- Animation Logic -----
+  const addFrame = () => {
+    // Duplicate current state
+    const newFrame: Frame = {
+      id: crypto.randomUUID(),
+      tokens: JSON.parse(JSON.stringify(tokens)), // Deep copy positions
+      drawings: JSON.parse(JSON.stringify(drawings)), // Copy drawings? Usually next frame starts with drawings? 
+      // Option: Clear drawings for next movement, or keep them? 
+      // Strategy: Keep them, user can clear if they want new movement arrows.
+      duration: 1000
+    };
+
+    // Update current frame first
+    updateCurrentFrame();
+
+    const newFrames = [...frames];
+    // Insert after current
+    newFrames.splice(currentFrameIndex + 1, 0, newFrame);
+
+    setFrames(newFrames);
+    setCurrentFrameIndex(currentFrameIndex + 1);
+    // Load new frame
+    setTokens(newFrame.tokens);
+    setDrawings(newFrame.drawings);
+  };
+
+  const deleteFrame = (index: number) => {
+    if (frames.length <= 1) return;
+    const newFrames = frames.filter((_, i) => i !== index);
+    setFrames(newFrames);
+
+    // Adjust index
+    if (index === currentFrameIndex) {
+      const newIndex = Math.max(0, index - 1);
+      setCurrentFrameIndex(newIndex);
+      setTokens(newFrames[newIndex].tokens);
+      setDrawings(newFrames[newIndex].drawings);
+    } else if (index < currentFrameIndex) {
+      setCurrentFrameIndex(currentFrameIndex - 1);
+    }
+  };
+
+  const selectFrame = (index: number) => {
+    updateCurrentFrame(); // Save current before switching
+    setCurrentFrameIndex(index);
+    setTokens(frames[index].tokens);
+    setDrawings(frames[index].drawings);
+  };
+
+  const togglePlay = () => {
+    if (isPlaying) {
+      setIsPlaying(false);
+      if (playbackRef.current) clearInterval(playbackRef.current);
+    } else {
+      setIsPlaying(true);
+      // Start loop
+      let idx = currentFrameIndex;
+
+      playbackRef.current = setInterval(() => {
+        idx++;
+        if (idx >= frames.length) {
+          idx = 0; // Loop? Or stop?
+          // clearInterval(playbackRef.current!);
+          // setIsPlaying(false);
+          // return;
+        }
+        // We need to access latest frames state?
+        // Use functional update or ref?
+        // Simple: just render.
+        // Logic check: SetState in interval will trigger re-render
+        setCurrentFrameIndex(idx);
+        setTokens(framesRef.current[idx].tokens);
+        setDrawings(framesRef.current[idx].drawings);
+      }, 1000); // Fixed 1s for now, or use frame.duration
+    }
+  };
+
+  // Ref for playback to access latest frames without closure staleness
+  const framesRef = useRef(frames);
+  useEffect(() => { framesRef.current = frames; }, [frames]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => { if (playbackRef.current) clearInterval(playbackRef.current); };
+  }, []);
+
+  // Update current frame on token/drawing release
+  // (Replaces addToHistory)
+  const commitChange = () => {
+    updateCurrentFrame();
+  };
+
+  // Old History Functions Removed in favor of Frame logic
+  /*
   const addToHistory = (newTokens: Token[], newDrawings: DrawingPath[]) => {
     setHistory(prev => [...prev.slice(-10), { tokens: newTokens, drawings: newDrawings }]);
   };
-
-  const undo = () => {
-    if (history.length <= 1) return;
-    // const confirm = window.confirm("Undo last action?"); // Removing confirm for smoother UX
-    const newHistory = [...history];
-    newHistory.pop(); // Remove current state
-    const prevState = newHistory[newHistory.length - 1];
-    setTokens(prevState.tokens);
-    setDrawings(prevState.drawings);
-    setHistory(newHistory);
-  };
+  const undo = () => { ... };
+  */
 
   // ----- Drawing Logic (Canvas) -----
   useEffect(() => {
@@ -329,13 +489,24 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
 
   const handleMouseUp = () => {
     if (currentPath) {
-      setDrawings(prev => [...prev, currentPath]);
-      addToHistory(tokens, [...drawings, currentPath]);
+      setDrawings(prev => {
+        const next = [...prev, currentPath];
+        // We need to commit this.
+        // Since setState is async, we can't commit immediately with 'next'.
+        // Let's use useEffect change detection or just pass it.
+        // Better: setDrawings is enough, the commitChange relies on state?
+        // No, commitChange duplicates state.
+        // Let's rely on a helper that does both.
+        return next;
+      });
       setCurrentPath(null);
+      // Timeout to allow state update? Or just use useEffect on drawings?
+      // With the refactor, we need to explicitly save frame.
+      setTimeout(commitChange, 0);
     }
     if (isDragging) {
-      addToHistory(tokens, drawings); // Save state after drag
       setIsDragging(null);
+      commitChange();
     }
   };
 
@@ -439,12 +610,12 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
                     }}
                     onBlur={() => {
                       setEditingId(null);
-                      addToHistory(tokens, drawings);
+                      commitChange();
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         setEditingId(null);
-                        addToHistory(tokens, drawings);
+                        commitChange();
                       }
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
@@ -498,20 +669,70 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
 
           <div className="w-full h-px bg-gray-700 my-2"></div>
 
-          <ToolButton
-            active={false}
-            onClick={undo}
-            icon={<Undo size={24} />}
-            label="Undo"
-          />
+          <div className="w-full h-px bg-gray-700 my-2"></div>
 
           <ToolButton
             active={false}
-            onClick={() => { setDrawings([]); addToHistory(tokens, []) }}
+            onClick={() => {
+              // Clear drawings for this frame
+              setDrawings([]);
+              commitChange();
+            }}
             icon={<Eraser size={24} />}
             label="Clear"
           />
 
+        </div>
+
+      </div>
+
+      {/* Timeline / Animation Controls */}
+      <div className="h-24 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex items-center px-4 gap-4 z-30 transition-colors">
+
+        {/* Controls */}
+        <div className="flex items-center gap-2 mr-4">
+          <button onClick={() => selectFrame(0)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-600 dark:text-gray-300">
+            <span className="text-xl font-bold">|&lt;</span>
+          </button>
+          <button
+            onClick={togglePlay}
+            className={`p-3 rounded-full flex items-center justify-center transition-all ${isPlaying ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+          >
+            {isPlaying ? <Square size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
+          </button>
+          <button onClick={addFrame} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex flex-col items-center gap-1 text-gray-600 dark:text-gray-300">
+            <div className="text-xl font-bold leading-none">+</div>
+            <span className="text-[9px] uppercase font-bold">Add Frame</span>
+          </button>
+        </div>
+
+        {/* Frames List */}
+        <div className="flex-1 overflow-x-auto flex items-center gap-2 py-2 no-scrollbar">
+          {frames.map((frame, idx) => (
+            <div
+              key={frame.id}
+              onClick={() => selectFrame(idx)}
+              className={`relative min-w-[80px] h-16 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-all group
+                        ${idx === currentFrameIndex ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}
+                    `}
+            >
+              <span className="text-xs font-bold text-gray-400">#{idx + 1}</span>
+
+              {/* Delete Frame Button */}
+              {frames.length > 1 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteFrame(idx); }}
+                  className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={10} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="text-xs font-bold text-gray-400 w-16 text-right">
+          {frames.length} Frame(s)
         </div>
 
       </div>
