@@ -16,13 +16,13 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@google/genai": "^1.40.0",
+    "@google/genai": "^1.41.0",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.7",
-    "lucide-react": "^0.563.0",
+    "lucide-react": "^0.564.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "recharts": "^3.7.0",
