@@ -1,0 +1,2161 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/home/wouter/Documents/korfstat-pro[39m
+
+ [32m✓[39m services/__tests__/analysisService.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m utils/__tests__/matchLogic.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m utils/__tests__/matchUtils.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+[90mstdout[2m | hooks/__tests__/useBroadcastSync.test.ts[2m > [22m[2museBroadcastSync[2m > [22m[2mshould call onUpdate when receiving match-update event
+[22m[39m[Sync] Received Update via WebSocket { eventCount: [33m0[39m }
+
+[90mstdout[2m | hooks/__tests__/useBroadcastSync.test.ts[2m > [22m[2museBroadcastSync[2m > [22m[2mshould broadcast updates via socket
+[22m[39m[Sync] Broadcasting Update via WebSocket { eventCount: [33m0[39m }
+
+[90mstdout[2m | hooks/__tests__/useBroadcastSync.test.ts[2m > [22m[2museBroadcastSync[2m > [22m[2mshould not broadcast identical states
+[22m[39m[Sync] Broadcasting Update via WebSocket { eventCount: [33m0[39m }
+
+[90mstdout[2m | hooks/__tests__/useBroadcastSync.test.ts[2m > [22m[2museBroadcastSync[2m > [22m[2mshould update active sessions when receiving active-sessions event
+[22m[39m[Sync] Received Active Sessions: [33m2[39m
+
+[90mstdout[2m | hooks/__tests__/useBroadcastSync.test.ts[2m > [22m[2museBroadcastSync[2m > [22m[2mshould call onSpotterAction when receiving spotter-action event
+[22m[39m[Sync] Received Spotter Action { type: [32m'GOAL'[39m, teamId: [32m'HOME'[39m }
+
+[90mstdout[2m | hooks/__tests__/useBroadcastSync.test.ts[2m > [22m[2museBroadcastSync[2m > [22m[2mshould prevent echo loops by not updating on own broadcasts
+[22m[39m[Sync] Broadcasting Update via WebSocket { eventCount: [33m0[39m }
+
+ [32m✓[39m hooks/__tests__/useBroadcastSync.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 57[2mms[22m[39m
+ [32m✓[39m components/__tests__/LiveStatsView.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[32m 125[2mms[22m[39m
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mrenders match configuration title
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+
+ [31m❯[39m components/__tests__/HomePage.test.tsx [2m([22m[2m9 tests[22m[2m | [22m[31m9 failed[39m[2m)[22m[32m 31[2mms[22m[39m
+[31m     [31m×[31m renders welcome message and title[39m[32m 16[2mms[22m[39m
+[31m     [31m×[31m displays active sessions count[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m navigates to Match Setup when "Start New Match" is clicked[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m navigates to Match History when history card is clicked[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m shows "Resume Tracker" button when match is in progress[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m navigates to tracker when "Resume Tracker" is clicked[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m displays match in progress information[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m does not show "Resume Tracker" when no active match[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m shows all navigation cards[39m[32m 1[2mms[22m[39m
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mrenders both team configuration sections
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+
+ [32m✓[39m components/__tests__/MatchTracker.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 107[2mms[22m[39m
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mallows setting team names
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+
+ [32m✓[39m components/__tests__/App.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 39[2mms[22m[39m
+ [31m❯[39m components/__tests__/JuryView.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 446[2mms[22m[39m
+     [32m✓[39m renders jury interface title[32m 50[2mms[22m[39m
+     [32m✓[39m displays team names[32m 15[2mms[22m[39m
+[31m     [31m×[31m shows foul counters for both teams[39m[32m 22[2mms[22m[39m
+     [32m✓[39m displays game clock[32m 17[2mms[22m[39m
+[31m     [31m×[31m calls onBack when back button is clicked[39m[33m 330[2mms[22m[39m
+[31m     [31m×[31m shows current half number[39m[32m 9[2mms[22m[39m
+ [32m✓[39m components/__tests__/StatsView.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[32m 203[2mms[22m[39m
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mallows setting match duration
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mshows 10 default players for each team
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mdisplays starters count (8/8)
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mallows adding new players
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mallows removing players
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mstarts match when start button is clicked
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mpasses custom duration to onStartMatch
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mallows changing team colors
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mdisplays gender mix for starters
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mallows updating player number
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mallows updating player name
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+
+[90mstdout[2m | components/__tests__/MatchSetup.test.tsx[2m > [22m[2mMatchSetup[2m > [22m[2mprepares teams with onField status for starters
+[22m[39m[MatchSetup] Rendering. SavedMatches length: [33m0[39m
+[MatchSetup] Recalculating allPlayers from savedMatches []
+[MatchSetup] Derived unique players: [33m0[39m
+
+ [31m❯[39m components/__tests__/MatchSetup.test.tsx [2m([22m[2m15 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 2372[2mms[22m[39m
+     [32m✓[39m renders match configuration title[32m 124[2mms[22m[39m
+     [32m✓[39m renders both team configuration sections[32m 63[2mms[22m[39m
+     [32m✓[39m allows setting team names[32m 92[2mms[22m[39m
+[31m     [31m×[31m allows setting match duration[39m[32m 283[2mms[22m[39m
+     [32m✓[39m shows 10 default players for each team[32m 25[2mms[22m[39m
+     [32m✓[39m displays starters count (8/8)[32m 30[2mms[22m[39m
+     [33m[2m✓[22m[39m allows adding new players [33m 465[2mms[22m[39m
+     [32m✓[39m allows removing players[32m 282[2mms[22m[39m
+     [33m[2m✓[22m[39m starts match when start button is clicked [33m 383[2mms[22m[39m
+[31m     [31m×[31m passes custom duration to onStartMatch[39m[32m 121[2mms[22m[39m
+     [32m✓[39m allows changing team colors[32m 36[2mms[22m[39m
+     [32m✓[39m displays gender mix for starters[32m 32[2mms[22m[39m
+     [32m✓[39m allows updating player number[32m 35[2mms[22m[39m
+     [32m✓[39m allows updating player name[32m 30[2mms[22m[39m
+     [33m[2m✓[22m[39m prepares teams with onField status for starters [33m 370[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 14 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m components/__tests__/HomePage.test.tsx[2m > [22mHomePage[2m > [22mrenders welcome message and title
+[41m[1m FAIL [22m[49m components/__tests__/HomePage.test.tsx[2m > [22mHomePage[2m > [22mdisplays active sessions count
+[41m[1m FAIL [22m[49m components/__tests__/HomePage.test.tsx[2m > [22mHomePage[2m > [22mnavigates to Match Setup when "Start New Match" is clicked
+[41m[1m FAIL [22m[49m components/__tests__/HomePage.test.tsx[2m > [22mHomePage[2m > [22mnavigates to Match History when history card is clicked
+[41m[1m FAIL [22m[49m components/__tests__/HomePage.test.tsx[2m > [22mHomePage[2m > [22mshows "Resume Tracker" button when match is in progress
+[41m[1m FAIL [22m[49m components/__tests__/HomePage.test.tsx[2m > [22mHomePage[2m > [22mnavigates to tracker when "Resume Tracker" is clicked
+[41m[1m FAIL [22m[49m components/__tests__/HomePage.test.tsx[2m > [22mHomePage[2m > [22mdisplays match in progress information
+[41m[1m FAIL [22m[49m components/__tests__/HomePage.test.tsx[2m > [22mHomePage[2m > [22mdoes not show "Resume Tracker" when no active match
+[41m[1m FAIL [22m[49m components/__tests__/HomePage.test.tsx[2m > [22mHomePage[2m > [22mshows all navigation cards
+[31m[1mTypeError[22m: activeSessions.filter is not a function[39m
+[36m [2m❯[22m components/HomePage.tsx:[2m23:27[22m[39m
+    [90m 21| [39m  // Calculate unique devices (ignoring "Unknown" loopback if needed, …
+    [90m 22| [39m  [35mconst[39m uniqueSessions [33m=[39m [34museMemo[39m(() [33m=>[39m {
+    [90m 23| [39m    [35mreturn[39m activeSessions[33m.[39m[34mfilter[39m((s[33m,[39m index[33m,[39m self) [33m=>[39m
+    [90m   | [39m                          [31m^[39m
+    [90m 24| [39m      index [33m===[39m self[33m.[39m[34mfindIndex[39m((t) [33m=>[39m (
+    [90m 25| [39m        t[33m.[39mid [33m===[39m s[33m.[39mid
+[90m [2m❯[22m mountMemo node_modules/react-dom/cjs/react-dom-client.development.js:[2m8777:23[22m[39m
+[90m [2m❯[22m Object.useMemo node_modules/react-dom/cjs/react-dom-client.development.js:[2m26216:18[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.useMemo node_modules/react/cjs/react.development.js:[2m1251:34[22m[39m
+[90m [2m❯[22m HomePage components/HomePage.tsx:[2m22:26[22m[39m
+[90m [2m❯[22m Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:[2m25904:20[22m[39m
+[90m [2m❯[22m renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:[2m7662:22[22m[39m
+[90m [2m❯[22m updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:[2m10166:19[22m[39m
+[90m [2m❯[22m beginWork node_modules/react-dom/cjs/react-dom-client.development.js:[2m11778:18[22m[39m
+[90m [2m❯[22m runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:[2m874:13[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m components/__tests__/JuryView.test.tsx[2m > [22mJuryView[2m > [22mshows foul counters for both teams
+[31m[1mTestingLibraryElementError[22m[39m: Found multiple elements with the text: /2/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"text-7xl font-black font-mono mb-6 text-red-500"[39m
+[36m>[39m
+  [0m25:00[0m
+[36m</div>[39m
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"text-7xl font-black font-mono mb-6 text-yellow-500"[39m
+[36m>[39m
+  [0m25[0m
+[36m</div>[39m
+
+Ignored nodes: comments, script, style
+[36m<button[39m
+  [33mclass[39m=[32m"py-3 bg-slate-600 hover:bg-slate-500 rounded-lg font-bold flex items-center justify-center gap-2"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"lucide lucide-rotate-ccw"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mheight[39m=[32m"20"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"2"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+    [33mwidth[39m=[32m"20"[39m
+    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+    [36m/>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M3 3v5h5"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+  [0m RESET 25 [0m
+  [36m<kbd[39m
+    [33mclass[39m=[32m"hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded"[39m
+  [36m>[39m
+    [0mR[0m
+  [36m</kbd>[39m
+[36m</button>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-slate-900 text-slate-100 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-w-4xl mx-auto"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-4 mb-8 border-b border-slate-700 pb-4"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 bg-slate-800 rounded hover:bg-slate-700"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 19-7-7 7-7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 12H5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+          [36m>[39m
+            [0mJury / Table Officials Interface[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-1 lg:grid-cols-2 gap-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-slate-400 font-bold uppercase tracking-widest mb-2"[39m
+              [36m>[39m
+                [0mGame Clock[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-7xl font-black font-mono mb-6 text-red-500"[39m
+              [36m>[39m
+                [0m25:00[0m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-4 rounded-xl text-xl font-bold shadow-lg flex items-center justify-center gap-4 transition-all mb-4 bg-green-600 hover:bg-green-700 text-white"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-play"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m START [0m
+                [36m<kbd[39m
+                  [33mclass[39m=[32m"hidden lg:inline ml-2 text-xs bg-white/20 px-2 py-1 rounded"[39m
+                [36m>[39m
+                  [0mSPACE[0m
+                [36m</kbd>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"text-sm font-bold text-slate-500 hover:text-slate-300 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-square-pen"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m ADJUST GAME CLOCK[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700 relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-slate-400 font-bold uppercase tracking-widest mb-2"[39m
+              [36m>[39m
+                [0mShot Clock[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-7xl font-black font-mono mb-6 text-yellow-500"[39m
+              [36m>[39m
+                [0m25[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid grid-cols-2 gap-4 w-full"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"py-3 rounded-lg font-bold flex items-center justify-center gap-2 bg-green-600"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-play"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"20"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"20"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mSTART[0m
+                  [0m [0m
+                  [36m<kbd[39m
+                    [33mclass[39m=[32m"hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded"[39m
+                  [36m>[39m
+                    [0mS[0m
+                  [36m</kbd>[39m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"py-3 bg-slate-600 hover:bg-slate-500 rounded-lg font-bold flex items-center justify-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-rotate-ccw"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"20"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"20"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 3v5h5"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m RESET 25 [0m
+                  [36m<kbd[39m
+                    [33mclass[39m=[32m"hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded"[39m
+                  [36m>[39m
+                    [0mR[0m
+                  [36m</kbd>[39m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"col-span-2 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold flex items-center justify-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-square-pen"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m CHANGE TIME[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-6 rounded-xl border border-slate-700"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-octagon-alert"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 16h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 8v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Disciplinary[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid grid-cols-2 gap-4"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-4 bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 rounded-lg hover:bg-yellow-500/30 font-bold"[39m
+                [36m>[39m
+                  [0mAdd Yellow Card[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-4 bg-red-600/20 text-red-500 border border-red-600/50 rounded-lg hover:bg-red-600/30 font-bold"[39m
+                [36m>[39m
+                  [0mAdd Red Card[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-6 rounded-xl border border-slate-700"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-repeat"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m17 2 4 4-4 4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 11v-1a4 4 0 0 1 4-4h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m7 22-4-4 4-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21 13v1a4 4 0 0 1-4 4H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Match Status[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex justify-between text-sm mb-4 text-slate-400"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mHome Blazers[0m
+                  [0m: [0m
+                  [0m0[0m
+                  [0m/8 Subs[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mAway Stars[0m
+                  [0m: [0m
+                  [0m0[0m
+                  [0m/8 Subs[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex gap-2 text-xs uppercase font-bold text-slate-500 mb-2"[39m
+              [36m>[39m
+                [0mCurrent Possession[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid grid-cols-2 gap-2"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-2 rounded font-bold border transition-all border-blue-500 bg-blue-500/20 text-blue-400"[39m
+                [36m>[39m
+                  [0mHome Blazers[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-2 rounded font-bold border transition-all border-slate-700 bg-slate-900/50 text-slate-500"[39m
+                [36m>[39m
+                  [0mAway Stars[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-6 rounded-xl border border-slate-700"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-clock"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 6v6l4 2"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"10"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Time-out[0m
+              [36m</h3>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full p-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-bold text-white"[39m
+              [36m>[39m
+                [0mStart 60s Time-out[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m getElementError node_modules/@testing-library/dom/dist/query-helpers.js:[2m20:35[22m[39m
+[90m [2m❯[22m getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:[2m23:10[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m55:13[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m components/__tests__/JuryView.test.tsx:[2m72:23[22m[39m
+    [90m 70| [39m
+    [90m 71| [39m        [90m// Should show foul counts[39m
+    [90m 72| [39m        expect(screen.getByText(/2/)).toBeInTheDocument(); // Home fou…
+    [90m   | [39m                      [31m^[39m
+    [90m 73| [39m        expect(screen.getByText(/1/)).toBeInTheDocument(); // Away fou…
+    [90m 74| [39m    })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m components/__tests__/JuryView.test.tsx[2m > [22mJuryView[2m > [22mcalls onBack when back button is clicked
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an accessible element with the role "button" and name `/Back/i`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-2 bg-slate-800 rounded hover:bg-slate-700"[39m
+  [36m/>[39m
+
+  Name "START SPACE":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full py-4 rounded-xl text-xl font-bold shadow-lg flex items-center justify-center gap-4 transition-all mb-4 bg-green-600 hover:bg-green-700 text-white"[39m
+  [36m/>[39m
+
+  Name "ADJUST GAME CLOCK":
+  [36m<button[39m
+    [33mclass[39m=[32m"text-sm font-bold text-slate-500 hover:text-slate-300 flex items-center gap-2"[39m
+  [36m/>[39m
+
+  Name "START S":
+  [36m<button[39m
+    [33mclass[39m=[32m"py-3 rounded-lg font-bold flex items-center justify-center gap-2 bg-green-600"[39m
+  [36m/>[39m
+
+  Name "RESET 25 R":
+  [36m<button[39m
+    [33mclass[39m=[32m"py-3 bg-slate-600 hover:bg-slate-500 rounded-lg font-bold flex items-center justify-center gap-2"[39m
+  [36m/>[39m
+
+  Name "CHANGE TIME":
+  [36m<button[39m
+    [33mclass[39m=[32m"col-span-2 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold flex items-center justify-center gap-2"[39m
+  [36m/>[39m
+
+  Name "Add Yellow Card":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-4 bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 rounded-lg hover:bg-yellow-500/30 font-bold"[39m
+  [36m/>[39m
+
+  Name "Add Red Card":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-4 bg-red-600/20 text-red-500 border border-red-600/50 rounded-lg hover:bg-red-600/30 font-bold"[39m
+  [36m/>[39m
+
+  Name "Home Blazers":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-2 rounded font-bold border transition-all border-blue-500 bg-blue-500/20 text-blue-400"[39m
+  [36m/>[39m
+
+  Name "Away Stars":
+  [36m<button[39m
+    [33mclass[39m=[32m"p-2 rounded font-bold border transition-all border-slate-700 bg-slate-900/50 text-slate-500"[39m
+  [36m/>[39m
+
+  Name "Start 60s Time-out":
+  [36m<button[39m
+    [33mclass[39m=[32m"w-full p-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-bold text-white"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Jury / Table Officials Interface":
+  [36m<h1[39m
+    [33mclass[39m=[32m"text-2xl font-bold"[39m
+  [36m/>[39m
+
+  Name "Disciplinary":
+  [36m<h3[39m
+    [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+  [36m/>[39m
+
+  Name "Match Status":
+  [36m<h3[39m
+    [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+  [36m/>[39m
+
+  Name "Time-out":
+  [36m<h3[39m
+    [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-slate-900 text-slate-100 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-w-4xl mx-auto"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-4 mb-8 border-b border-slate-700 pb-4"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 bg-slate-800 rounded hover:bg-slate-700"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 19-7-7 7-7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 12H5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+          [36m>[39m
+            [0mJury / Table Officials Interface[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-1 lg:grid-cols-2 gap-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-slate-400 font-bold uppercase tracking-widest mb-2"[39m
+              [36m>[39m
+                [0mGame Clock[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-7xl font-black font-mono mb-6 text-red-500"[39m
+              [36m>[39m
+                [0m25:00[0m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-4 rounded-xl text-xl font-bold shadow-lg flex items-center justify-center gap-4 transition-all mb-4 bg-green-600 hover:bg-green-700 text-white"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-play"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m START [0m
+                [36m<kbd[39m
+                  [33mclass[39m=[32m"hidden lg:inline ml-2 text-xs bg-white/20 px-2 py-1 rounded"[39m
+                [36m>[39m
+                  [0mSPACE[0m
+                [36m</kbd>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"text-sm font-bold text-slate-500 hover:text-slate-300 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-square-pen"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m ADJUST GAME CLOCK[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700 relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-slate-400 font-bold uppercase tracking-widest mb-2"[39m
+              [36m>[39m
+                [0mShot Clock[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-7xl font-black font-mono mb-6 text-yellow-500"[39m
+              [36m>[39m
+                [0m25[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid grid-cols-2 gap-4 w-full"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"py-3 rounded-lg font-bold flex items-center justify-center gap-2 bg-green-600"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-play"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"20"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"20"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mSTART[0m
+                  [0m [0m
+                  [36m<kbd[39m
+                    [33mclass[39m=[32m"hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded"[39m
+                  [36m>[39m
+                    [0mS[0m
+                  [36m</kbd>[39m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"py-3 bg-slate-600 hover:bg-slate-500 rounded-lg font-bold flex items-center justify-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-rotate-ccw"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"20"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"20"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 3v5h5"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m RESET 25 [0m
+                  [36m<kbd[39m
+                    [33mclass[39m=[32m"hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded"[39m
+                  [36m>[39m
+                    [0mR[0m
+                  [36m</kbd>[39m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"col-span-2 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold flex items-center justify-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-square-pen"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m CHANGE TIME[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-6 rounded-xl border border-slate-700"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-octagon-alert"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 16h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 8v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Disciplinary[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid grid-cols-2 gap-4"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-4 bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 rounded-lg hover:bg-yellow-500/30 font-bold"[39m
+                [36m>[39m
+                  [0mAdd Yellow Card[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-4 bg-red-600/20 text-red-500 border border-red-600/50 rounded-lg hover:bg-red-600/30 font-bold"[39m
+                [36m>[39m
+                  [0mAdd Red Card[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-6 rounded-xl border border-slate-700"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-repeat"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m17 2 4 4-4 4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 11v-1a4 4 0 0 1 4-4h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m7 22-4-4 4-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21 13v1a4 4 0 0 1-4 4H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Match Status[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex justify-between text-sm mb-4 text-slate-400"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mHome Blazers[0m
+                  [0m: [0m
+                  [0m0[0m
+                  [0m/8 Subs[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mAway Stars[0m
+                  [0m: [0m
+                  [0m0[0m
+                  [0m/8 Subs[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex gap-2 text-xs uppercase font-bold text-slate-500 mb-2"[39m
+              [36m>[39m
+                [0mCurrent Possession[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid grid-cols-2 gap-2"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-2 rounded font-bold border transition-all border-blue-500 bg-blue-500/20 text-blue-400"[39m
+                [36m>[39m
+                  [0mHome Blazers[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-2 rounded font-bold border transition-all border-slate-700 bg-slate-900/50 text-slate-500"[39m
+                [36m>[39m
+                  [0mAway Stars[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-6 rounded-xl border border-slate-700"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-clock"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 6v6l4 2"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"10"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Time-out[0m
+              [36m</h3>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full p-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-bold text-white"[39m
+              [36m>[39m
+                [0mStart 60s Time-out[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m components/__tests__/JuryView.test.tsx:[2m92:35[22m[39m
+    [90m 90| [39m        render(<JuryView matchState={matchState} onUpdateMatch={mockOn…
+    [90m 91| [39m
+    [90m 92| [39m        const backButton = screen.getByRole('button', { name: /Back/i …
+    [90m   | [39m                                  [31m^[39m
+    [90m 93| [39m        fireEvent[33m.[39m[34mclick[39m(backButton)[33m;[39m
+    [90m 94| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m components/__tests__/JuryView.test.tsx[2m > [22mJuryView[2m > [22mshows current half number
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an element with the text: /Half 2/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-slate-900 text-slate-100 p-6"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-w-4xl mx-auto"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-4 mb-8 border-b border-slate-700 pb-4"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"p-2 bg-slate-800 rounded hover:bg-slate-700"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-arrow-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 19-7-7 7-7"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 12H5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+          [36m>[39m
+            [0mJury / Table Officials Interface[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-1 lg:grid-cols-2 gap-8"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-slate-400 font-bold uppercase tracking-widest mb-2"[39m
+              [36m>[39m
+                [0mGame Clock[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-7xl font-black font-mono mb-6 text-red-500"[39m
+              [36m>[39m
+                [0m25:00[0m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-4 rounded-xl text-xl font-bold shadow-lg flex items-center justify-center gap-4 transition-all mb-4 bg-green-600 hover:bg-green-700 text-white"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-play"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m START [0m
+                [36m<kbd[39m
+                  [33mclass[39m=[32m"hidden lg:inline ml-2 text-xs bg-white/20 px-2 py-1 rounded"[39m
+                [36m>[39m
+                  [0mSPACE[0m
+                [36m</kbd>[39m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"text-sm font-bold text-slate-500 hover:text-slate-300 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-square-pen"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m ADJUST GAME CLOCK[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700 relative"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-slate-400 font-bold uppercase tracking-widest mb-2"[39m
+              [36m>[39m
+                [0mShot Clock[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-7xl font-black font-mono mb-6 text-yellow-500"[39m
+              [36m>[39m
+                [0m25[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid grid-cols-2 gap-4 w-full"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"py-3 rounded-lg font-bold flex items-center justify-center gap-2 bg-green-600"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-play"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"20"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"20"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0mSTART[0m
+                  [0m [0m
+                  [36m<kbd[39m
+                    [33mclass[39m=[32m"hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded"[39m
+                  [36m>[39m
+                    [0mS[0m
+                  [36m</kbd>[39m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"py-3 bg-slate-600 hover:bg-slate-500 rounded-lg font-bold flex items-center justify-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-rotate-ccw"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"20"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"20"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 3v5h5"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m RESET 25 [0m
+                  [36m<kbd[39m
+                    [33mclass[39m=[32m"hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded"[39m
+                  [36m>[39m
+                    [0mR[0m
+                  [36m</kbd>[39m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"col-span-2 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold flex items-center justify-center gap-2"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-square-pen"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"16"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"16"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m CHANGE TIME[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-6"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-6 rounded-xl border border-slate-700"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-octagon-alert"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 16h.01"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 8v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Disciplinary[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid grid-cols-2 gap-4"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-4 bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 rounded-lg hover:bg-yellow-500/30 font-bold"[39m
+                [36m>[39m
+                  [0mAdd Yellow Card[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-4 bg-red-600/20 text-red-500 border border-red-600/50 rounded-lg hover:bg-red-600/30 font-bold"[39m
+                [36m>[39m
+                  [0mAdd Red Card[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-6 rounded-xl border border-slate-700"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-repeat"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m17 2 4 4-4 4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 11v-1a4 4 0 0 1 4-4h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m7 22-4-4 4-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21 13v1a4 4 0 0 1-4 4H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Match Status[0m
+              [36m</h3>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex justify-between text-sm mb-4 text-slate-400"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mHome Blazers[0m
+                  [0m: [0m
+                  [0m0[0m
+                  [0m/8 Subs[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mAway Stars[0m
+                  [0m: [0m
+                  [0m0[0m
+                  [0m/8 Subs[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex gap-2 text-xs uppercase font-bold text-slate-500 mb-2"[39m
+              [36m>[39m
+                [0mCurrent Possession[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid grid-cols-2 gap-2"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-2 rounded font-bold border transition-all border-blue-500 bg-blue-500/20 text-blue-400"[39m
+                [36m>[39m
+                  [0mHome Blazers[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-2 rounded font-bold border transition-all border-slate-700 bg-slate-900/50 text-slate-500"[39m
+                [36m>[39m
+                  [0mAway Stars[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"bg-slate-800 p-6 rounded-xl border border-slate-700"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"font-bold text-slate-300 mb-4 flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-clock"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 6v6l4 2"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"10"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Time-out[0m
+              [36m</h3>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full p-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-bold text-white"[39m
+              [36m>[39m
+                [0mStart 60s Time-out[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m components/__tests__/JuryView.test.tsx:[2m102:23[22m[39m
+    [90m100| [39m        render(<JuryView matchState={matchState} onUpdateMatch={mockOn…
+    [90m101| [39m
+    [90m102| [39m        [34mexpect[39m(screen[33m.[39m[34mgetByText[39m([36m/Half 2/i[39m))[33m.[39m[34mtoBeInTheDocument[39m()[33m;[39m
+    [90m   | [39m                      [31m^[39m
+    [90m103| [39m    })[33m;[39m
+    [90m104| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m components/__tests__/MatchSetup.test.tsx[2m > [22mMatchSetup[2m > [22mallows setting match duration
+[31m[1mTestingLibraryElementError[22m[39m: Found multiple elements with the role "spinbutton"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 text-center font-bold border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded p-1"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"25"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"1"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"2"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"3"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"4"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"5"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"6"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"7"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"8"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"9"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"10"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"1"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"2"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"3"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"4"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"5"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"6"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"7"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"8"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"9"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"10"[39m
+[36m/>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-gray-50 dark:bg-gray-900 p-6 flex flex-col transition-colors duration-300"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"text-center mb-8"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"text-4xl font-extrabold text-gray-900 dark:text-white mb-2"[39m
+        [36m>[39m
+          [0mKorfStat Pro[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-gray-500 dark:text-gray-400 mb-4"[39m
+        [36m>[39m
+          [0mMatch Configuration[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm font-bold text-gray-500 dark:text-gray-400"[39m
+          [36m>[39m
+            [0mHalf Duration:[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"w-12 text-center font-bold border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded p-1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m"25"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm text-gray-500 dark:text-gray-400"[39m
+          [36m>[39m
+            [0mmins[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col lg:flex-row gap-6 mb-8 max-w-7xl mx-auto w-full flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex-1 min-w-[350px] flex flex-col h-full transition-colors relative"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2 mb-4"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-lg font-bold flex items-center gap-2 text-blue-700 dark:text-blue-400"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-users"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"20"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"20"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 3.128a4 4 0 0 1 0 7.744"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"9"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mHome Team[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"[39m
+                  [33mtitle[39m=[32m"Load Saved Team"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-download"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"18"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 15V3"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m7 10 5 5 5-5"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"p-1.5 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"[39m
+                [33mtitle[39m=[32m"Save Team As Club"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-save"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7 3v4a1 1 0 0 0 1 1h7"[39m
+       ...
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m getElementError node_modules/@testing-library/dom/dist/query-helpers.js:[2m20:35[22m[39m
+[90m [2m❯[22m getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:[2m23:10[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m55:13[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m components/__tests__/MatchSetup.test.tsx:[2m45:38[22m[39m
+    [90m 43| [39m        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatche…
+    [90m 44| [39m
+    [90m 45| [39m        [35mconst[39m durationInput [33m=[39m screen[33m.[39m[34mgetByRole[39m([32m'spinbutton'[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m 46| [39m        fireEvent[33m.[39m[34mchange[39m(durationInput[33m,[39m { target[33m:[39m { value[33m:[39m [32m'30'[39m } })[33m;[39m
+    [90m 47| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m components/__tests__/MatchSetup.test.tsx[2m > [22mMatchSetup[2m > [22mpasses custom duration to onStartMatch
+[31m[1mTestingLibraryElementError[22m[39m: Found multiple elements with the role "spinbutton"
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 text-center font-bold border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded p-1"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"25"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"1"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"2"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"3"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"4"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"5"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"6"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"7"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"8"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"9"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"10"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"1"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"2"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"3"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"4"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"5"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"6"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"7"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"8"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"9"[39m
+[36m/>[39m
+
+Ignored nodes: comments, script, style
+[36m<input[39m
+  [33mclass[39m=[32m"w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"[39m
+  [33mplaceholder[39m=[32m"#"[39m
+  [33mtype[39m=[32m"number"[39m
+  [33mvalue[39m=[32m"10"[39m
+[36m/>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"min-h-screen bg-gray-50 dark:bg-gray-900 p-6 flex flex-col transition-colors duration-300"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"text-center mb-8"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"text-4xl font-extrabold text-gray-900 dark:text-white mb-2"[39m
+        [36m>[39m
+          [0mKorfStat Pro[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-gray-500 dark:text-gray-400 mb-4"[39m
+        [36m>[39m
+          [0mMatch Configuration[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm font-bold text-gray-500 dark:text-gray-400"[39m
+          [36m>[39m
+            [0mHalf Duration:[0m
+          [36m</span>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"w-12 text-center font-bold border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded p-1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m"25"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm text-gray-500 dark:text-gray-400"[39m
+          [36m>[39m
+            [0mmins[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col lg:flex-row gap-6 mb-8 max-w-7xl mx-auto w-full flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex-1 min-w-[350px] flex flex-col h-full transition-colors relative"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2 mb-4"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-lg font-bold flex items-center gap-2 text-blue-700 dark:text-blue-400"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-users"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"20"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"20"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 3.128a4 4 0 0 1 0 7.744"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 21v-2a4 4 0 0 0-3-3.87"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"9"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mHome Team[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"[39m
+                  [33mtitle[39m=[32m"Load Saved Team"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-download"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"18"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 15V3"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m7 10 5 5 5-5"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"p-1.5 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"[39m
+                [33mtitle[39m=[32m"Save Team As Club"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-save"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M7 3v4a1 1 0 0 0 1 1h7"[39m
+       ...
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m getElementError node_modules/@testing-library/dom/dist/query-helpers.js:[2m20:35[22m[39m
+[90m [2m❯[22m getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:[2m23:10[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m55:13[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m components/__tests__/MatchSetup.test.tsx:[2m118:38[22m[39m
+    [90m116| [39m
+    [90m117| [39m        [90m// Change duration to 30 minutes[39m
+    [90m118| [39m        [35mconst[39m durationInput [33m=[39m screen[33m.[39m[34mgetByRole[39m([32m'spinbutton'[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m119| [39m        fireEvent[33m.[39m[34mchange[39m(durationInput[33m,[39m { target[33m:[39m { value[33m:[39m [32m'30'[39m } })[33m;[39m
+    [90m120| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m8 passed[39m[22m[90m (11)[39m
+[2m      Tests [22m [1m[31m14 failed[39m[22m[2m | [22m[1m[32m60 passed[39m[22m[90m (74)[39m
+[2m   Start at [22m 11:37:51
+[2m   Duration [22m 3.63s[2m (transform 1.34s, setup 714ms, import 3.17s, tests 3.40s, environment 7.92s)[22m
+

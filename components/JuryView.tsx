@@ -115,7 +115,7 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack }
         <div className="min-h-screen bg-slate-900 text-slate-100 p-6">
             <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-4 mb-8 border-b border-slate-700 pb-4">
-                    <button onClick={onBack} className="p-2 bg-slate-800 rounded hover:bg-slate-700"><ArrowLeft /></button>
+                    <button onClick={onBack} className="p-2 bg-slate-800 rounded hover:bg-slate-700" aria-label="Back"><ArrowLeft /></button>
                     <h1 className="text-2xl font-bold">Jury / Table Officials Interface</h1>
                 </div>
 
@@ -218,6 +218,10 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack }
                     <div className="space-y-6">
                         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
                             <h3 className="font-bold text-slate-300 mb-4 flex items-center gap-2"><AlertOctagon /> Disciplinary</h3>
+                            <div className="flex justify-between text-sm mb-4 text-slate-400 font-mono bg-slate-900/50 p-2 rounded">
+                                <span className="text-red-400">Home Fouls: {matchState.events.filter(e => e.teamId === matchState.homeTeam.id && e.type === 'FOUL').length}</span>
+                                <span className="text-blue-400">Away Fouls: {matchState.events.filter(e => e.teamId === matchState.awayTeam.id && e.type === 'FOUL').length}</span>
+                            </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <button
                                     onClick={() => initiateCard('YELLOW')}

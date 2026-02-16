@@ -1,5 +1,10 @@
 # KorfStat Pro 🏀
 
+[![CI/CD Pipeline](https://github.com/NesiciCoding/korfstat-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/NesiciCoding/korfstat-pro/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/NesiciCoding/korfstat-pro/branch/main/graph/badge.svg)](https://codecov.io/gh/NesiciCoding/korfstat-pro)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **The Ultimate Korfball Statistics & Management Tool**
 
 Welcome to **KorfStat Pro**, a professional-grade application designed to help Korfball teams, coaches, and officials track match statistics, manage game clocks, and visualize performance in real-time. Whether you are a coach looking for detailed insights or a table official managing the scoreboard, KorfStat Pro makes it simple.

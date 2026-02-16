@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import HomePage from './components/HomePage';
 import MatchSetup from './components/MatchSetup';
-import MatchTracker from './components/MatchTracker';
-import StatsView from './components/StatsView';
-import JuryView from './components/JuryView';
-import LiveStatsView from './components/LiveStatsView';
-import MatchHistory from './components/MatchHistory';
+
+// Lazy load heavy route-level components for better initial bundle size
+const MatchTracker = lazy(() => import('./components/MatchTracker'));
+const StatsView = lazy(() => import('./components/StatsView'));
+const JuryView = lazy(() => import('./components/JuryView'));
+const LiveStatsView = lazy(() => import('./components/LiveStatsView'));
+const MatchHistory = lazy(() => import('./components/MatchHistory'));
 import OverallStats from './components/OverallStats';
 import StrategyPlanner from './components/StrategyPlanner';
 import LivestreamView from './components/LivestreamView';
@@ -336,41 +338,51 @@ function AppContent() {
       )}
 
       {view === 'TRACK' && (
-        <MatchTracker
-          matchState={derivedMatchState}
-          onUpdateMatch={handleUpdateMatch}
-          onFinishMatch={handleFinishMatch}
-          onViewChange={setView}
-        />
+        <Suspense fallback={<div className="loading-fallback">Loading Match Tracker...</div>}>
+          <MatchTracker
+            matchState={derivedMatchState}
+            onUpdateMatch={handleUpdateMatch}
+            onFinishMatch={handleFinishMatch}
+            onViewChange={setView}
+          />
+        </Suspense>
       )}
 
       {view === 'STATS' && (
-        <StatsView
-          matchState={derivedMatchState}
-          onBack={handleBackNavigation}
-          onHome={handleExitToHome}
-        />
+        <Suspense fallback={<div className="loading-fallback">Loading Statistics...</div>}>
+          <StatsView
+            matchState={derivedMatchState}
+            onBack={handleBackNavigation}
+            onHome={handleExitToHome}
+          />
+        </Suspense>
       )}
 
       {view === 'JURY' && (
-        <JuryView
-          matchState={derivedMatchState}
-          onUpdateMatch={handleUpdateMatch}
-          onBack={handleBackNavigation}
-        />
+        <Suspense fallback={<div className="loading-fallback">Loading Jury View...</div>}>
+          <JuryView
+            matchState={derivedMatchState}
+            onUpdateMatch={handleUpdateMatch}
+            onBack={handleBackNavigation}
+          />
+        </Suspense>
       )}
 
       {view === 'LIVE' && (
-        <LiveStatsView matchState={derivedMatchState} />
+        <Suspense fallback={<div className="loading-fallback">Loading Live Stats...</div>}>
+          <LiveStatsView matchState={derivedMatchState} />
+        </Suspense>
       )}
 
       {view === 'MATCH_HISTORY' && (
-        <MatchHistory
-          matches={savedMatches}
-          onSelectMatch={(match) => { setMatchState(match); setView('STATS'); }}
-          onDeleteMatch={handleDeleteMatch}
-          onBack={() => setView('HOME')}
-        />
+        <Suspense fallback={<div className="loading-fallback">Loading History...</div>}>
+          <MatchHistory
+            matches={savedMatches}
+            onSelectMatch={(match) => { setMatchState(match); setView('STATS'); }}
+            onDeleteMatch={handleDeleteMatch}
+            onBack={() => setView('HOME')}
+          />
+        </Suspense>
       )}
 
       {view === 'OVERALL_STATS' && (

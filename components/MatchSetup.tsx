@@ -86,7 +86,7 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ p, toggleStarter, updatePlayer, r
       </button>
     </div>
 
-    <button onClick={() => removePlayer(p.id)} className="text-gray-400 hover:text-red-600 p-1">
+    <button onClick={() => removePlayer(p.id)} className="text-gray-400 hover:text-red-600 p-1" aria-label="Remove Player" title="Remove Player">
       <Trash2 size={16} />
     </button>
   </div>
@@ -223,6 +223,7 @@ const TeamConfig = ({
           onChange={(e) => setName(e.target.value)}
           className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg font-semibold rounded-md px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
           placeholder="Enter team name..."
+          aria-label={`${teamId === 'HOME' ? 'Home' : 'Away'} Team Name`}
         />
       </div>
 
@@ -280,6 +281,7 @@ const TeamConfig = ({
         <button
           onClick={addPlayer}
           className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-indigo-500 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all font-medium"
+          aria-label={`Add Player to ${teamId === 'HOME' ? 'Home' : 'Away'} Team`}
         >
           <Plus size={18} /> Add Player
         </button>
@@ -430,6 +432,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
             value={duration}
             onChange={e => setDuration(parseInt(e.target.value) || 25)}
             className="w-12 text-center font-bold border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded p-1"
+            aria-label="Half Duration"
           />
           <span className="text-sm text-gray-500 dark:text-gray-400">mins</span>
         </div>
