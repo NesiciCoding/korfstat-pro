@@ -2,6 +2,7 @@ import React from 'react';
 import { MatchState } from '../types';
 import { ArrowLeft, Calendar, ChevronRight, Trash2, FileJson, FileText } from 'lucide-react';
 import { generatePDF, generateJSON } from '../services/reportGenerator';
+import { getScore } from '../utils/matchUtils';
 
 interface MatchHistoryProps {
   matches: MatchState[];
@@ -11,8 +12,7 @@ interface MatchHistoryProps {
 }
 
 const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onDeleteMatch, onBack }) => {
-  const getScore = (match: MatchState, teamId: 'HOME' | 'AWAY') =>
-    match.events.filter(e => e.teamId === teamId && e.result === 'GOAL').length;
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 transition-colors duration-300">

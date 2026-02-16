@@ -112,6 +112,17 @@ export const useBroadcastSync = (
         lastBroadcastStateStr.current = stateStr;
     }, []);
 
+    // Debounced version for frequent updates (e.g., clock ticks)
+    const debouncedBroadcast = useRef<NodeJS.Timeout | null>(null);
+    const broadcastUpdateDebounced = useCallback((state: MatchState, delay: number = 100) => {
+        if (debouncedBroadcast.current) {
+            clearTimeout(debouncedBroadcast.current);
+        }
+        debouncedBroadcast.current = setTimeout(() => {
+            broadcastUpdate(state);
+        }, delay);
+    }, [broadcastUpdate]);
+
     const registerView = useCallback((viewName: string) => {
         viewNameRef.current = viewName;
         if (socketRef.current) {
@@ -119,5 +130,7 @@ export const useBroadcastSync = (
         }
     }, []);
 
-    return { broadcastUpdate, activeSessions, registerView };
+
+    return { broadcastUpdate, broadcastUpdateDebounced, activeSessions, registerView };
 }; // End of file
+

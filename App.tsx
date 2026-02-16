@@ -15,6 +15,7 @@ import ShotClockView from './components/ShotClockView';
 import SpotterView from './components/SpotterView';
 import SettingsModal from './components/SettingsModal';
 import SeasonManager from './components/SeasonManager';
+import ErrorBoundary from './components/ErrorBoundary';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { MatchState, Team } from './types';
 import { Settings } from 'lucide-react';
@@ -230,7 +231,7 @@ function AppContent() {
     });
   }, [matchState]);
 
-  const handleStartMatch = (home: Team, away: Team, durationSeconds: number, seasonId?: string) => {
+  const handleStartMatch = useCallback((home: Team, away: Team, durationSeconds: number, seasonId?: string) => {
     const newState: MatchState = {
       id: crypto.randomUUID(),
       seasonId,
@@ -249,9 +250,9 @@ function AppContent() {
     setMatchState(newState);
     broadcastUpdate(newState);
     setView('TRACK');
-  };
+  }, [broadcastUpdate]);
 
-  const handleFinishMatch = () => {
+  const handleFinishMatch = useCallback(() => {
     // Ensure everything stopped
     const finalState = {
       ...derivedMatchState, // Capture final derived values
@@ -270,22 +271,22 @@ function AppContent() {
     console.log('Match saved to local storage');
 
     setView('STATS');
-  };
+  }, [derivedMatchState, savedMatches, broadcastUpdate]);
 
-  const handleDeleteMatch = (id: string) => {
+  const handleDeleteMatch = useCallback((id: string) => {
     const newHistory = savedMatches.filter(m => m.id !== id);
     setSavedMatches(newHistory);
-  };
+  }, [savedMatches]);
 
-  const handleBackNavigation = () => {
+  const handleBackNavigation = useCallback(() => {
     if (window.opener) {
       window.close();
     } else {
       setView('TRACK');
     }
-  };
+  }, []);
 
-  const handleExitToHome = () => {
+  const handleExitToHome = useCallback(() => {
     // Completely reset match state to allow new match
     const resetState: MatchState = {
       isConfigured: false,
@@ -303,7 +304,7 @@ function AppContent() {
     broadcastUpdate(resetState);
     localStorage.removeItem('korfstat_current_match');
     setView('HOME');
-  };
+  }, [settings, broadcastUpdate]);
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 font-sans transition-colors duration-300">
@@ -430,10 +431,13 @@ function AppContent() {
   );
 };
 
+
 export default function App() {
   return (
-    <SettingsProvider>
-      <AppContent />
-    </SettingsProvider>
+    <ErrorBoundary>
+      <SettingsProvider>
+        <AppContent />
+      </SettingsProvider>
+    </ErrorBoundary>
   );
 };

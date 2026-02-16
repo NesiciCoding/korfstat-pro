@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { MatchState, SHOT_TYPES } from "../types";
+import { getScore, formatTime } from "../utils/matchUtils";
 
 const getClient = () => {
   // 1. Try to get from Local Storage (User Settings)
@@ -181,14 +182,4 @@ export const generateLiveCommentary = async (matchData: MatchState): Promise<str
     }
     return "Technical timeout on the commentary box...";
   }
-};
-
-// Helper inside service (duplicate of tracker logic, but simple enough)
-const getScore = (match: MatchState, teamId: 'HOME' | 'AWAY') =>
-  match.events.filter(e => e.teamId === teamId && e.result === 'GOAL').length;
-
-const formatTime = (seconds: number) => {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
 };

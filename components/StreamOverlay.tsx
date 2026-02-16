@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MatchState, TeamId, MatchEvent } from '../types';
 import { Clock, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, Shirt } from 'lucide-react';
+import { getScore, formatTime } from '../utils/matchUtils';
 
 interface StreamOverlayProps {
     matchState: MatchState;
@@ -77,13 +78,7 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
     }, [matchState.events, activePopup, matchState.overlayOverride]);
 
 
-    const getScore = (teamId: TeamId) => matchState.events.filter(e => e.teamId === teamId && e.result === 'GOAL').length;
 
-    const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60);
-        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    };
 
     // URL param to toggle bg
     const params = new URLSearchParams(window.location.search);
@@ -111,7 +106,7 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
                     <div className="bg-slate-900 border-r border-slate-800 text-white w-64 flex items-center justify-between px-6 py-2 relative overflow-hidden">
                         <div className="absolute left-0 top-0 bottom-0 w-3" style={{ backgroundColor: matchState.homeTeam.color }}></div>
                         <span className="font-bold text-2xl uppercase tracking-wider truncate pl-2">{matchState.homeTeam.name}</span>
-                        <span className="font-black text-5xl font-mono leading-none">{getScore('HOME')}</span>
+                        <span className="font-black text-5xl font-mono leading-none">{getScore(matchState, 'HOME')}</span>
                     </div>
 
                     {/* Center Clock */}
@@ -143,7 +138,7 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
                     <div className="bg-slate-900 border-l border-slate-800 text-white w-64 flex items-center justify-between px-6 py-2 relative overflow-hidden flex-row-reverse">
                         <div className="absolute right-0 top-0 bottom-0 w-3" style={{ backgroundColor: matchState.awayTeam.color }}></div>
                         <span className="font-bold text-2xl uppercase tracking-wider truncate pr-2">{matchState.awayTeam.name}</span>
-                        <span className="font-black text-5xl font-mono leading-none">{getScore('AWAY')}</span>
+                        <span className="font-black text-5xl font-mono leading-none">{getScore(matchState, 'AWAY')}</span>
                     </div>
                 </div>
             )}

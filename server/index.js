@@ -7,10 +7,17 @@ const app = express();
 app.use(cors());
 
 const server = createServer(app);
+
+// Configure CORS based on environment
+const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean)
+    : ['*']; // Allow all in development
+
 const io = new Server(server, {
     cors: {
-        origin: "*", // Allow any origin for local dev
-        methods: ["GET", "POST"]
+        origin: allowedOrigins.length > 0 && allowedOrigins[0] !== '*' ? allowedOrigins : "*",
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
@@ -172,7 +179,21 @@ app.get('/api/ticker', (req, res) => {
     res.json(getTickerData(currentState));
 });
 
-const PORT = 3002;
-server.listen(PORT, () => {
-    console.log(`WebSocket server running on port ${PORT}`);
+// Health Check Endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        connections: connectedClients.size,
+        hasActiveMatch: currentState !== null
+    });
 });
+
+const PORT = process.env.PORT || 3002;
+server.listen(PORT, () => {
+    console.log(`✅ KorfStat Pro Server running on port ${PORT}`);
+    console.log(`📡 WebSocket server ready for real-time sync`);
+    console.log(`🏥 Health check available at http://localhost:${PORT}/health`);
+});
+

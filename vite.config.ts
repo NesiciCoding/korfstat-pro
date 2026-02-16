@@ -39,10 +39,51 @@ export default defineConfig(({ mode }) => {
         }
       })
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Split vendor code from app code
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-socket': ['socket.io-client'],
+            'vendor-charts': ['recharts'],
+            'vendor-pdf': ['jspdf'],
+            'vendor-excel': ['xlsx'],
+            'vendor-ui': ['lucide-react'],
+          }
+        }
+      },
+      // Increase chunk size warning limit for large components
+      chunkSizeWarningLimit: 1000,
+      // Enable minification
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: mode === 'production', // Remove console.log in production
+        }
+      }
+    },
     test: {
       globals: true,
       environment: 'jsdom',
       setupFiles: './test/setup.ts',
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'json', 'html', 'lcov'],
+        exclude: [
+          'node_modules/',
+          'test/',
+          '**/*.test.ts',
+          '**/*.test.tsx',
+          '**/types.ts',
+          'vite.config.ts',
+          'server/index.js',
+        ],
+        statements: 70,
+        branches: 65,
+        functions: 70,
+        lines: 70,
+      },
     },
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),

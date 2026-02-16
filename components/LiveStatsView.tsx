@@ -1,18 +1,13 @@
 import React from 'react';
 import { MatchState } from '../types';
+import { getScore, formatTime } from '../utils/matchUtils';
 
 interface LiveStatsViewProps {
     matchState: MatchState;
 }
 
 const LiveStatsView: React.FC<LiveStatsViewProps> = ({ matchState }) => {
-    const getScore = (teamId: 'HOME' | 'AWAY') => matchState.events.filter(e => e.teamId === teamId && e.result === 'GOAL').length;
 
-    const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60);
-        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    };
 
     return (
         <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 overflow-hidden">
@@ -21,7 +16,7 @@ const LiveStatsView: React.FC<LiveStatsViewProps> = ({ matchState }) => {
                 {/* Home */}
                 <div className="text-center">
                     <div className="text-4xl font-bold uppercase mb-4" style={{ color: matchState.homeTeam.color }}>{matchState.homeTeam.name}</div>
-                    <div className="text-[12rem] font-black leading-none bg-zinc-900 rounded-3xl py-8 shadow-inner">{getScore('HOME')}</div>
+                    <div className="text-[12rem] font-black leading-none bg-zinc-900 rounded-3xl py-8 shadow-inner">{getScore(matchState, 'HOME')}</div>
                     {matchState.possession === 'HOME' && <div className="mt-4 text-3xl font-bold text-yellow-500 animate-pulse tracking-widest uppercase">POSSESSION</div>}
                 </div>
 
@@ -47,7 +42,7 @@ const LiveStatsView: React.FC<LiveStatsViewProps> = ({ matchState }) => {
                 {/* Away */}
                 <div className="text-center">
                     <div className="text-4xl font-bold uppercase mb-4" style={{ color: matchState.awayTeam.color }}>{matchState.awayTeam.name}</div>
-                    <div className="text-[12rem] font-black leading-none bg-zinc-900 rounded-3xl py-8 shadow-inner">{getScore('AWAY')}</div>
+                    <div className="text-[12rem] font-black leading-none bg-zinc-900 rounded-3xl py-8 shadow-inner">{getScore(matchState, 'AWAY')}</div>
                     {matchState.possession === 'AWAY' && <div className="mt-4 text-3xl font-bold text-yellow-500 animate-pulse tracking-widest uppercase">POSSESSION</div>}
                 </div>
             </div>
@@ -80,4 +75,4 @@ const LiveStatsView: React.FC<LiveStatsViewProps> = ({ matchState }) => {
     );
 };
 
-export default LiveStatsView;
+export default React.memo(LiveStatsView);
