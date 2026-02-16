@@ -3,7 +3,7 @@ import { MatchState, TeamId, Player, ShotType } from '../types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import KorfballField from './KorfballField';
 import PlayerProfileModal from './PlayerProfileModal';
-import { Download, ArrowLeft, Home, FileSpreadsheet, ChevronDown } from 'lucide-react';
+import { Download, ArrowLeft, Home, FileSpreadsheet, ChevronDown, Video } from 'lucide-react';
 import { generatePDF, generateJSON } from '../services/reportGenerator';
 import { generateExcel } from '../services/excelGenerator';
 import { generateMatchInsights } from '../services/analysisService';
@@ -12,9 +12,10 @@ interface StatsViewProps {
   matchState: MatchState;
   onBack: () => void;
   onHome?: () => void;
+  onAnalyze?: () => void;
 }
 
-const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome }) => {
+const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAnalyze }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<{ player: Player, teamId: TeamId } | null>(null);
@@ -173,17 +174,27 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome }) => 
           </div>
 
           <div className="flex gap-3 relative">
+            {onAnalyze && (
+              <button
+                onClick={onAnalyze}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm transition-all font-medium"
+              >
+                <Video size={18} />
+                Video Analysis
+              </button>
+            )}
+
             <button
               onClick={() => setShowInsights(!showInsights)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium border ${showInsights ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700'}`}
             >
               <span>📊</span>
-              Analyze Match
+              Show Insights
             </button>
 
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-md transition-all font-medium"
+              className="flex items-center gap-2 px-6 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 shadow-sm transition-all font-medium"
             >
               <Download size={18} />
               Export
@@ -225,8 +236,8 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome }) => 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {insights.map((insight, idx) => (
                 <div key={idx} className={`p-4 rounded-lg border flex items-start gap-3 ${insight.type === 'POSITIVE' ? 'bg-green-50 border-green-100 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200' :
-                    insight.type === 'NEGATIVE' ? 'bg-red-50 border-red-100 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200' :
-                      'bg-gray-50 border-gray-100 text-gray-800 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200'
+                  insight.type === 'NEGATIVE' ? 'bg-red-50 border-red-100 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200' :
+                    'bg-gray-50 border-gray-100 text-gray-800 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200'
                   }`}>
                   {insight.type === 'POSITIVE' ? <span>✅</span> :
                     insight.type === 'NEGATIVE' ? <span>⚠️</span> :

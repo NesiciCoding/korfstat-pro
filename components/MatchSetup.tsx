@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Team, TeamId, Player, Gender, Position, SavedTeam } from '../types';
-import { Plus, Trash2, PlayCircle, User, Users, Shield, Sword, Paintbrush, Save, Download, ChevronDown } from 'lucide-react';
+import { Club } from '../types/club';
+import { ClubService } from '../services/clubService';
+import { Plus, Trash2, PlayCircle, User, Users, Shield, Sword, Paintbrush, Save, Download, ChevronDown, Database } from 'lucide-react';
 
 interface MatchSetupProps {
   onStartMatch: (home: Team, away: Team, durationSeconds: number, seasonId?: string) => void;
@@ -102,8 +104,10 @@ const TeamConfig = ({
   setPlayers,
   suggestions = [],
   savedTeams = [],
+  clubs = [],
   onSaveTeam,
   onLoadTeam,
+  onLoadClub,
   onDeleteTeam
 }: {
   teamId: TeamId,
@@ -115,11 +119,14 @@ const TeamConfig = ({
   setPlayers: (p: Player[]) => void,
   suggestions?: Player[],
   savedTeams?: SavedTeam[],
+  clubs?: Club[],
   onSaveTeam: () => void,
   onLoadTeam: (team: SavedTeam) => void,
+  onLoadClub: (club: Club) => void,
   onDeleteTeam?: (team: SavedTeam) => void
 }) => {
   const [showLoadMenu, setShowLoadMenu] = useState(false);
+  const [showClubMenu, setShowClubMenu] = useState(false);
 
   const addPlayer = () => {
     const newPlayer: Player = {
@@ -168,7 +175,7 @@ const TeamConfig = ({
             </button>
             {showLoadMenu && (
               <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg z-50 py-1">
-                <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase border-b border-gray-100 dark:border-gray-700">Load Club</div>
+                <div className="px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase border-b border-gray-100 dark:border-gray-700">Load Snapshot</div>
                 {savedTeams.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-gray-400 italic">No saved teams</div>
                 ) : (
@@ -186,6 +193,36 @@ const TeamConfig = ({
                         title="Delete Team"
                       >
                         <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Load from Club */}
+          <div className="relative">
+            <button
+              onClick={() => setShowClubMenu(!showClubMenu)}
+              className="p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              title="Load from Club Database"
+            >
+              <Database size={18} />
+            </button>
+            {showClubMenu && (
+              <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg z-50 py-1">
+                <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase border-b border-gray-100 dark:border-gray-700">Load Club</div>
+                {(!clubs || clubs.length === 0) ? (
+                  <div className="px-3 py-2 text-sm text-gray-400 italic">No clubs found</div>
+                ) : (
+                  clubs.map(club => (
+                    <div key={club.id} className="flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/40 px-3 py-2 group">
+                      <button
+                        onClick={() => { onLoadClub(club); setShowClubMenu(false); }}
+                        className="flex-1 text-left text-sm text-gray-700 dark:text-gray-200 font-medium"
+                      >
+                        {club.name}
                       </button>
                     </div>
                   ))
@@ -420,6 +457,32 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
     localStorage.setItem('korfstat_saved_teams', JSON.stringify(newSavedTeams));
   };
 
+  const [clubs, setClubs] = useState<Club[]>([]);
+
+  React.useEffect(() => {
+    setClubs(ClubService.getAllClubs());
+  }, []);
+
+  const handleLoadClub = (club: Club, setTeamName: (s: string) => void, setTeamColor: (s: string) => void, setTeamPlayers: (p: Player[]) => void) => {
+    console.log('Loading club:', club.name);
+    setTeamName(club.name);
+    setTeamColor(club.primaryColor);
+
+    const mappedPlayers: Player[] = club.players.map((p) => ({
+      id: p.id, // Use persistent ID
+      number: p.shirtNumber || 0,
+      name: `${p.firstName} ${p.lastName}`.trim(),
+      gender: p.gender,
+      initialPosition: p.positions?.[0] || 'ATTACK',
+      isStarter: false
+    }));
+
+    // Auto-select 8 starters if possible
+    mappedPlayers.slice(0, 8).forEach(p => p.isStarter = true);
+
+    setTeamPlayers(mappedPlayers);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 flex flex-col transition-colors duration-300">
       <div className="text-center mb-8">
@@ -464,8 +527,10 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
           players={homePlayers} setPlayers={setHomePlayers}
           suggestions={allPlayers}
           savedTeams={savedTeams}
+          clubs={clubs}
           onSaveTeam={() => handleSaveTeam(homeName, homeColor, homePlayers)}
           onLoadTeam={(team) => handleLoadTeam(team, setHomeName, setHomeColor, setHomePlayers, 'h')}
+          onLoadClub={(club) => handleLoadClub(club, setHomeName, setHomeColor, setHomePlayers)}
           onDeleteTeam={handleDeleteTeam}
         />
         <TeamConfig
@@ -475,8 +540,10 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
           players={awayPlayers} setPlayers={setAwayPlayers}
           suggestions={allPlayers}
           savedTeams={savedTeams}
+          clubs={clubs}
           onSaveTeam={() => handleSaveTeam(awayName, awayColor, awayPlayers)}
           onLoadTeam={(team) => handleLoadTeam(team, setAwayName, setAwayColor, setAwayPlayers, 'a')}
+          onLoadClub={(club) => handleLoadClub(club, setAwayName, setAwayColor, setAwayPlayers)}
           onDeleteTeam={handleDeleteTeam}
         />
       </div>

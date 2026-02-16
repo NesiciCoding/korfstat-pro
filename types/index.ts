@@ -95,6 +95,20 @@ export interface MatchState {
     durationSeconds: number;
   };
   overlayOverride?: OverlayMessage | null;
+
+  // Video Sync
+  videoUrl?: string;
+  videoOffset?: number; // Time in seconds in the video where the match timer = 0
+  videoSourceType?: 'local' | 'url';
+
+  // Broadcast Theme
+  broadcastTheme?: {
+    theme: 'modern' | 'classic' | 'neon' | 'minimal';
+    font: 'roboto' | 'inter' | 'montserrat' | 'oswald';
+    accentColor?: string;
+    showShotClock?: boolean;
+    scoreboardPosition?: 'bottom' | 'top';
+  };
 }
 
 export const SHOT_TYPES: { value: ShotType; label: string; isStatic: boolean }[] = [

@@ -200,6 +200,13 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   color="amber"
                   onClick={() => onNavigate('STRATEGY')}
                 />
+                <NavCard
+                  title="Club Manager"
+                  desc="Manage clubs and rosters"
+                  icon={<Users />}
+                  color="cyan"
+                  onClick={() => onNavigate('CLUB_MANAGER')}
+                />
               </div>
             </div>
 
@@ -227,6 +234,13 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   icon={<LayoutTemplate />}
                   color="cyan"
                   onClick={() => onNavigate('JURY')}
+                />
+                <NavCard
+                  title="Spotter Interface"
+                  desc="Live event tracking"
+                  icon={<Users />}
+                  color="blue"
+                  onClick={() => onNavigate('SPOTTER')}
                 />
               </div>
             </div>

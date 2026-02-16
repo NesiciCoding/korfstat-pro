@@ -1,17 +1,18 @@
 import React from 'react';
 import { MatchState } from '../types';
-import { ArrowLeft, Calendar, ChevronRight, Trash2, FileJson, FileText } from 'lucide-react';
+import { ArrowLeft, Calendar, ChevronRight, Trash2, FileJson, FileText, Video } from 'lucide-react';
 import { generatePDF, generateJSON } from '../services/reportGenerator';
 import { getScore } from '../utils/matchUtils';
 
 interface MatchHistoryProps {
   matches: MatchState[];
   onSelectMatch: (match: MatchState) => void;
+  onAnalyzeMatch: (match: MatchState) => void;
   onDeleteMatch: (id: string) => void;
   onBack: () => void;
 }
 
-const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onDeleteMatch, onBack }) => {
+const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onAnalyzeMatch, onDeleteMatch, onBack }) => {
 
 
   return (
@@ -57,6 +58,13 @@ const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onD
                 </div>
 
                 <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-100 dark:border-gray-700">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAnalyzeMatch(match); }}
+                    className="p-2 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                    title="Video Analysis"
+                  >
+                    <Video size={18} />
+                  </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); generatePDF(match); }}
                     className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { MatchState, OverlayMessage, TeamId } from '../types';
 import StreamOverlay from './StreamOverlay'; // For Preview
 import CommentaryFeed from './CommentaryFeed';
-import { Monitor, Type, MessageSquare, Zap, Play, Square, LayoutTemplate, ALargeSmall, Maximize, History } from 'lucide-react';
+import { Monitor, Type, MessageSquare, Zap, Play, Square, LayoutTemplate, ALargeSmall, Maximize, History, Palette, Settings } from 'lucide-react';
+import { THEME_PRESETS, FONT_OPTIONS } from '../config/broadcastThemes';
 
 interface DirectorDashboardProps {
     matchState: MatchState;
@@ -21,11 +22,28 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
         visible: true
     });
 
-    const [activeTab, setActiveTab] = useState<'QUICK' | 'CUSTOM'>('QUICK');
+    const [activeTab, setActiveTab] = useState<'QUICK' | 'CUSTOM' | 'THEME'>('QUICK');
 
     // Helper to push state update
     const pushOverride = (override: OverlayMessage | null) => {
         const newState = { ...matchState, overlayOverride: override };
+        setMatchState(newState);
+        broadcastUpdate(newState);
+    };
+
+    // Helper to update theme
+    const updateTheme = (themeUpdates: Partial<NonNullable<MatchState['broadcastTheme']>>) => {
+        const newState = {
+            ...matchState,
+            broadcastTheme: {
+                theme: 'modern' as const,
+                font: 'inter' as const,
+                showShotClock: true,
+                scoreboardPosition: 'bottom' as const,
+                ...matchState.broadcastTheme,
+                ...themeUpdates
+            }
+        };
         setMatchState(newState);
         broadcastUpdate(newState);
     };
@@ -67,6 +85,9 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
         ...matchState,
         overlayOverride: previewMessage
     };
+
+    const currentTheme = matchState.broadcastTheme?.theme || 'modern';
+    const currentFont = matchState.broadcastTheme?.font || 'inter';
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col font-sans">
@@ -118,108 +139,198 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                         )}
                     </div>
 
-                    {/* Quick Actions */}
-                    <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg">
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><Zap size={14} /> Quick Triggers (6s)</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button onClick={() => triggerQuickPopup('GOAL', 'HOME')} className="bg-indigo-900/50 hover:bg-indigo-600 border border-indigo-700 hover:border-indigo-500 text-indigo-100 py-3 rounded font-bold transition-all text-sm flex items-center justify-center gap-2">
-                                GOAL HOME
-                            </button>
-                            <button onClick={() => triggerQuickPopup('GOAL', 'AWAY')} className="bg-indigo-900/50 hover:bg-indigo-600 border border-indigo-700 hover:border-indigo-500 text-indigo-100 py-3 rounded font-bold transition-all text-sm flex items-center justify-center gap-2">
-                                GOAL AWAY
-                            </button>
-                            <button onClick={() => triggerQuickPopup('TIMEOUT', 'HOME')} className="bg-purple-900/50 hover:bg-purple-600 border border-purple-700 hover:border-purple-500 text-purple-100 py-3 rounded font-bold transition-all text-sm flex items-center justify-center gap-2">
-                                TIMEOUT HOME
-                            </button>
-                            <button onClick={() => triggerQuickPopup('TIMEOUT', 'AWAY')} className="bg-purple-900/50 hover:bg-purple-600 border border-purple-700 hover:border-purple-500 text-purple-100 py-3 rounded font-bold transition-all text-sm flex items-center justify-center gap-2">
-                                TIMEOUT AWAY
-                            </button>
-                        </div>
+                    {/* Tab Navigation */}
+                    <div className="flex bg-slate-900 p-1 rounded-lg gap-1">
+                        <button
+                            onClick={() => setActiveTab('QUICK')}
+                            className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${activeTab === 'QUICK' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            <Zap size={14} /> Quick
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('CUSTOM')}
+                            className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${activeTab === 'CUSTOM' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            <Type size={14} /> Custom
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('THEME')}
+                            className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${activeTab === 'THEME' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            <Palette size={14} /> Theme
+                        </button>
                     </div>
 
-
-                    {/* Custom Builder */}
-                    <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg flex-1">
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><Type size={14} /> Custom Message Builder</h3>
-
-                        <div className="space-y-4">
-                            {/* Type Selector */}
-                            <div className="flex bg-slate-900 p-1 rounded-lg">
-                                <button
-                                    onClick={() => setPreviewMessage({ ...previewMessage, type: 'POPUP' })}
-                                    className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${previewMessage.type === 'POPUP' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-                                >
-                                    <LayoutTemplate size={16} /> Lower 3rd
+                    {/* Quick Actions */}
+                    {activeTab === 'QUICK' && (
+                        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg animate-in fade-in duration-200">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><Zap size={14} /> Quick Triggers (6s)</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => triggerQuickPopup('GOAL', 'HOME')} className="bg-indigo-900/50 hover:bg-indigo-600 border border-indigo-700 hover:border-indigo-500 text-indigo-100 py-3 rounded font-bold transition-all text-sm flex items-center justify-center gap-2">
+                                    GOAL HOME
                                 </button>
-                                <button
-                                    onClick={() => setPreviewMessage({ ...previewMessage, type: 'SCROLL' })}
-                                    className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${previewMessage.type === 'SCROLL' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-                                >
-                                    <ALargeSmall size={16} /> Ticker
+                                <button onClick={() => triggerQuickPopup('GOAL', 'AWAY')} className="bg-indigo-900/50 hover:bg-indigo-600 border border-indigo-700 hover:border-indigo-500 text-indigo-100 py-3 rounded font-bold transition-all text-sm flex items-center justify-center gap-2">
+                                    GOAL AWAY
                                 </button>
-                                <button
-                                    onClick={() => setPreviewMessage({ ...previewMessage, type: 'FULLSCREEN' })}
-                                    className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${previewMessage.type === 'FULLSCREEN' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-                                >
-                                    <Maximize size={16} /> Full
+                                <button onClick={() => triggerQuickPopup('TIMEOUT', 'HOME')} className="bg-purple-900/50 hover:bg-purple-600 border border-purple-700 hover:border-purple-500 text-purple-100 py-3 rounded font-bold transition-all text-sm flex items-center justify-center gap-2">
+                                    TIMEOUT HOME
+                                </button>
+                                <button onClick={() => triggerQuickPopup('TIMEOUT', 'AWAY')} className="bg-purple-900/50 hover:bg-purple-600 border border-purple-700 hover:border-purple-500 text-purple-100 py-3 rounded font-bold transition-all text-sm flex items-center justify-center gap-2">
+                                    TIMEOUT AWAY
                                 </button>
                             </div>
+                        </div>
+                    )}
 
-                            {/* Inputs */}
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1">Main Text</label>
-                                <input
-                                    value={previewMessage.text}
-                                    onChange={(e) => setPreviewMessage({ ...previewMessage, text: e.target.value })}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none font-bold"
-                                    placeholder={previewMessage.type === 'SCROLL' ? "Breaking News..." : "GOAL!"}
-                                />
-                            </div>
+                    {/* Theme & Style Panel */}
+                    {activeTab === 'THEME' && (
+                        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg flex-1 overflow-y-auto animate-in fade-in duration-200">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><Palette size={14} /> Broadcast Theme</h3>
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1">Sub Text / Detail</label>
-                                <input
-                                    value={previewMessage.subText || ''}
-                                    onChange={(e) => setPreviewMessage({ ...previewMessage, subText: e.target.value })}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    placeholder={previewMessage.type === 'SCROLL' ? "Additional details..." : "Player Name"}
-                                />
-                            </div>
-
-                            {/* Color Picker (for Popup) */}
-                            {previewMessage.type === 'POPUP' && (
+                            <div className="space-y-6">
+                                {/* Theme Selector */}
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 mb-1">Accent Color</label>
-                                    <div className="flex gap-2">
-                                        {[
-                                            { c: '#6366f1', n: 'Indigo' },
-                                            { c: '#ef4444', n: 'Red' },
-                                            { c: '#eab308', n: 'Yellow' },
-                                            { c: '#22c55e', n: 'Green' },
-                                            { c: matchState.homeTeam.color, n: 'Home' },
-                                            { c: matchState.awayTeam.color, n: 'Away' }
-                                        ].map(col => (
-                                            <button
-                                                key={col.c}
-                                                onClick={() => setPreviewMessage({ ...previewMessage, color: col.c })}
-                                                className={`w-8 h-8 rounded-full border-2 ${previewMessage.color === col.c ? 'border-white ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-800' : 'border-transparent opacity-70 hover:opacity-100'}`}
-                                                style={{ backgroundColor: col.c }}
-                                                title={col.n}
-                                            />
-                                        ))}
+                                    <label className="block text-xs font-bold text-slate-500 mb-3">Visual Style</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {(Object.keys(THEME_PRESETS) as Array<keyof typeof THEME_PRESETS>).map(themeKey => {
+                                            const preset = THEME_PRESETS[themeKey];
+                                            return (
+                                                <button
+                                                    key={themeKey}
+                                                    onClick={() => updateTheme({ theme: themeKey })}
+                                                    className={`p-4 rounded-lg border-2 transition-all text-left ${currentTheme === themeKey
+                                                        ? 'border-indigo-500 bg-indigo-900/30'
+                                                        : 'border-slate-700 hover:border-slate-600 bg-slate-900'
+                                                        }`}
+                                                >
+                                                    <div className="font-bold text-sm mb-1">{preset.name}</div>
+                                                    <div className="text-xs text-slate-400">{preset.description}</div>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
-                            )}
 
-                            <button
-                                onClick={handleGoLive}
-                                className="w-full mt-4 bg-green-600 hover:bg-green-500 text-white text-lg font-black uppercase py-4 rounded-xl shadow-lg transform hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
-                            >
-                                <Play size={24} fill="currentColor" /> GO LIVE
-                            </button>
-                            <p className="text-center text-xs text-slate-500 mt-2">Updates override immediately.</p>
+                                {/* Font Selector */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Typography</label>
+                                    <select
+                                        value={currentFont}
+                                        onChange={(e) => updateTheme({ font: e.target.value as any })}
+                                        className="w-full bg-slate-900 border border-slate-700 rounded p-3 text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    >
+                                        {(Object.keys(FONT_OPTIONS) as Array<keyof typeof FONT_OPTIONS>).map(fontKey => (
+                                            <option key={fontKey} value={fontKey}>{FONT_OPTIONS[fontKey].name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Shot Clock Toggle */}
+                                <div>
+                                    <label className="flex items-center justify-between cursor-pointer">
+                                        <span className="text-xs font-bold text-slate-500">Show Shot Clock</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={matchState.broadcastTheme?.showShotClock !== false}
+                                            onChange={(e) => updateTheme({ showShotClock: e.target.checked })}
+                                            className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                    </label>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-700">
+                                    <p className="text-xs text-slate-500 italic">
+                                        Theme changes are applied instantly to the preview and broadcast.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    )}
+
+                    {/* Custom Builder */}
+                    {activeTab === 'CUSTOM' && (
+                        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg flex-1 animate-in fade-in duration-200">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><Type size={14} /> Custom Message Builder</h3>
+
+                            <div className="space-y-4">
+                                {/* Type Selector */}
+                                <div className="flex bg-slate-900 p-1 rounded-lg">
+                                    <button
+                                        onClick={() => setPreviewMessage({ ...previewMessage, type: 'POPUP' })}
+                                        className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${previewMessage.type === 'POPUP' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                                    >
+                                        <LayoutTemplate size={16} /> Lower 3rd
+                                    </button>
+                                    <button
+                                        onClick={() => setPreviewMessage({ ...previewMessage, type: 'SCROLL' })}
+                                        className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${previewMessage.type === 'SCROLL' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                                    >
+                                        <ALargeSmall size={16} /> Ticker
+                                    </button>
+                                    <button
+                                        onClick={() => setPreviewMessage({ ...previewMessage, type: 'FULLSCREEN' })}
+                                        className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${previewMessage.type === 'FULLSCREEN' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                                    >
+                                        <Maximize size={16} /> Full
+                                    </button>
+                                </div>
+
+                                {/* Inputs */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-1">Main Text</label>
+                                    <input
+                                        value={previewMessage.text}
+                                        onChange={(e) => setPreviewMessage({ ...previewMessage, text: e.target.value })}
+                                        className="w-full bg-slate-900 border border-slate-700 rounded p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none font-bold"
+                                        placeholder={previewMessage.type === 'SCROLL' ? "Breaking News..." : "GOAL!"}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-1">Sub Text / Detail</label>
+                                    <input
+                                        value={previewMessage.subText || ''}
+                                        onChange={(e) => setPreviewMessage({ ...previewMessage, subText: e.target.value })}
+                                        className="w-full bg-slate-900 border border-slate-700 rounded p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        placeholder={previewMessage.type === 'SCROLL' ? "Additional details..." : "Player Name"}
+                                    />
+                                </div>
+
+                                {/* Color Picker (for Popup) */}
+                                {previewMessage.type === 'POPUP' && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 mb-1">Accent Color</label>
+                                        <div className="flex gap-2">
+                                            {[
+                                                { c: '#6366f1', n: 'Indigo' },
+                                                { c: '#ef4444', n: 'Red' },
+                                                { c: '#eab308', n: 'Yellow' },
+                                                { c: '#22c55e', n: 'Green' },
+                                                { c: matchState.homeTeam.color, n: 'Home' },
+                                                { c: matchState.awayTeam.color, n: 'Away' }
+                                            ].map(col => (
+                                                <button
+                                                    key={col.c}
+                                                    onClick={() => setPreviewMessage({ ...previewMessage, color: col.c })}
+                                                    className={`w-8 h-8 rounded-full border-2 ${previewMessage.color === col.c ? 'border-white ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-800' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                                                    style={{ backgroundColor: col.c }}
+                                                    title={col.n}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={handleGoLive}
+                                    className="w-full mt-4 bg-green-600 hover:bg-green-500 text-white text-lg font-black uppercase py-4 rounded-xl shadow-lg transform hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                                >
+                                    <Play size={24} fill="currentColor" /> GO LIVE
+                                </button>
+                                <p className="text-center text-xs text-slate-500 mt-2">Updates override immediately.</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* RIGHT: PREVIEW */}

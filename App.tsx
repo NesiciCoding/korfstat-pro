@@ -17,6 +17,8 @@ import ShotClockView from './components/ShotClockView';
 import SpotterView from './components/SpotterView';
 import SettingsModal from './components/SettingsModal';
 import SeasonManager from './components/SeasonManager';
+import ClubManager from './components/ClubManager';
+import MatchAnalysis from './components/MatchAnalysis'; // Not lazy for now, or lazy is fine
 import ErrorBoundary from './components/ErrorBoundary';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { MatchState, Team } from './types';
@@ -26,10 +28,10 @@ import { calculateDerivedMatchState } from './utils/matchLogic';
 
 function AppContent() {
   // Initialize view from URL parameter
-  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'SPOTTER'>(() => {
+  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS'>(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
-    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'SPOTTER'];
+    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS'];
     if (viewParam && validViews.includes(viewParam)) {
       return viewParam as any;
     }
@@ -354,6 +356,7 @@ function AppContent() {
             matchState={derivedMatchState}
             onBack={handleBackNavigation}
             onHome={handleExitToHome}
+            onAnalyze={() => setView('ANALYSIS')}
           />
         </Suspense>
       )}
@@ -379,6 +382,7 @@ function AppContent() {
           <MatchHistory
             matches={savedMatches}
             onSelectMatch={(match) => { setMatchState(match); setView('STATS'); }}
+            onAnalyzeMatch={(match) => { setMatchState(match); setView('ANALYSIS'); }}
             onDeleteMatch={handleDeleteMatch}
             onBack={() => setView('HOME')}
           />
@@ -433,10 +437,24 @@ function AppContent() {
         />
       )}
 
+      {view === 'CLUB_MANAGER' && (
+        <ClubManager
+          onBack={() => setView('HOME')}
+          savedMatches={savedMatches}
+        />
+      )}
+
       {view === 'SPOTTER' && (
         <SpotterView
           matchState={derivedMatchState}
           onBack={() => setView('HOME')}
+        />
+      )}
+
+      {view === 'ANALYSIS' && (
+        <MatchAnalysis
+          match={matchState} // We rely on matchState being set before switching to this view
+          onBack={() => setView('MATCH_HISTORY')}
         />
       )}
     </div>
