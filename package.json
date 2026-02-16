@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "server": "node server/index.js",
+    "dev:server": "node server/index.js",
     "dev:multi": "concurrently \"npm run server\" \"npm run dev\"",
     "build": "vite build",
     "preview": "vite preview",
@@ -33,6 +34,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "jsdom": "^28.1.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
