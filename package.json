@@ -53,5 +53,8 @@
     "*.{ts,tsx}": [
       "vitest related --run"
     ]
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
