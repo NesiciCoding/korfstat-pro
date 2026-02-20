@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import i18n from '../i18n';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -14,6 +15,7 @@ export interface Settings {
 
     // UI Preferences
     showTimerInTitle: boolean;
+    language: 'en' | 'nl';
 
     // Match Defaults
     defaultHomeName: string;
@@ -36,6 +38,7 @@ const defaultSettings: Settings = {
     matchType: 'indoor',
     geminiModel: 'gemini-2.0-flash',
     showTimerInTitle: false,
+    language: 'en',
     defaultHomeName: 'Home',
     defaultAwayName: 'Away',
     defaultHomeColor: '#EF4444', // Red-500
@@ -53,6 +56,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     useEffect(() => {
         localStorage.setItem('korfstat_settings', JSON.stringify(settings));
         applyTheme(settings.theme);
+        if (i18n.language !== settings.language) {
+            i18n.changeLanguage(settings.language);
+        }
     }, [settings]);
 
     const applyTheme = (theme: Theme) => {

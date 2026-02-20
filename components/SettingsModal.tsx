@@ -1,6 +1,7 @@
 import React from 'react';
-import { X, Moon, Sun, Monitor, Volume2, VolumeX, Trash2, RotateCcw, User } from 'lucide-react';
+import { X, Moon, Sun, Monitor, Volume2, VolumeX, Trash2, RotateCcw, User, Languages } from 'lucide-react';
 import { useSettings, Settings } from '../contexts/SettingsContext';
+import { useTranslation } from 'react-i18next';
 
 
 interface SettingsModalProps {
@@ -10,6 +11,7 @@ interface SettingsModalProps {
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { settings, updateSettings, clearAllData } = useSettings();
+    const { t } = useTranslation();
 
 
 
@@ -22,7 +24,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div className="flex gap-4">
-                        <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">Settings</span>
+                        <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{t('settings.title')}</span>
                     </div>
                     <button
                         onClick={onClose}
@@ -39,31 +41,49 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     <>
                         {/* Appearance Section */}
                         <div className="space-y-3">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Appearance</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{t('settings.general')}</label>
                             <div className="grid grid-cols-3 gap-2">
                                 <ThemeOption
                                     active={settings.theme === 'light'}
                                     onClick={() => updateSettings({ theme: 'light' })}
                                     icon={<Sun size={18} />}
-                                    label="Light"
+                                    label={t('settings.light')}
                                 />
                                 <ThemeOption
                                     active={settings.theme === 'dark'}
                                     onClick={() => updateSettings({ theme: 'dark' })}
                                     icon={<Moon size={18} />}
-                                    label="Dark"
+                                    label={t('settings.dark')}
                                 />
                                 <ThemeOption
                                     active={settings.theme === 'system'}
                                     onClick={() => updateSettings({ theme: 'system' })}
                                     icon={<Monitor size={18} />}
-                                    label="System"
+                                    label={t('settings.system')}
                                 />
                             </div>
 
-                            {/* Show Timer in Title */}
+                            {/* Language Selector */}
                             <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 mt-2">
-                                <span className="text-gray-900 dark:text-gray-100">Show Timer in Tab Title</span>
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400">
+                                        <Languages size={18} />
+                                    </div>
+                                    <span className="text-gray-900 dark:text-gray-100 font-medium">{t('settings.language')}</span>
+                                </div>
+                                <select
+                                    value={settings.language}
+                                    onChange={(e) => updateSettings({ language: e.target.value as any })}
+                                    className="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2"
+                                >
+                                    <option value="en">English</option>
+                                    <option value="nl">Nederlands</option>
+                                </select>
+                            </div>
+
+                            {/* Show Timer in Title */}
+                            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                <span className="text-gray-900 dark:text-gray-100">{t('settings.showTimerTitle')}</span>
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -115,7 +135,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                         {/* Match Defaults */}
                         <div className="space-y-3">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Default Configurations</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{t('settings.match_defaults')}</label>
 
                             <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
                                 <div className="flex items-center justify-between">
@@ -161,7 +181,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                         {/* Integrations */}
                         <div className="space-y-3">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Integrations</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{t('settings.integrations')}</label>
 
                             <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
                                 <div>
@@ -214,7 +234,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         onClick={onClose}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors shadow-sm"
                     >
-                        Done
+                        {t('settings.close')}
                     </button>
                 </div>
             </div>

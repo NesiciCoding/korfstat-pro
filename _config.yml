@@ -1,0 +1,25 @@
+# Jekyll configuration for GitHub Pages
+# This file is included to ensure Jekyll handles the site correctly if not disabled.
+
+title: KorfStat Pro
+description: Professional Korfball Statistics Tracker
+baseurl: "/korfstat-pro"
+url: "https://korfstat.github.io" # Change this to your actual GH Pages URL if different
+
+# Exclude files that Jekyll shouldn't process
+exclude:
+  - node_modules
+  - package.json
+  - package-lock.json
+  - .github
+  - src
+  - public
+  - tsconfig.json
+  - vite.config.ts
+  - README.md
+  - .gitignore
+
+# Keep these files in the output
+include:
+  - .nojekyll
+  - 404.html
