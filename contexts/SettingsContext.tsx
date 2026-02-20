@@ -49,8 +49,13 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [settings, setSettings] = useState<Settings>(() => {
-        const saved = localStorage.getItem('korfstat_settings');
-        return saved ? JSON.parse(saved) : defaultSettings;
+        try {
+            const saved = localStorage.getItem('korfstat_settings');
+            return saved ? JSON.parse(saved) : defaultSettings;
+        } catch (e) {
+            console.error("Failed to parse settings from localStorage", e);
+            return defaultSettings;
+        }
     });
 
     useEffect(() => {
