@@ -44,7 +44,7 @@
     "jsdom": "^28.1.0",
     "lint-staged": "^16.2.7",
     "rollup-plugin-visualizer": "^6.0.5",
-    "typescript": "~5.8.2",
+    "typescript": "~5.9.3",
     "vite": "^6.2.0",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.18"
