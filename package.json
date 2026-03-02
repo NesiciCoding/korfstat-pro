@@ -16,15 +16,15 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@google/genai": "^1.40.0",
+    "@google/genai": "^1.43.0",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "i18next": "^25.8.11",
+    "i18next": "^25.8.13",
     "i18next-browser-languagedetector": "^8.2.1",
     "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.7",
-    "lucide-react": "^0.563.0",
+    "lucide-react": "^0.576.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-i18next": "^16.5.4",
