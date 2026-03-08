@@ -12,6 +12,7 @@ export interface Player {
   onField?: boolean;
   isSuspended?: boolean; // For Yellow card time penalty
   suspensionEndTime?: number; // Timestamp when they can return
+  photoUrl?: string; // Path or URL to uploaded player headshot
   careerStats?: {
     matches: number;
     goals: number;
@@ -23,7 +24,9 @@ export interface Team {
   id: TeamId;
   name: string;
   players: Player[];
-  color: string; // Hex code
+  color: string; // Primary Hex code
+  secondaryColor?: string; // Secondary Hex code for gradients
+  logoUrl?: string; // Path or URL to uploaded team logo
   substitutionCount: number;
 }
 
@@ -61,12 +64,15 @@ export interface MatchEvent {
   previousPossession?: TeamId | null;
 }
 
+import { MatchProfile } from './profile';
+
 export interface MatchState {
   id?: string;   // Unique ID for persistence
   seasonId?: string; // Link to a season
   date?: number; // Timestamp for persistence
   halfDurationSeconds: number; // Duration of a half in seconds (e.g. 1500 for 25m)
   isConfigured: boolean;
+  profile?: MatchProfile; // The rules engine profile driving the timers
   homeTeam: Team;
   awayTeam: Team;
   events: MatchEvent[];

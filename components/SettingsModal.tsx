@@ -1,7 +1,8 @@
-import React from 'react';
-import { X, Moon, Sun, Monitor, Volume2, VolumeX, Trash2, RotateCcw, User, Languages } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Moon, Sun, Monitor, Volume2, VolumeX, Trash2, Radio, Languages } from 'lucide-react';
 import { useSettings, Settings } from '../contexts/SettingsContext';
 import { useTranslation } from 'react-i18next';
+import CompanionSetup from './CompanionSetup';
 
 
 interface SettingsModalProps {
@@ -12,7 +13,7 @@ interface SettingsModalProps {
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { settings, updateSettings, clearAllData } = useSettings();
     const { t } = useTranslation();
-
+    const [showCompanion, setShowCompanion] = useState(false);
 
 
     if (!isOpen) return null;
@@ -219,6 +220,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                         <option value="gemini-1.5-pro">Gemini 1.5 Pro (High Intelligence)</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            {/* Companion / Button-Box Integration */}
+                            <div>
+                                <button
+                                    onClick={() => setShowCompanion(c => !c)}
+                                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${
+                                        showCompanion
+                                            ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-400 text-indigo-700 dark:text-indigo-300'
+                                            : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Radio size={16} className={showCompanion ? 'text-indigo-500' : 'text-gray-500'} />
+                                        <span className="font-medium text-sm">Bitfocus Companion / Button-Box</span>
+                                    </div>
+                                    <span className="text-xs text-gray-400">{showCompanion ? 'Hide' : 'Configure →'}</span>
+                                </button>
+                                {showCompanion && (
+                                    <div className="mt-2 p-3 bg-gray-900 rounded-xl border border-gray-700">
+                                        <CompanionSetup />
+                                    </div>
+                                )}
                             </div>
                         </div>
 

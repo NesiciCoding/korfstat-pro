@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import LandingGateway from './components/LandingGateway';
+
+// ... (keep the rest of the imports unchanged. Note for the AI applying this: just append the import to the top of the file using a separate replace_file_content block, I will chunk this update to be safe.)
 import HomePage from './components/HomePage';
 import MatchSetup from './components/MatchSetup';
 
@@ -20,8 +23,11 @@ import SeasonManager from './components/SeasonManager';
 import ClubManager from './components/ClubManager';
 import MatchAnalysis from './components/MatchAnalysis'; // Not lazy for now, or lazy is fine
 import ErrorBoundary from './components/ErrorBoundary';
+
+import { MatchState, MatchEvent, TeamId, ShotType, Team, OverlayMessage } from './types';
+import { MatchProfile, DEFAULT_PROFILES } from './types/profile';
+
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
-import { MatchState, Team } from './types';
 import { Settings } from 'lucide-react';
 import { useBroadcastSync } from './hooks/useBroadcastSync';
 import { calculateDerivedMatchState } from './utils/matchLogic';
@@ -235,22 +241,28 @@ function AppContent() {
     });
   }, [matchState]);
 
-  const handleStartMatch = useCallback((home: Team, away: Team, durationSeconds: number, seasonId?: string) => {
+  const handleStartMatch = useCallback((home: Team, away: Team, profile?: typeof DEFAULT_PROFILES[0], seasonId?: string) => {
+    // Fallbacks if no profile provided (legacy or custom edge cases)
+    const durationSeconds = profile ? profile.periodDurationSeconds : 1500;
+    const shotClockSecs = profile ? profile.shotClockDurationSeconds : 25;
+
     const newState: MatchState = {
       id: crypto.randomUUID(),
       seasonId,
       date: Date.now(),
       isConfigured: true,
       halfDurationSeconds: durationSeconds,
+      profile: profile, // Inject selected profile
       homeTeam: home,
       awayTeam: away,
       events: [],
       currentHalf: 1,
-      possession: 'HOME',
+      possession: null,
       timer: { elapsedSeconds: 0, isRunning: false },
-      shotClock: { seconds: 25, isRunning: false },
-      timeout: { isActive: false, startTime: 0, remainingSeconds: 60 },
+      shotClock: { seconds: shotClockSecs, isRunning: false },
+      timeout: { isActive: false, startTime: 0, remainingSeconds: 0 }
     };
+
     setMatchState(newState);
     broadcastUpdate(newState);
     setView('TRACK');
@@ -328,7 +340,7 @@ function AppContent() {
 
 
       {view === 'HOME' && (
-        <HomePage
+        <LandingGateway
           onNavigate={setView}
           activeSessions={activeSessions}
           matchState={derivedMatchState}

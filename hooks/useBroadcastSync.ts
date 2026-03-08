@@ -6,7 +6,8 @@ import { useSettings } from '../contexts/SettingsContext';
 export const useBroadcastSync = (
     currentState: MatchState,
     onUpdate: (newState: MatchState) => void,
-    onSpotterAction?: (action: any) => void
+    onSpotterAction?: (action: any) => void,
+    onCompanionAction?: (action: any) => void
 ) => {
     const socketRef = useRef<Socket | null>(null);
     const lastBroadcastStateStr = useRef<string>('');
@@ -14,6 +15,7 @@ export const useBroadcastSync = (
     const isProcessingUpdate = useRef(false);
     const onUpdateRef = useRef(onUpdate);
     const onSpotterActionRef = useRef<((action: any) => void) | undefined>(onSpotterAction);
+    const onCompanionActionRef = useRef<((action: any) => void) | undefined>(onCompanionAction);
     const viewNameRef = useRef<string | null>(null);
 
     const { settings } = useSettings();
@@ -22,6 +24,7 @@ export const useBroadcastSync = (
     useEffect(() => {
         onUpdateRef.current = onUpdate;
         onSpotterActionRef.current = onSpotterAction;
+        onCompanionActionRef.current = onCompanionAction;
     });
 
     const [activeSessions, setActiveSessions] = useState<any[]>([]);
@@ -84,6 +87,19 @@ export const useBroadcastSync = (
             console.log('[Sync] Received Spotter Action', action);
             if (onSpotterActionRef.current) {
                 onSpotterActionRef.current(action);
+            }
+        });
+
+        // Listen for Companion / button-box actions (triggered by REST API + io.emit)
+        socket.on('companion-action', (action: any) => {
+            console.log('[Sync] Received Companion Action', action);
+            // If a dedicated handler is provided, use it; otherwise fall back to spotter handler
+            if (onCompanionActionRef.current) {
+                onCompanionActionRef.current(action);
+            } else if (onSpotterActionRef.current) {
+                // Translate Companion action names to Spotter action names for compatibility
+                const translated = { ...action };
+                onSpotterActionRef.current(translated);
             }
         });
 

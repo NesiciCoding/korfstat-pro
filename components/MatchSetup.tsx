@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Team, TeamId, Player, Gender, Position, SavedTeam } from '../types';
+import { Team, type TeamId, Player, Gender, Position, SavedTeam } from '../types';
+import { MatchProfile, DEFAULT_PROFILES } from '../types/profile';
 import { Club } from '../types/club';
 import { ClubService } from '../services/clubService';
-import { Plus, Trash2, PlayCircle, User, Users, Shield, Sword, Paintbrush, Save, Download, ChevronDown, Database } from 'lucide-react';
+import { Plus, Trash2, PlayCircle, Play, User, Users, Shield, Sword, Paintbrush, Save, Download, ChevronDown, Database } from 'lucide-react';
+import AssetUploader from './AssetUploader';
 
 interface MatchSetupProps {
-  onStartMatch: (home: Team, away: Team, durationSeconds: number, seasonId?: string) => void;
+  onStartMatch: (home: Team, away: Team, profile?: MatchProfile, seasonId?: string) => void;
   savedMatches: any[]; // Using any[] to avoid circular dependency import issues if simple
 }
 
@@ -94,12 +96,34 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ p, toggleStarter, updatePlayer, r
   </div>
 );
 
-const TeamConfig = ({
+interface TeamSetupProps {
+  teamId: TeamId;
+  name: string;
+  setName: (s: string) => void;
+  color: string;
+  setColor: (s: string) => void;
+  logoUrl?: string;
+  setLogoUrl: (s: string) => void;
+  players: Player[];
+  setPlayers: (p: Player[]) => void;
+  suggestions?: Player[];
+  savedTeams?: SavedTeam[];
+  clubs?: Club[];
+  onSaveTeam: () => void;
+  onLoadTeam: (team: SavedTeam) => void;
+  onLoadClub: (club: Club) => void;
+  onDeleteTeam?: (team: SavedTeam) => void;
+}
+
+// Component for configuring a single team
+const TeamSetup: React.FC<TeamSetupProps> = ({
   teamId,
   name,
   setName,
   color,
   setColor,
+  logoUrl,
+  setLogoUrl,
   players,
   setPlayers,
   suggestions = [],
@@ -109,21 +133,6 @@ const TeamConfig = ({
   onLoadTeam,
   onLoadClub,
   onDeleteTeam
-}: {
-  teamId: TeamId,
-  name: string,
-  setName: (s: string) => void,
-  color: string,
-  setColor: (s: string) => void,
-  players: Player[],
-  setPlayers: (p: Player[]) => void,
-  suggestions?: Player[],
-  savedTeams?: SavedTeam[],
-  clubs?: Club[],
-  onSaveTeam: () => void,
-  onLoadTeam: (team: SavedTeam) => void,
-  onLoadClub: (club: Club) => void,
-  onDeleteTeam?: (team: SavedTeam) => void
 }) => {
   const [showLoadMenu, setShowLoadMenu] = useState(false);
   const [showClubMenu, setShowClubMenu] = useState(false);
@@ -252,6 +261,14 @@ const TeamConfig = ({
         </div>
       </div>
 
+      <div className="mb-4">
+        <AssetUploader 
+            label="Team Logo" 
+            currentUrl={logoUrl} 
+            onUploadSuccess={setLogoUrl} 
+        />
+      </div>
+
       <div className="mb-6">
         <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Team Name</label>
         <input
@@ -331,8 +348,13 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
   console.log('[MatchSetup] Rendering. SavedMatches length:', savedMatches?.length);
   const [homeName, setHomeName] = useState('Home Team');
   const [homeColor, setHomeColor] = useState('#2563eb'); // Blue-600
+  const [homeLogoUrl, setHomeLogoUrl] = useState<string | undefined>();
+  
   const [awayName, setAwayName] = useState('Away Team');
   const [awayColor, setAwayColor] = useState('#dc2626'); // Red-600
+  const [awayLogoUrl, setAwayLogoUrl] = useState<string | undefined>();
+
+  const [selectedProfile, setSelectedProfile] = useState<MatchProfile>(DEFAULT_PROFILES[0]);
 
   // Extract unique historical players
   const allPlayers = React.useMemo(() => {
@@ -444,7 +466,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
     onStartMatch(
       prepareTeam('HOME', homeName, homePlayers, homeColor),
       prepareTeam('AWAY', awayName, awayPlayers, awayColor),
-      duration * 60,
+      selectedProfile,
       selectedSeasonId || undefined
     );
   };
@@ -486,24 +508,41 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 flex flex-col transition-colors duration-300">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">KorfStat Pro</h1>
-        <p className="text-gray-500 dark:text-gray-400 mb-4">Match Configuration</p>
-        <div className="inline-flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-          <span className="text-sm font-bold text-gray-500 dark:text-gray-400">Half Duration:</span>
-          <input
-            type="number"
-            value={duration}
-            onChange={e => setDuration(parseInt(e.target.value) || 25)}
-            className="w-12 text-center font-bold border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded p-1"
-            aria-label="Half Duration"
-          />
-          <span className="text-sm text-gray-500 dark:text-gray-400">mins</span>
+        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">Match Setup Wizard</h1>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">Select rules and configure teams</p>
+        
+        {/* Profile Selection */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 text-left pl-2">1. Select Match Rules</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+            {DEFAULT_PROFILES.map(profile => (
+              <button
+                key={profile.id}
+                onClick={() => setSelectedProfile(profile)}
+                className={`p-4 rounded-xl border-2 transition-all ${selectedProfile?.id === profile.id ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300'}`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className={`font-bold ${selectedProfile?.id === profile.id ? 'text-indigo-700 dark:text-indigo-400' : 'text-gray-800 dark:text-gray-200'}`}>{profile.name}</h3>
+                  {selectedProfile?.id === profile.id && <span className="text-indigo-600"><Plus size={18} /></span>}
+                </div>
+                <p className="text-xs text-gray-500 mb-3">{profile.description}</p>
+                <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">{profile.periods}x{profile.periodDurationSeconds / 60}m</span>
+                  {profile.hasShotClock ? (
+                    <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2 py-1 rounded">{profile.shotClockDurationSeconds}s Clock</span>
+                  ) : (
+                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-1 rounded">No Clock</span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {seasons.length > 0 && (
           <div className="mt-4 flex justify-center">
             <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <span className="text-sm font-bold text-gray-500 dark:text-gray-400">Season:</span>
+              <span className="text-sm font-bold text-gray-500 dark:text-gray-400">Season (Optional):</span>
               <select
                 className="bg-transparent font-bold text-gray-900 dark:text-white outline-none cursor-pointer"
                 value={selectedSeasonId}
@@ -519,11 +558,16 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
         )}
       </div>
 
+      <div className="max-w-7xl mx-auto w-full mb-4 pl-2">
+        <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">2. Configure Lineups</h2>
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-6 mb-8 max-w-7xl mx-auto w-full flex-1">
-        <TeamConfig
+        <TeamSetup
           teamId="HOME"
           name={homeName} setName={setHomeName}
           color={homeColor} setColor={setHomeColor}
+          logoUrl={homeLogoUrl} setLogoUrl={setHomeLogoUrl}
           players={homePlayers} setPlayers={setHomePlayers}
           suggestions={allPlayers}
           savedTeams={savedTeams}
@@ -533,10 +577,12 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
           onLoadClub={(club) => handleLoadClub(club, setHomeName, setHomeColor, setHomePlayers)}
           onDeleteTeam={handleDeleteTeam}
         />
-        <TeamConfig
+
+        <TeamSetup
           teamId="AWAY"
           name={awayName} setName={setAwayName}
           color={awayColor} setColor={setAwayColor}
+          logoUrl={awayLogoUrl} setLogoUrl={setAwayLogoUrl}
           players={awayPlayers} setPlayers={setAwayPlayers}
           suggestions={allPlayers}
           savedTeams={savedTeams}
@@ -548,12 +594,13 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
         />
       </div>
 
-      <div className="flex justify-center pb-10">
+      <div className="max-w-7xl mx-auto w-full flex justify-end pb-12 pr-2">
         <button
           onClick={handleStart}
-          className="flex items-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold px-12 py-4 rounded-full shadow-xl transform hover:scale-105 transition-all ring-4 ring-indigo-50 dark:ring-indigo-900"
+          className="flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-1 transition-all text-xl font-bold"
         >
-          <PlayCircle size={28} /> Start Match
+          <Play size={24} fill="currentColor" />
+          Start Match
         </button>
       </div>
     </div>

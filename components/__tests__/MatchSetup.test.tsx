@@ -38,19 +38,6 @@ describe('MatchSetup', () => {
         expect(awayNameInput).toHaveValue('Testing Stars');
     });
 
-    it('allows setting match duration', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
-
-        // Select input by aria-label for robustness
-        const durationInpt = screen.getByLabelText(/Half Duration/i);
-
-        fireEvent.change(durationInpt, { target: { value: '30' } });
-
-        expect(durationInpt).toHaveValue(30);
-
-        expect(durationInpt).toHaveValue(30);
-    });
-
     it('shows 10 default players for each team', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
@@ -108,25 +95,29 @@ describe('MatchSetup', () => {
         const callArgs = mockOnStartMatch.mock.calls[0];
         expect(callArgs[0]).toHaveProperty('id', 'HOME');
         expect(callArgs[1]).toHaveProperty('id', 'AWAY');
-        expect(callArgs[2]).toBe(1500); // 25 minutes * 60 seconds
+        // By default, the first profile is active which has 25 minutes.
+        expect(callArgs[2]).toHaveProperty('id', 'standard_ikf');
+        expect(callArgs[3]).toBeUndefined();
     });
 
-    it('passes custom duration to onStartMatch', () => {
+    it('submits a selected match configuration profile', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        // Change duration to 30 minutes
-        // Change duration to 30 minutes
-        const durationInput = screen.getByLabelText(/Half Duration/i);
-        fireEvent.change(durationInput, { target: { value: '30' } });
+        fireEvent.change(screen.getByLabelText('Home Team Name'), { target: { value: 'Test Home' } });
+        fireEvent.change(screen.getByLabelText('Away Team Name'), { target: { value: 'Test Away' } });
 
-        const startButton = screen.getByRole('button', { name: /Start Match/i });
-        fireEvent.click(startButton);
+        // Select the Short Scrimmage profile
+        const profileButtons = screen.getAllByRole('button').filter(btn => btn.textContent?.includes('Short Scrimmage'));
+        if (profileButtons.length > 0) {
+           fireEvent.click(profileButtons[0]);
+        }
 
-        // Should be 30 * 60 = 1800 seconds
+        fireEvent.click(screen.getByText('Start Match'));
+
         expect(mockOnStartMatch).toHaveBeenCalledWith(
-            expect.anything(),
-            expect.anything(),
-            1800,
+            expect.objectContaining({ name: 'Test Home' }),
+            expect.objectContaining({ name: 'Test Away' }),
+            expect.objectContaining({ id: 'training_short' }),
             undefined
         );
     });
