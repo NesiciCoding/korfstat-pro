@@ -5,7 +5,7 @@ import { MatchState } from '../../types';
 
 describe('HomePage', () => {
     const mockNavigate = vi.fn();
-    const mockActiveSessions: any[] = [{ id: '1' }, { id: '2' }, { id: '3' }];
+    const mockActiveSessions: any[] = [{ id: '1', view: 'JURY' }, { id: '2', view: 'STATS' }, { id: '3', view: 'LIVE' }];
 
     const createMockMatchState = (isConfigured: boolean): MatchState => ({
         id: 'test-match-123',
@@ -56,7 +56,7 @@ describe('HomePage', () => {
             />
         );
 
-        expect(screen.getByText('3')).toBeInTheDocument();
+        expect(screen.getByTestId('active-sessions-count')).toHaveTextContent('3');
         expect(screen.getByText(/Active Sessions/i)).toBeInTheDocument();
     });
 

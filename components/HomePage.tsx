@@ -113,7 +113,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
               <h2 className="font-bold text-slate-200 flex items-center gap-2">
                 <Wifi size={18} className="text-emerald-400" /> Active Sessions
               </h2>
-              <span className="bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded-full font-mono">{uniqueSessions.length}</span>
+              <span data-testid="active-sessions-count" className="bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded-full font-mono">{uniqueSessions.length}</span>
             </div>
             <div className="flex-1 p-2 overflow-y-auto max-h-[200px] space-y-1">
               {uniqueSessions.length === 0 ? (

@@ -7,6 +7,15 @@ import { io, Socket } from 'socket.io-client';
 // Mock socket.io-client
 vi.mock('socket.io-client');
 
+// Mock Settings Context
+vi.mock('../../contexts/SettingsContext', () => ({
+    useSettings: () => ({
+        settings: {
+            watchControlMode: 'read-only'
+        }
+    })
+}));
+
 describe('useBroadcastSync', () => {
     let mockSocket: Partial<Socket>;
     let eventHandlers: Record<string, Function>;
@@ -150,7 +159,15 @@ describe('useBroadcastSync', () => {
             eventHandlers['active-sessions'](sessions);
         });
 
-        expect(result.current.activeSessions).toEqual(sessions);
+        expect(result.current.activeSessions).toEqual([
+            ...sessions,
+            expect.objectContaining({
+                id: 'wear-os-adb',
+                view: 'WATCH',
+                ip: 'ADB Bridge',
+                userAgent: 'Wear OS Emulator (Read-Only)'
+            })
+        ]);
     });
 
     it('should call onSpotterAction when receiving spotter-action event', () => {
