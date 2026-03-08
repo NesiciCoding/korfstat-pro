@@ -588,7 +588,7 @@ app.get('/health', (req, res) => {
 });
 
 // SPA Catch-all route for React Router
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 

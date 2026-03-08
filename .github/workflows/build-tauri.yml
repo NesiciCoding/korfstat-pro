@@ -1,0 +1,113 @@
+name: Build KorfStat Pro (Tauri)
+
+on:
+  push:
+    tags:
+      - 'v*'          # trigger on version tags like v1.0.0
+  workflow_dispatch:  # allow manual trigger from GitHub Actions UI
+    inputs:
+      debug_build:
+        description: 'Build in debug mode?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── macOS (Intel + Apple Silicon) ──────────────────────────────────
+          - platform: macos-latest
+            os-label: macOS
+            args: '--target universal-apple-darwin'
+
+          # ── Windows ────────────────────────────────────────────────────────
+          - platform: windows-latest
+            os-label: Windows
+            args: ''
+
+          # ── Linux (Ubuntu) ─────────────────────────────────────────────────
+          - platform: ubuntu-22.04
+            os-label: Linux
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    name: Build — ${{ matrix.os-label }}
+
+    steps:
+      # ── 1. Checkout ─────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Install Linux system dependencies ────────────────────────────────
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            pkg-config
+
+      # ── 3. Set up Rust ───────────────────────────────────────────────────────
+      - name: Set up Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # Add the Apple Silicon target for universal macOS builds
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      # ── 4. Rust build caching ────────────────────────────────────────────────
+      - name: Cache Rust build artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      # ── 5. Set up Node.js ────────────────────────────────────────────────────
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── 6. Install npm dependencies ──────────────────────────────────────────
+      - name: Install npm dependencies
+        run: npm ci
+
+      # ── 7. Build Tauri app ───────────────────────────────────────────────────
+      - name: Build Tauri application
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'KorfStat Pro ${{ github.ref_name }}'
+          releaseBody: |
+            ## KorfStat Pro ${{ github.ref_name }}
+
+            Download the installer for your platform below.
+
+            | Platform | File |
+            |---|---|
+            | 🪟 Windows | `.msi` or `.exe` (NSIS) |
+            | 🍎 macOS | `.dmg` (Universal: Intel + Apple Silicon) |
+            | 🐧 Linux | `.AppImage` or `.deb` |
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }} ${{ inputs.debug_build == 'true' && '--debug' || '' }}
+
+  # ── Optional: notify on failure ─────────────────────────────────────────────
+  notify-failure:
+    needs: build-tauri
+    if: failure()
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Notify build failure
+        run: echo "::error::One or more platform builds failed. Check the matrix job logs above."

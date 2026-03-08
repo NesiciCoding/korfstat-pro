@@ -1,11 +1,11 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "KorfStat Pro",
-  "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "version": "0.0.9",
+  "identifier": "com.nesicicoding.korfstatpro",
   "build": {
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:5173",
+    "devUrl": "http://localhost:3000",
     "beforeDevCommand": "npm run dev:multi",
     "beforeBuildCommand": "npm run build"
   },
@@ -33,5 +33,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "PLACEHOLDER_REPLACE_WITH_YOUR_PUBLIC_KEY",
+      "endpoints": [
+        "https://github.com/NesiciCoding/korfstat-pro/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

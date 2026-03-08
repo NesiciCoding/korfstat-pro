@@ -13,10 +13,19 @@
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "analyze": "vite build && open dist/stats.html",
-    "prepare": "husky"
+    "prepare": "husky",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "node scripts/build.js",
+    "tauri:build:mac": "node scripts/build.js --target mac",
+    "tauri:build:win": "node scripts/build.js --target win",
+    "tauri:build:linux": "node scripts/build.js --target linux",
+    "tauri:build:debug": "node scripts/build.js --debug",
+    "tauri:build:all": "node scripts/build.js --target all"
   },
   "dependencies": {
     "@google/genai": "^1.40.0",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.10.0",
     "better-sqlite3": "^12.6.2",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",

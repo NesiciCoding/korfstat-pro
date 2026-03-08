@@ -20,11 +20,8 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
 
   const uniqueSessions = useMemo(() => {
     return activeSessions
-      .filter(s => s.view && s.view !== 'Unknown')
       .filter((s, index, self) =>
-        index === self.findIndex((t) => (
-          t.id === s.id
-        ))
+        index === self.findIndex((t) => t.id === s.id)
       );
   }, [activeSessions]);
 
@@ -291,7 +288,7 @@ const NavCard = ({ title, desc, icon, color, onClick }: any) => {
 };
 
 const formatViewName = (view: string) => {
-  if (!view) return 'Unknown';
+  if (!view || view === 'Unknown') return 'Connecting…';
   return view.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 };
 

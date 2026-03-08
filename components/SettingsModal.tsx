@@ -20,7 +20,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transition-colors duration-300">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full flex flex-col max-h-[90vh] transition-colors duration-300">
 
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
@@ -36,7 +36,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Body */}
-                <div className="p-6 space-y-8 min-h-[400px]">
+                <div className="p-6 space-y-8 overflow-y-auto flex-1">
 
 
                     <>

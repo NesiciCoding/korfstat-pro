@@ -15,7 +15,7 @@ describe('MatchSetup', () => {
     it('renders match configuration title', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        expect(screen.getByText('Match Configuration')).toBeInTheDocument();
+        expect(screen.getByText('Match Setup Wizard')).toBeInTheDocument();
     });
 
     it('renders both team configuration sections', () => {

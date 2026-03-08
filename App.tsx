@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { Home as HomeIcon } from 'lucide-react';
 import LandingGateway from './components/LandingGateway';
+import UpdateChecker from './components/UpdateChecker';
 
 // ... (keep the rest of the imports unchanged. Note for the AI applying this: just append the import to the top of the file using a separate replace_file_content block, I will chunk this update to be safe.)
 import HomePage from './components/HomePage';
@@ -334,6 +336,18 @@ function AppContent() {
         <Settings size={20} />
       </button>
 
+      {/* Home Floater — shown on every non-HOME view */}
+      {view !== 'HOME' && (
+        <button
+          onClick={() => setView('HOME')}
+          className="fixed bottom-4 right-4 z-[90] flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all text-sm font-medium"
+          title="Go to Home"
+        >
+          <HomeIcon size={16} />
+          <span>Home</span>
+        </button>
+      )}
+
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
       {/* Locked Screen */}
@@ -479,6 +493,7 @@ export default function App() {
     <ErrorBoundary>
       <SettingsProvider>
         <AppContent />
+        <UpdateChecker />
       </SettingsProvider>
     </ErrorBoundary>
   );
