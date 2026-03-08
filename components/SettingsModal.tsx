@@ -139,6 +139,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                             <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
                                 <div className="flex items-center justify-between">
+                                    <span className="text-gray-900 dark:text-gray-100 text-sm">Wear OS Control Mode</span>
+                                    <select
+                                        value={settings.watchControlMode}
+                                        onChange={(e) => updateSettings({ watchControlMode: e.target.value as any })}
+                                        className="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2"
+                                    >
+                                        <option value="read-only">Read Only (Jury controls time)</option>
+                                        <option value="write">Write (Referee controls time)</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-center justify-between">
                                     <span className="text-gray-900 dark:text-gray-100 text-sm">Half Duration</span>
                                     <select
                                         value={settings.defaultHalfDuration}

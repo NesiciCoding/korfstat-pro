@@ -1,6 +1,7 @@
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { MatchState } from '../types';
+import { useSettings } from '../contexts/SettingsContext';
 
 export const useBroadcastSync = (
     currentState: MatchState,
@@ -14,6 +15,8 @@ export const useBroadcastSync = (
     const onUpdateRef = useRef(onUpdate);
     const onSpotterActionRef = useRef<((action: any) => void) | undefined>(onSpotterAction);
     const viewNameRef = useRef<string | null>(null);
+
+    const { settings } = useSettings();
 
     // Keep callback refs fresh
     useEffect(() => {
@@ -110,7 +113,45 @@ export const useBroadcastSync = (
         console.log('[Sync] Broadcasting Update via WebSocket', { eventCount: state.events.length });
         socketRef.current.emit('match-update', state);
         lastBroadcastStateStr.current = stateStr;
-    }, []);
+
+        // --- MOCK WATCH SYNC ---
+        // Send state to local Vite plugin to sync with Android Wear OS emulator
+        try {
+            const lastSubEvent = state.events.slice().reverse().find(e => e.type === 'SUBSTITUTION');
+            let subOutStr = "";
+            let subInStr = "";
+            if (lastSubEvent) {
+                const team = lastSubEvent.teamId === 'HOME' ? state.homeTeam : state.awayTeam;
+                const pOut = team.players.find(p => p.id === lastSubEvent.subOutId);
+                const pIn = team.players.find(p => p.id === lastSubEvent.subInId);
+                subOutStr = pOut ? `#${pOut.number} ${pOut.name}` : "";
+                subInStr = pIn ? `#${pIn.number} ${pIn.name}` : "";
+                subOutStr = subOutStr.replace(/"/g, ''); // escape quotes for shell
+                subInStr = subInStr.replace(/"/g, '');
+            }
+
+            fetch('http://localhost:3000/api/sync-watch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    homeScore: state.events ? state.events.filter(e => e.teamId === 'HOME' && e.type === 'SHOT' && e.result === 'GOAL').length : 0,
+                    awayScore: state.events ? state.events.filter(e => e.teamId === 'AWAY' && e.type === 'SHOT' && e.result === 'GOAL').length : 0,
+                    gameTime: Math.floor(Math.max(0, (state.halfDurationSeconds || 1500) - (state.timer?.elapsedSeconds || 0))) * 1000,
+                    shotClock: Math.floor(state.shotClock?.seconds || 0) * 1000,
+                    isGameTimeRunning: state.timer?.isRunning || false,
+                    isShotClockRunning: state.shotClock?.isRunning || false,
+                    period: state.currentHalf || 1,
+                    subPending: false, 
+                    latestSubId: lastSubEvent?.id || "",
+                    subOut: subOutStr,
+                    subIn: subInStr,
+                    timeoutTeam: state.timeout?.isActive ? (state.timeout.teamId === 'HOME' ? state.homeTeam.name : state.awayTeam.name).replace(/"/g, '') : "",
+                    watchControlMode: settings.watchControlMode
+                })
+            }).catch(e => console.error('[Watch Sync Failed]', e));
+        } catch(e) {}
+
+    }, [settings.watchControlMode]);
 
     // Debounced version for frequent updates (e.g., clock ticks)
     const debouncedBroadcast = useRef<NodeJS.Timeout | null>(null);
@@ -130,7 +171,19 @@ export const useBroadcastSync = (
         }
     }, []);
 
+    // Inject Watch as a visible session
+    const watchSession = useMemo(() => ({
+        id: 'wear-os-adb',
+        view: 'WATCH',
+        ip: 'ADB Bridge',
+        userAgent: `Wear OS Emulator (${settings.watchControlMode === 'read-only' ? 'Read-Only' : 'Write'})`,
+        connectedAt: Date.now()
+    }), [settings.watchControlMode]);
 
-    return { broadcastUpdate, broadcastUpdateDebounced, activeSessions, registerView };
+    const combinedSessions = useMemo(() => {
+        return [...activeSessions, watchSession];
+    }, [activeSessions, watchSession]);
+
+    return { broadcastUpdate, broadcastUpdateDebounced, activeSessions: combinedSessions, registerView };
 }; // End of file
 

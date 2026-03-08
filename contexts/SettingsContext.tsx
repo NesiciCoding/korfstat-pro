@@ -22,6 +22,9 @@ export interface Settings {
     defaultAwayName: string;
     defaultHomeColor: string;
     defaultAwayColor: string;
+
+    // Wear OS Sync
+    watchControlMode: 'read-only' | 'write';
 }
 
 interface SettingsContextType {
@@ -43,6 +46,7 @@ const defaultSettings: Settings = {
     defaultAwayName: 'Away',
     defaultHomeColor: '#EF4444', // Red-500
     defaultAwayColor: '#3B82F6', // Blue-500
+    watchControlMode: 'read-only',
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

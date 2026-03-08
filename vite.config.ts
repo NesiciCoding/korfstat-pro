@@ -1,13 +1,64 @@
-/// <reference types="vitest" />
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { exec } from 'child_process';
 
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  
+  const watchSyncPlugin = {
+    name: 'watch-sync-mock',
+    configureServer(server: any) {
+      server.middlewares.use('/api/sync-watch', (req: any, res: any) => {
+        if (req.method !== 'POST') return;
+        let body = '';
+        req.on('data', (chunk: any) => body += chunk.toString());
+        req.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            const adbPath = process.env.HOME ? `${process.env.HOME}/Library/Android/sdk/platform-tools/adb` : 'adb';
+            let cmd = `${adbPath} shell am broadcast -a com.korfstat.UPDATE_STATE`;
+            if (data.homeScore !== undefined) cmd += ` --ei homeScore ${data.homeScore}`;
+            if (data.awayScore !== undefined) cmd += ` --ei awayScore ${data.awayScore}`;
+            if (data.gameTime !== undefined) cmd += ` --el gameTime ${data.gameTime}`;
+            if (data.shotClock !== undefined) cmd += ` --el shotClock ${data.shotClock}`;
+            if (data.isGameTimeRunning !== undefined) cmd += ` --ez isGameTimeRunning ${data.isGameTimeRunning}`;
+            if (data.isShotClockRunning !== undefined) cmd += ` --ez isShotClockRunning ${data.isShotClockRunning}`;
+            if (data.period !== undefined) cmd += ` --ei period ${data.period}`;
+            if (data.subPending !== undefined) cmd += ` --ez subPending ${data.subPending}`;
+            if (data.latestSubId !== undefined) cmd += ` --es latestSubId "${data.latestSubId}"`;
+            if (data.subOut !== undefined) cmd += ` --es subOut "${data.subOut}"`;
+            if (data.subIn !== undefined) cmd += ` --es subIn "${data.subIn}"`;
+            if (data.watchControlMode !== undefined) {
+                const isReadOnly = data.watchControlMode === 'read-only';
+                cmd += ` --ez isReadOnly ${isReadOnly}`;
+            }
+            
+            const tTeam = data.timeoutTeam || "NONE";
+            cmd += ` --es timeoutTeam "${tTeam}"`;
+            
+            exec(cmd, (error) => {
+              res.setHeader('Content-Type', 'application/json');
+              if (error) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: error.message }));
+              } else {
+                res.statusCode = 200;
+                res.end(JSON.stringify({ success: true }));
+              }
+            });
+          } catch(e) {
+             res.statusCode = 400;
+             res.end(JSON.stringify({ error: 'Bad Request' }));
+          }
+        });
+      });
+    }
+  };
+
   return {
     base: './',
     server: {
@@ -16,6 +67,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
+      watchSyncPlugin,
       visualizer({
         filename: './dist/stats.html',
         open: false,

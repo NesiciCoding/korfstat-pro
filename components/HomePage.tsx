@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import {
   PlayCircle, History, BarChart2, BrainCircuit,
   Monitor, Video, Tv, LayoutTemplate, Clock,
-  Wifi, Users, Activity, Play, Globe, Trophy
+  Wifi, Users, Activity, Play, Globe, Trophy, Watch
 } from 'lucide-react';
 import { MatchState } from '../types';
 
@@ -18,13 +18,14 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
   // We can check if `matchState?.isConfigured` is true.
   const hasActiveMatch = matchState?.isConfigured;
 
-  // Calculate unique devices (ignoring "Unknown" loopback if needed, but for now just show all)
   const uniqueSessions = useMemo(() => {
-    return activeSessions.filter((s, index, self) =>
-      index === self.findIndex((t) => (
-        t.id === s.id
-      ))
-    );
+    return activeSessions
+      .filter(s => s.view && s.view !== 'Unknown')
+      .filter((s, index, self) =>
+        index === self.findIndex((t) => (
+          t.id === s.id
+        ))
+      );
   }, [activeSessions]);
 
   return (
@@ -309,6 +310,7 @@ const getViewIcon = (view: string) => {
     case 'SHOT_CLOCK': return <Clock size={16} />;
     case 'DIRECTOR': return <Monitor size={16} />;
     case 'TRACK': return <Activity size={16} />;
+    case 'WATCH': return <Watch size={16} />;
     default: return <Users size={16} />;
   }
 }
@@ -318,6 +320,7 @@ const getViewColor = (view: string) => {
     case 'SHOT_CLOCK': return 'bg-red-500/20 text-red-400';
     case 'DIRECTOR': return 'bg-indigo-500/20 text-indigo-400';
     case 'TRACK': return 'bg-emerald-500/20 text-emerald-400';
+    case 'WATCH': return 'bg-cyan-500/20 text-cyan-400';
     default: return 'bg-slate-700 text-slate-400';
   }
 }
