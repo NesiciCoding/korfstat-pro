@@ -36,7 +36,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "PLACEHOLDER_REPLACE_WITH_YOUR_PUBLIC_KEY",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ5QURCMTNDMTEwOEM3QUQKUldTdHh3Z1JQTEd0U1MwRHhuRU1NUXFPK2NIdlpKRkh4cm9PNm9SdEFXOWZ6ejlSVEw2RzQvS1EK",
       "endpoints": [
         "https://github.com/NesiciCoding/korfstat-pro/releases/latest/download/latest.json"
       ]
