@@ -103,7 +103,16 @@ jobs:
             | 🐧 Linux | `.AppImage` or `.deb` |
           releaseDraft: true
           prerelease: false
+          tauriScript: npm run tauri
           args: ${{ matrix.args }} ${{ inputs.debug_build == 'true' && '--debug' || '' }}
+
+      # ── 8. Debug: List built artifacts ──────────────────────────────────────
+      - name: List built artifacts
+        if: always()
+        shell: bash
+        run: |
+          echo "Listing release artifacts in target directory..."
+          find src-tauri/target/release/bundle -maxdepth 3 -type f \( -name "*.dmg" -o -name "*.app" -o -name "*.msi" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "latest.json" \) 2>/dev/null || echo "No artifacts found in release/bundle"
 
   # ── Optional: notify on failure ─────────────────────────────────────────────
   notify-failure:
