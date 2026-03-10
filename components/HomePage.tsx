@@ -14,8 +14,7 @@ interface HomePageProps {
 
 const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], matchState }) => {
   const isMatchActive = matchState?.timer.isRunning || matchState?.isConfigured;
-  // Actually isConfigured is true once a match starts.
-  // We can check if `matchState?.isConfigured` is true.
+  // Check if a match configuration is active to enable tracker resumption
   const hasActiveMatch = matchState?.isConfigured;
 
   const uniqueSessions = useMemo(() => {

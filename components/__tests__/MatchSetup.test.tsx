@@ -125,7 +125,7 @@ describe('MatchSetup', () => {
     it('allows changing team colors', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        const colorInputs = screen.getAllByTitle(/Select Team Color/i);
+        const colorInputs = screen.getAllByTitle(/Primary Team Color/i);
         expect(colorInputs.length).toBe(2);
 
         fireEvent.change(colorInputs[0], { target: { value: '#00ff00' } });

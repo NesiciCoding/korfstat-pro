@@ -129,3 +129,71 @@ export const getPlayerTrend = (playerId: string, matches: MatchState[]): TrendPo
 
     return trend;
 };
+
+export const calculateMatchPlusMinus = (matchState: MatchState): Map<string, number> => {
+    const map = new Map<string, number>();
+    const currentHomeLineup = new Set<string>();
+    const currentAwayLineup = new Set<string>();
+
+    matchState.homeTeam.players.forEach(p => { if (p.isStarter) currentHomeLineup.add(p.id); map.set(p.id, 0); });
+    matchState.awayTeam.players.forEach(p => { if (p.isStarter) currentAwayLineup.add(p.id); map.set(p.id, 0); });
+
+    const sortedEvents = [...matchState.events].sort((a, b) => a.timestamp - b.timestamp);
+
+    sortedEvents.forEach(e => {
+        if (e.type === 'SUBSTITUTION' && e.subInId && e.subOutId) {
+            if (e.teamId === 'HOME') {
+                currentHomeLineup.delete(e.subOutId);
+                currentHomeLineup.add(e.subInId);
+                if (!map.has(e.subInId)) map.set(e.subInId, 0);
+            } else {
+                currentAwayLineup.delete(e.subOutId);
+                currentAwayLineup.add(e.subInId);
+                if (!map.has(e.subInId)) map.set(e.subInId, 0);
+            }
+        }
+
+        if (e.type === 'SHOT' && e.result === 'GOAL') {
+            if (e.teamId === 'HOME') {
+                currentHomeLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) + 1));
+                currentAwayLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) - 1));
+            } else {
+                currentAwayLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) + 1));
+                currentHomeLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) - 1));
+            }
+        }
+    });
+
+    return map;
+};
+
+export const calculatePlayerMatchStats = (team: any, matchState: MatchState, plusMinusMap: Map<string, number>) => {
+    return team.players.map((player: any) => {
+        const events = matchState.events.filter((e: MatchEvent) => e.playerId === player.id);
+        const shots = events.filter((e: MatchEvent) => e.type === 'SHOT');
+        const goals = shots.filter((e: MatchEvent) => e.result === 'GOAL');
+        const rebounds = events.filter((e: MatchEvent) => e.type === 'REBOUND');
+        const fouls = events.filter((e: MatchEvent) => e.type === 'FOUL');
+        const turnovers = events.filter((e: MatchEvent) => e.type === 'TURNOVER');
+
+        const misses = shots.length - goals.length;
+        const rating = (goals.length * 5) + (rebounds.length * 2) - (misses * 1) - (turnovers.length * 3) - (fouls.length * 2);
+
+        return {
+            ...player,
+            shots: shots.length,
+            goals: goals.length,
+            percentage: shots.length > 0 ? Math.round((goals.length / shots.length) * 100) : 0,
+            rebounds: rebounds.length,
+            fouls: fouls.length,
+            rating,
+            plusMinus: plusMinusMap.get(player.id) || 0,
+            shotTypes: {
+                short: shots.filter((s: MatchEvent) => s.shotType === 'NEAR').length,
+                medium: shots.filter((s: MatchEvent) => s.shotType === 'MEDIUM').length,
+                long: shots.filter((s: MatchEvent) => s.shotType === 'FAR').length,
+                pen: shots.filter((s: MatchEvent) => s.shotType === 'PENALTY' || s.shotType === 'FREE_THROW').length,
+            }
+        };
+    }).sort((a: any, b: any) => b.rating - a.rating);
+};

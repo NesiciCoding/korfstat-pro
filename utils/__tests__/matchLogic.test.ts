@@ -59,4 +59,16 @@ describe('calculateDerivedMatchState', () => {
         const derived = calculateDerivedMatchState(state, now);
         expect(derived.timeout.remainingSeconds).toBe(58); // 60 - 2
     });
+
+    it('should handle break countdown', () => {
+        const startTime = 1000;
+        const now = 3000; // 2 seconds later
+        const state: MatchState = {
+            ...baseState,
+            break: { isActive: true, startTime: startTime, durationSeconds: 600 }
+        };
+
+        const derived = calculateDerivedMatchState(state, now);
+        expect(derived.break?.durationSeconds).toBe(598); // 600 - 2
+    });
 });

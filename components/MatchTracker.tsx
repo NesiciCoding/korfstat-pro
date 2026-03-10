@@ -110,8 +110,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
       return;
     }
 
-    // 2. If we are in ANY other specific context (e.g. Sub In/Out, Substitution Exception), 
-    // we should IGNORE action shortcuts to prevent "Overwriting" the menu.
+    // 2. Ignore action shortcuts when deep within specific context menus to prevent state overwriting
     if (isMenuOpen && ['SELECT_SUB_OUT', 'SELECT_SUB_IN', 'CONFIRM_SUB_EXCEPTION', 'SELECT_SHOT_TYPE'].includes(currentStep || '')) {
       // Do not interrupt these flows with a new action start
       return;
@@ -151,7 +150,6 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
 
   const handlePlayerNumberSelection = (numberIndex: number) => {
-    // numberIndex is 0-7 (for keys 1-8)
     // numberIndex is 0-7 (for keys 1-8)
     if (!isMenuOpen) return;
 

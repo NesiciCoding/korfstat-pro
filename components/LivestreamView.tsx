@@ -4,6 +4,7 @@ import KorfballField from './KorfballField';
 import PlayerProfileModal from './PlayerProfileModal';
 import CommentaryFeed from './CommentaryFeed';
 import { TrendingUp, Target, History, Filter } from 'lucide-react';
+import { calculateMatchPlusMinus, calculatePlayerMatchStats } from '../utils/statsCalculator';
 
 interface LivestreamViewProps {
     matchState: MatchState;
@@ -36,70 +37,12 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
     }, [matchState.events, filterPlayerId, filterShotType]);
 
     // --- Plus/Minus Calculation ---
-    // We need to replay events to know who was on field at time of goal
-    // This logic is duplicated from StatsView - consider moving to a helper utility
-    const plusMinusMap = useMemo(() => {
-        const map = new Map<string, number>();
-        const currentHomeLineup = new Set<string>();
-        const currentAwayLineup = new Set<string>();
-
-        matchState.homeTeam.players.forEach(p => { if (p.isStarter) currentHomeLineup.add(p.id); map.set(p.id, 0); });
-        matchState.awayTeam.players.forEach(p => { if (p.isStarter) currentAwayLineup.add(p.id); map.set(p.id, 0); });
-
-        const sortedEvents = [...matchState.events].sort((a, b) => a.timestamp - b.timestamp);
-
-        sortedEvents.forEach(e => {
-            if (e.type === 'SUBSTITUTION' && e.subInId && e.subOutId) {
-                if (e.teamId === 'HOME') {
-                    currentHomeLineup.delete(e.subOutId);
-                    currentHomeLineup.add(e.subInId);
-                    if (!map.has(e.subInId)) map.set(e.subInId, 0);
-                } else {
-                    currentAwayLineup.delete(e.subOutId);
-                    currentAwayLineup.add(e.subInId);
-                    if (!map.has(e.subInId)) map.set(e.subInId, 0);
-                }
-            }
-
-            if (e.type === 'SHOT' && e.result === 'GOAL') {
-                if (e.teamId === 'HOME') {
-                    currentHomeLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) + 1));
-                    currentAwayLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) - 1));
-                } else {
-                    currentAwayLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) + 1));
-                    currentHomeLineup.forEach(pid => map.set(pid, (map.get(pid) || 0) - 1));
-                }
-            }
-        });
-        return map;
-    }, [matchState.events, matchState.homeTeam, matchState.awayTeam]);
+    const plusMinusMap = useMemo(() => calculateMatchPlusMinus(matchState), [matchState]);
 
     // 2. Current Match Player Stats
     const getCurrentPlayerStats = (teamId: TeamId) => {
         const team = teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
-        return team.players.map(player => {
-            const events = matchState.events.filter(e => e.playerId === player.id);
-            const shots = events.filter(e => e.type === 'SHOT');
-            const goals = shots.filter(e => e.result === 'GOAL');
-            const rebounds = events.filter(e => e.type === 'REBOUND');
-            const fouls = events.filter(e => e.type === 'FOUL');
-            const turnovers = events.filter(e => e.type === 'TURNOVER');
-
-            // Calculate Rating
-            const misses = shots.length - goals.length;
-            const rating = (goals.length * 5) + (rebounds.length * 2) - (misses * 1) - (turnovers.length * 3) - (fouls.length * 2);
-
-            return {
-                ...player,
-                shots: shots.length,
-                goals: goals.length,
-                percentage: shots.length > 0 ? Math.round((goals.length / shots.length) * 100) : 0,
-                rebounds: rebounds.length,
-                fouls: fouls.length,
-                rating,
-                plusMinus: plusMinusMap.get(player.id) || 0
-            };
-        }).sort((a, b) => b.rating - a.rating);
+        return calculatePlayerMatchStats(team, matchState, plusMinusMap);
     };
 
     // 3. Historic Player Stats (Only for players in CURRENT match)
@@ -116,8 +59,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
 
         // Initialize with current players
         currentPlayers.forEach(p => {
-            // Use Name as key since ID might change between matches if not persisted perfectly
-            // Ideally ID is consistent? If not, Name is safer for "Same Player Different Match" heuristic
+            // Use player name as a stable key for cross-match aggregation
             const key = p.name;
             const teamName = matchState.homeTeam.players.find(hp => hp.id === p.id) ? matchState.homeTeam.name : matchState.awayTeam.name;
             playerMap.set(key, { name: p.name, teamName, matches: 0, goals: 0, shots: 0, rebounds: 0 });
@@ -141,18 +83,12 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
             });
         });
 
-        // Add CURRENT match stats too? 
-        // User likely wants "Historic" to include "Career including current"?
-        // Or just "Previous"?
-        // Usually "Season Stats" includes current game live.
-        // Let's add current match stats to the history aggregation.
+        // Include current match stats in the career history aggregation
         [matchState.homeTeam, matchState.awayTeam].forEach(t => {
             t.players.forEach(p => {
                 if (playerMap.has(p.name)) {
                     const stat = playerMap.get(p.name)!;
-                    // Current match is always "played" if they are in roster? 
-                    // Or if they are on field/have events?
-                    // Let's assume +1 match if they exist in current state (active match)
+                    // Current match counts as +1 match played
                     stat.matches++;
 
                     const pEvents = matchState.events.filter(e => e.playerId === p.id);
@@ -275,8 +211,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
 
                             {/* Field */}
                             <div className="flex-1 bg-white rounded-xl shadow-lg border border-slate-700 overflow-hidden relative flex items-center justify-center p-4">
-                                {/* Using white bg for field because KorfballField is light-themed usually, or ensure it handles dark mode? 
-                          Field usually has white background in code. Let's keep container white for contrast.*/}
+                                {/* Maintain solid background for optimal field visibility and contrast */}
                                 <KorfballField mode="view" events={filteredEvents} heatmapMode={heatmapMode} showZoneEfficiency={showZoneStats} />
                             </div>
                         </div>
@@ -368,8 +303,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                     </thead>
                                     <tbody className="divide-y divide-slate-700 font-medium">
                                         {historicStats.map((stat, i) => {
-                                            // Try to find player in current match to open profile
-                                            // This only works for players currently on the roster, which fits the requirement "historic stats (Only for players in CURRENT match)" logic used above
+                                            // Map historical stats back to current match player entities for profile interactions
                                             const homeP = matchState.homeTeam.players.find(p => p.name === stat.name);
                                             const awayP = matchState.awayTeam.players.find(p => p.name === stat.name);
                                             const playerObj = homeP || awayP;

@@ -12,6 +12,25 @@ interface ClubEditorProps {
     savedMatches?: MatchState[];
 }
 
+const ColorPickerField = ({ label, color, onChange }: { label: string, color: string, onChange: (val: string) => void }) => (
+    <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+        <div className="flex gap-2">
+            <input
+                type="color"
+                value={color}
+                onChange={(e) => onChange(e.target.value)}
+                className="w-10 h-10 p-0 border-none rounded cursor-pointer"
+            />
+            <input
+                value={color}
+                onChange={(e) => onChange(e.target.value)}
+                className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 font-mono uppercase text-gray-900 dark:text-white text-sm"
+            />
+        </div>
+    </div>
+);
+
 const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = [] }) => {
     const [name, setName] = useState(club.name);
     const [shortName, setShortName] = useState(club.shortName);
@@ -91,38 +110,16 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                                 className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 uppercase font-mono text-gray-900 dark:text-white"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Primary Color</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="color"
-                                    value={primaryColor}
-                                    onChange={(e) => setPrimaryColor(e.target.value)}
-                                    className="w-10 h-10 p-0 border-none rounded cursor-pointer"
-                                />
-                                <input
-                                    value={primaryColor}
-                                    onChange={(e) => setPrimaryColor(e.target.value)}
-                                    className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 font-mono uppercase text-gray-900 dark:text-white text-sm"
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Secondary Color</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="color"
-                                    value={secondaryColor}
-                                    onChange={(e) => setSecondaryColor(e.target.value)}
-                                    className="w-10 h-10 p-0 border-none rounded cursor-pointer"
-                                />
-                                <input
-                                    value={secondaryColor}
-                                    onChange={(e) => setSecondaryColor(e.target.value)}
-                                    className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 font-mono uppercase text-gray-900 dark:text-white text-sm"
-                                />
-                            </div>
-                        </div>
+                        <ColorPickerField 
+                            label="Primary Color" 
+                            color={primaryColor} 
+                            onChange={setPrimaryColor} 
+                        />
+                        <ColorPickerField 
+                            label="Secondary Color" 
+                            color={secondaryColor} 
+                            onChange={setSecondaryColor} 
+                        />
                     </div>
                 </div>
 

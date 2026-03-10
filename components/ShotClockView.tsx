@@ -14,9 +14,7 @@ const ShotClockView: React.FC<ShotClockViewProps> = ({ matchState }) => {
 
     useEffect(() => {
         const currentShotClock = matchState.shotClock.seconds;
-        // Trigger sound when transitioning to 0 from a positive number
-        // AND the clock was actually running (or just experienced a time update that hit 0)
-        // We check matchState.shotClock.lastStartTime to ensure it's an active game transition
+        // Trigger sound only on an active countdown transitioning to 0. Validated via lastStartTime.
         if (prevShotClockRef.current > 0 && currentShotClock <= 0 && matchState.shotClock.lastStartTime) {
             playShotClockBuzzer();
         }
@@ -27,13 +25,7 @@ const ShotClockView: React.FC<ShotClockViewProps> = ({ matchState }) => {
     const isLowTime = seconds <= 5;
     const isExpired = seconds === 0;
 
-    // Determine background and text color based on state
-    // Default: Black background, Yellow text
-    // Low time (<5s): Black background, Red text
-    // Expired (0s): Red background, White text ? Or just Red text? 
-    // User asked for "very clear". 
-    // Standard shot clocks often go red at 0 or low time.
-    // Let's stick to high contrast.
+    // Clock colors: High contrast yellow (default) and red (low time / expired)
 
     let bgColor = "bg-black";
     let textColor = "text-yellow-400"; // Standard LED yellow
@@ -45,8 +37,7 @@ const ShotClockView: React.FC<ShotClockViewProps> = ({ matchState }) => {
         textColor = "text-red-500";
     }
 
-    // Override for simple clear look:
-    // We want MAX READABILITY.
+    // Use standard full-screen styling for maximal readability
 
     return (
         <div className={`w-screen h-screen flex items-center justify-center ${bgColor} overflow-hidden`}>

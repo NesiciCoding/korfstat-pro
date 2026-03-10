@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Club } from '../types/club';
 import { ClubService } from '../services/clubService';
 import { Plus, Trash2, Edit2, Users, ArrowLeft, Download, BarChart2 } from 'lucide-react';
-import ClubEditor from './ClubEditor'; // We will create this next
+import ClubEditor from './ClubEditor';
 import { MatchState } from '../types';
 import { calculateCareerStats } from '../utils/statsCalculator';
 
@@ -49,7 +49,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
     };
 
     const handleImportLegacy = () => {
-        const count = ClubService.migrateLegacyTeams(); // We need to update Service to return count
+        const count = ClubService.migrateLegacyTeams();
         if (count > 0) {
             alert(`Migrated ${count} teams!`);
             loadClubs();
@@ -141,8 +141,6 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
                                 </div>
                             </div>
 
-                            {/* Mini Roster Preview with Stats? Or just keep simple? */}
-                            {/* Let's show top scorer if matches exist? */}
                             {savedMatches.length > 0 && (
                                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                                     <div className="text-xs font-bold text-gray-400 uppercase mb-2">Internal Top Scorers</div>

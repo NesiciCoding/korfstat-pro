@@ -8,6 +8,7 @@ import { generatePDF, generateJSON } from '../services/reportGenerator';
 import { generateExcel } from '../services/excelGenerator';
 import { generateMatchInsights } from '../services/analysisService';
 import SocialGraphicGenerator from './SocialGraphicGenerator';
+import { calculateMatchPlusMinus, calculatePlayerMatchStats } from '../utils/statsCalculator';
 
 interface StatsViewProps {
   matchState: MatchState;
@@ -44,79 +45,11 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
   const insights = useMemo(() => generateMatchInsights(matchState), [matchState]);
 
   // --- Plus/Minus Calculation ---
-  // We need to replay events to know who was on field at time of goal
-  const plusMinusMap = new Map<string, number>();
-
-  // Initialize starting lineups
-  const currentHomeLineup = new Set<string>();
-  const currentAwayLineup = new Set<string>();
-
-  matchState.homeTeam.players.forEach(p => { if (p.isStarter) currentHomeLineup.add(p.id); plusMinusMap.set(p.id, 0); });
-  matchState.awayTeam.players.forEach(p => { if (p.isStarter) currentAwayLineup.add(p.id); plusMinusMap.set(p.id, 0); });
-
-  // Chronological Replay
-  const sortedEvents = [...matchState.events].sort((a, b) => a.timestamp - b.timestamp);
-
-  sortedEvents.forEach(e => {
-    if (e.type === 'SUBSTITUTION' && e.subInId && e.subOutId) {
-      // Update Lineups
-      if (e.teamId === 'HOME') {
-        currentHomeLineup.delete(e.subOutId);
-        currentHomeLineup.add(e.subInId);
-        // Ensure new player has entry in map if not present (though should be initialized above if we iterate all players)
-        if (!plusMinusMap.has(e.subInId)) plusMinusMap.set(e.subInId, 0);
-      } else {
-        currentAwayLineup.delete(e.subOutId);
-        currentAwayLineup.add(e.subInId);
-        if (!plusMinusMap.has(e.subInId)) plusMinusMap.set(e.subInId, 0);
-      }
-    }
-
-    if (e.type === 'SHOT' && e.result === 'GOAL') {
-      if (e.teamId === 'HOME') {
-        // Home Goal: +1 for Home lineup, -1 for Away lineup
-        currentHomeLineup.forEach(pid => plusMinusMap.set(pid, (plusMinusMap.get(pid) || 0) + 1));
-        currentAwayLineup.forEach(pid => plusMinusMap.set(pid, (plusMinusMap.get(pid) || 0) - 1));
-      } else {
-        // Away Goal: +1 for Away lineup, -1 for Home lineup
-        currentAwayLineup.forEach(pid => plusMinusMap.set(pid, (plusMinusMap.get(pid) || 0) + 1));
-        currentHomeLineup.forEach(pid => plusMinusMap.set(pid, (plusMinusMap.get(pid) || 0) - 1));
-      }
-    }
-  });
+  const plusMinusMap = useMemo(() => calculateMatchPlusMinus(matchState), [matchState]);
 
   const getPlayerStats = (teamId: TeamId) => {
     const team = teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
-    return team.players.map(player => {
-      const events = matchState.events.filter(e => e.playerId === player.id);
-      const shots = events.filter(e => e.type === 'SHOT');
-      const goals = shots.filter(e => e.result === 'GOAL');
-      const rebounds = events.filter(e => e.type === 'REBOUND');
-      const fouls = events.filter(e => e.type === 'FOUL');
-      const turnovers = events.filter(e => e.type === 'TURNOVER');
-
-      // Calculate Rating (VAL)
-      // Formula: (Goals * 5) + (Rebounds * 2) - (Misses * 1) - (Turnovers * 3) - (Fouls * 2)
-      const misses = shots.length - goals.length;
-      const rating = (goals.length * 5) + (rebounds.length * 2) - (misses * 1) - (turnovers.length * 3) - (fouls.length * 2);
-
-      return {
-        ...player,
-        shots: shots.length,
-        goals: goals.length,
-        percentage: shots.length > 0 ? Math.round((goals.length / shots.length) * 100) : 0,
-        rebounds: rebounds.length,
-        fouls: fouls.length,
-        rating: rating,
-        plusMinus: plusMinusMap.get(player.id) || 0,
-        shotTypes: {
-          short: shots.filter(s => s.shotType === 'NEAR').length,
-          medium: shots.filter(s => s.shotType === 'MEDIUM').length,
-          long: shots.filter(s => s.shotType === 'FAR').length,
-          pen: shots.filter(s => s.shotType === 'PENALTY' || s.shotType === 'FREE_THROW').length,
-        }
-      };
-    }).sort((a, b) => b.rating - a.rating);
+    return calculatePlayerMatchStats(team, matchState, plusMinusMap);
   };
 
   const scoreData = useMemo(() => {

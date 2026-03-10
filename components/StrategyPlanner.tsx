@@ -74,11 +74,7 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
   // Sync current state to frames whenever it changes (auto-save to frame)
   useEffect(() => {
     if (frames.length > 0 && !isPlaying) {
-      // Debounce or just update?
-      // Direct update might cause cycles if we depend on frames.
-      // Better: Only update frames on specific actions (MouseUp, ToolChange) or use a "Save Frame" specific trigger?
-      // For smoothness, let's update `frames` immediately but ensure we don't re-render `tokens` from `frames` constantly.
-      // Actually, let's explicit save. "Auto-save" to frame state needs care.
+      // Rely on explicit "Commit" actions (e.g., mouse up) rather than auto-saving into frames to avoid render cycles
 
       const updatedFrames = [...frames];
       updatedFrames[currentFrameIndex] = {
@@ -86,11 +82,9 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
         tokens,
         drawings
       };
-      // Avoid setting frames if identical to prevent loop
-      // setFrames(updatedFrames); 
-      // This is dangerous. Let's use a Ref for "IsLoadingFrame" to skip, or just update Frames on interactions.
+      // Do not setFrames automatically here to prevent infinite render loops
     }
-  }, [tokens, drawings]); // This is tricky. Let's rely on explicit "commit" or update frames on interaction end.
+  }, [tokens, drawings]); // Explicit frame commits govern state consistency
 
   const updateCurrentFrame = () => {
     if (isPlaying) return;
@@ -140,10 +134,7 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
 
   const loadPlay = (play: SavedPlay) => {
     if (window.confirm(`Load play "${play.name}"? Unsaved changes will be lost.`)) {
-      // Handle migration if needed (old plays had logic?)
-      // Assuming interface works.
-      // If play.frames is undefined (legacy), wrap it?
-      // Let's assume typescript checks hold or we migrate in loadSavedPlays.
+      // Optional backwards-compatibility migration for older play formats
       if (!play.frames && (play as any).tokens) {
         // Migration for legacy
         const legacyFrame: Frame = {
@@ -213,9 +204,7 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
     const newFrame: Frame = {
       id: crypto.randomUUID(),
       tokens: JSON.parse(JSON.stringify(tokens)), // Deep copy positions
-      drawings: JSON.parse(JSON.stringify(drawings)), // Copy drawings? Usually next frame starts with drawings? 
-      // Option: Clear drawings for next movement, or keep them? 
-      // Strategy: Keep them, user can clear if they want new movement arrows.
+      drawings: JSON.parse(JSON.stringify(drawings)), // Persist drawings sequentially across frames
       duration: 1000
     };
 
@@ -269,14 +258,8 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
         idx++;
         if (idx >= frames.length) {
           idx = 0; // Loop? Or stop?
-          // clearInterval(playbackRef.current!);
-          // setIsPlaying(false);
-          // return;
         }
-        // We need to access latest frames state?
-        // Use functional update or ref?
-        // Simple: just render.
-        // Logic check: SetState in interval will trigger re-render
+        // State updates within setInterval trigger re-rendering
         setCurrentFrameIndex(idx);
         setTokens(framesRef.current[idx].tokens);
         setDrawings(framesRef.current[idx].drawings);
@@ -363,10 +346,8 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
       // Right Spot: postX - 2.5m
       const penaltyX = isRight ? postX - (2.5 * m) : postX + (2.5 * m);
 
-      // --- Penalty Area / Free Pass Circle (Visual Guide) ---
-      // Typically a circle around the post? Or oval?
-      // User image showed an ORANGE area.
-      // Let's draw a 2.5m radius circle around post (standard free pass distance)
+      // --- Penalty Area / Free Pass Area ---
+      // 2.5m radius circle around post (standard free pass distance marker)
       ctx.beginPath();
       ctx.arc(postX, postY, 2.5 * m, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(251, 146, 60, 0.3)'; // Orange transparent
@@ -448,8 +429,7 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
     const pos = getPos(e);
 
     if (activeTool === 'SELECT') {
-      // Check if clicked on token? (Handled by token's own event)
-      // Background click -> deselect or stop editing
+      // Background click -> deselect active token
       if (editingId) setEditingId(null);
     } else if (activeTool === 'PEN' || activeTool === 'ARROW') {
       if (editingId) setEditingId(null);
@@ -491,12 +471,7 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
     if (currentPath) {
       setDrawings(prev => {
         const next = [...prev, currentPath];
-        // We need to commit this.
-        // Since setState is async, we can't commit immediately with 'next'.
-        // Let's use useEffect change detection or just pass it.
-        // Better: setDrawings is enough, the commitChange relies on state?
-        // No, commitChange duplicates state.
-        // Let's rely on a helper that does both.
+        // Updates to drawings rely on async state completion prior to frame commit
         return next;
       });
       setCurrentPath(null);
