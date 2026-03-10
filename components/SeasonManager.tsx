@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Trophy, Calendar, ChevronRight, Table } from 'lucide-react';
+import { ArrowLeft, Plus, Trophy, Calendar, ChevronRight, Table, GitMerge } from 'lucide-react';
 import { Season, Standing } from '../types/season';
-import { MatchState } from '../types';
+import { MatchState, Team } from '../types';
+import TournamentBracket from './TournamentBracket';
+import { generateEmptyBracket, updateBracketProgression } from '../utils/tournamentLogic';
+import { exportBracketToPDF } from '../services/bracketExport';
+import GroupStage from './GroupStage';
 
 interface SeasonManagerProps {
     onBack: () => void;
@@ -17,6 +21,9 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
     const [activeSeason, setActiveSeason] = useState<Season | null>(null);
     const [isCreating, setIsCreating] = useState(false);
     const [newSeasonName, setNewSeasonName] = useState('');
+    const [newSeasonFormat, setNewSeasonFormat] = useState<'LEAGUE' | 'KNOCKOUT' | 'GROUP_KNOCKOUT'>('LEAGUE');
+    const [newBracketSize, setNewBracketSize] = useState<number>(8);
+    const [newGroupCount, setNewGroupCount] = useState<number>(2);
 
     useEffect(() => {
         localStorage.setItem('korfstat_seasons', JSON.stringify(seasons));
@@ -24,13 +31,28 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
 
     const handleCreateSeason = () => {
         if (!newSeasonName.trim()) return;
+        let initialGroups = undefined;
+        if (newSeasonFormat === 'GROUP_KNOCKOUT') {
+            initialGroups = Array.from({ length: newGroupCount }).map((_, i) => ({
+                id: `GROUP_${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]}`,
+                name: `Group ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]}`,
+                teamIds: []
+            }));
+        }
+
         const newSeason: Season = {
             id: crypto.randomUUID(),
             name: newSeasonName,
+            format: newSeasonFormat,
             startDate: Date.now(),
-            teams: [], // We could maintain a global team list, but for now we aggregate from matches
+            teams: [], 
             matches: [],
-            standings: []
+            standings: [],
+            bracketMap: {},
+            bracketConfig: ['KNOCKOUT', 'GROUP_KNOCKOUT'].includes(newSeasonFormat) 
+                ? { teamCount: newBracketSize, thirdPlaceMatch: true } 
+                : undefined,
+            groups: initialGroups
         };
         setSeasons([...seasons, newSeason]);
         setNewSeasonName('');
@@ -131,11 +153,13 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Standings Table */}
-                            <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <Table size={20} /> League Table
-                                </h3>
+                            {/* Main Content Area */}
+                            <div className="lg:col-span-2 flex flex-col gap-6">
+                                {(!activeSeason.format || activeSeason.format === 'LEAGUE') && (
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                            <Table size={20} /> League Table
+                                        </h3>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm text-left">
                                         <thead className="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-900/50">
@@ -176,6 +200,76 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
                                     </table>
                                 </div>
                             </div>
+                            )}
+
+                            {['KNOCKOUT', 'GROUP_KNOCKOUT'].includes(activeSeason.format || '') && (
+                                <div className="flex flex-col gap-6">
+                                    {activeSeason.format === 'GROUP_KNOCKOUT' && (
+                                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+                                            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                                    <Table size={18} /> Group Stage
+                                                </h3>
+                                            </div>
+                                            <div className="p-2">
+                                                {(() => {
+                                                    const allTeams = new Map<string, Team>();
+                                                    matches.filter(m => m.seasonId === activeSeason.id).forEach(m => {
+                                                        allTeams.set(m.homeTeam.id, m.homeTeam);
+                                                        allTeams.set(m.awayTeam.id, m.awayTeam);
+                                                    });
+                                                    return (
+                                                        <GroupStage 
+                                                            groups={activeSeason.groups || []} 
+                                                            matches={matches.filter(m => m.seasonId === activeSeason.id)} 
+                                                            teams={Array.from(allTeams.values())} 
+                                                        />
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+                                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                            <GitMerge size={18} /> Tournament Bracket
+                                        </h3>
+                                        <button 
+                                            onClick={() => exportBracketToPDF('bracket-export-region', activeSeason.name)}
+                                            className="px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg transition-colors"
+                                        >
+                                            Export Bracket
+                                        </button>
+                                    </div>
+                                    <div className="w-full overflow-x-auto min-h-[500px]">
+                                        {(() => {
+                                            const nodes = generateEmptyBracket(activeSeason.bracketConfig || { teamCount: 8, thirdPlaceMatch: true });
+                                            const allTeams = new Map<string, Team>();
+                                            matches.filter(m => m.seasonId === activeSeason.id).forEach(m => {
+                                                allTeams.set(m.homeTeam.id, m.homeTeam);
+                                                allTeams.set(m.awayTeam.id, m.awayTeam);
+                                            });
+                                            
+                                            const progressedNodes = updateBracketProgression(nodes, activeSeason.bracketMap || {}, matches);
+                                            return (
+                                                <TournamentBracket 
+                                                    bracketMap={activeSeason.bracketMap || {}} 
+                                                    nodes={progressedNodes} 
+                                                    matches={matches} 
+                                                    teams={Array.from(allTeams.values())} 
+                                                    onMatchClick={(node, match) => {
+                                                        console.log('Clicked node', node.id, match?.id);
+                                                        alert(`Clicked ${node.id}. If this was plugged in, it would open Match Tracker for this game!`);
+                                                    }} 
+                                                />
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+                                </div>
+                            )}
+                        </div>
 
                             {/* Stats / Info Sidebar */}
                             <div className="space-y-6">
@@ -210,17 +304,59 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
                                     <span className="font-semibold text-gray-900 dark:text-white">Create New Season</span>
                                 </>
                             ) : (
-                                <div className="w-full" onClick={(e) => e.stopPropagation()}>
+                                <div className="w-full flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
                                     <input
                                         type="text"
                                         autoFocus
                                         placeholder="Season Name (e.g. 2024/2025)"
-                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent dark:text-white mb-2"
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white"
                                         value={newSeasonName}
                                         onChange={(e) => setNewSeasonName(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleCreateSeason()}
                                     />
                                     <div className="flex gap-2">
+                                        <select 
+                                            value={newSeasonFormat}
+                                            onChange={(e) => setNewSeasonFormat(e.target.value as any)}
+                                            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white text-sm"
+                                        >
+                                            <option value="LEAGUE">League (Points Table)</option>
+                                            <option value="KNOCKOUT">Knockout Bracket</option>
+                                            <option value="GROUP_KNOCKOUT">Group Stage + Knockout</option>
+                                        </select>
+                                    </div>
+                                    {['KNOCKOUT', 'GROUP_KNOCKOUT'].includes(newSeasonFormat) && (
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex gap-2 items-center">
+                                                <label className="text-xs text-gray-500 whitespace-nowrap min-w-[80px]">Bracket Size:</label>
+                                                <select 
+                                                    value={newBracketSize}
+                                                    onChange={(e) => setNewBracketSize(Number(e.target.value))}
+                                                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white text-sm"
+                                                >
+                                                    <option value={4}>4 Teams</option>
+                                                    <option value={8}>8 Teams</option>
+                                                    <option value={16}>16 Teams</option>
+                                                    <option value={32}>32 Teams</option>
+                                                </select>
+                                            </div>
+                                            {newSeasonFormat === 'GROUP_KNOCKOUT' && (
+                                                <div className="flex gap-2 items-center">
+                                                    <label className="text-xs text-gray-500 whitespace-nowrap min-w-[80px]">Group Count:</label>
+                                                    <select 
+                                                        value={newGroupCount}
+                                                        onChange={(e) => setNewGroupCount(Number(e.target.value))}
+                                                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white text-sm"
+                                                    >
+                                                        <option value={2}>2 Groups</option>
+                                                        <option value={4}>4 Groups</option>
+                                                        <option value={8}>8 Groups</option>
+                                                    </select>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2 mt-2">
                                         <button onClick={handleCreateSeason} className="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-sm hover:bg-indigo-700">Create</button>
                                         <button onClick={() => setIsCreating(false)} className="px-3 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm">Cancel</button>
                                     </div>

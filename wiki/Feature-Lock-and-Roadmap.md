@@ -12,6 +12,7 @@ The following features are currently implemented and are critical to the operati
 - **Season Manager**: Grouping matches and statistics into seasons.
 - **Club Manager**: Managing club details, teams, and player rosters.
 - **Settings & Configuration**: App-wide configuration, including keyboard shortcuts.
+- **Tournament Formats & Brackets**: Scalable tools for Leagues, Knockouts, and Group Stages, featuring visual generation and PDF bracket exports.
 
 ### Live Tracking & Officiating
 - **Match Tracker**: Real-time input of goals, fouls, substitutions, and timeouts.
@@ -66,8 +67,3 @@ These are game-changing features that require significant architectural work.
 
 ### Medium Impact, Low/Medium Time to Implement
 Nice-to-have features that polish the experience.
-
-8. **Pre-defined Tournament Formats & Brackets**
-   - **Description**: A tool to generate visual tournament brackets or round-robin tables based on match results.
-   - **Impact**: Medium (Useful for one-off tournaments).
-   - **Time**: Medium.

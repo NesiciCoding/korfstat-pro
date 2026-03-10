@@ -60,62 +60,30 @@ When launching using the app will automatically start in the background and you 
 
 ---
 
-## 📱 How to Use KorfStat Pro
+## 📱 Key Features & Modules
 
-The application is divided into several powerful views, each designed for a specific role.
+KorfStat Pro has grown into a comprehensive suite of tools for all aspects of managing, officiating, and broadcasting Korfball. The application is divided into several powerful modules:
 
-### 🏠 Home Dashboard
-The central hub where you can:
-- **Start a New Match**: Set up teams and players.
-- **View History**: Look back at previous match results.
-- **Analyze Stats**: See overall player and team performance.
-- **Plan Strategy**: Use the whiteboard feature to draw plays. Save your plays and load them later.
+### ⚙️ Core Management
+- **Home Dashboard**: Central hub for accessing all features.
+- **Match & Season Manager**: Set up matches, group them into seasons, and manage club details/team rosters.
+- **Tournament Formats**: Automatically generate Leagues, Knockout Brackets, and Group Stages with printable PDF exports.
 
-### ⚙️ Setting Up a Match
-Before the game starts, you'll need to configure the teams:
-1.  **Select Teams**: Enter team names and choose their colors.
-2.  **Add Players**: List players with their numbers and gender.
-3.  **Lineup**: Select who starts on the field (Attack/Defense).
-4.  Click **"Start Match"** to enter the tracking interface.
+### ⏱️ Live Tracking & Officiating
+- **Match Tracker**: Real-time input of goals, fouls, substitutions, and timeouts with full Undo/Redo support.
+- **Jury & Spotter Views**: Dedicated remote interfaces for table officials and designated spotters.
+- **Precision Clocks**: Professional-grade Game Clock and a decoupled 25s Shot Clock.
 
-### 📊 Match Tracker (The Main Screen)
-This is where the statistics magic happens during the game.
-- **Live Clock**: Manage the Game Clock and Shot Clock.
-- **Track Events**: Click on the field to record shots, goals, turnovers, and fouls.
-- **Substitutions**: Manage player changes easily.
-- **Undo**: Made a mistake? Quickly undo the last action.
+### 📺 Broadcasting & Display
+- **Stream Overlays & Director**: Fully customizable graphics (gradients, team logos) for OBS/vMix, controlled via a dedicated Director dashboard.
+- **Live Stats (Big Screen)**: Formatted views optimized for in-arena displays and livestreams.
 
-### 👨‍⚖️ Jury / Table Official Interface
-*Designed for the official scorer's table.*
-Run this view on a separate laptop or tab for the officials or a dedicated timekeeper
-- **Game Clock Control**: Start/Stop the main timer independently.
-- **Shot Clock Control**: Start/Stop/Reset the 25-second clock.
-- **Scoreboard Management**: Correct scores if needed.
-- **Disciplinary**: Issue / Register Yellow/Red cards.
+### 📊 Analysis & Integrations
+- **Extensive Stats & AI**: Automated insights, Strategy Planner whiteboard, and PDF/Excel/JSON data exports.
+- **Social Media Graphics**: Rapid export tool to create beautifully formatted score graphics for social media.
+- **Hardware & App Integrations**: Native Tauri desktop builds, full Bitfocus Companion API support (Stream Deck), and a companion Wear OS referee watch app.
 
-> **Tip:** Open this link in a new window and drag it to a second (touch-screen) monitor if you have one!
-
-> **Tip** Open this link on a separate device to use it as a dedicated timekeeper and jury interface!
-
-### 📺 Live Stream Statistics
-Shows you three subscreens that you can use for a livestream. It shows useful data for commentators and analysts.
-1. **Shot Analysis**: Shows you either a heat map of all shots taken or an exact view of every goal/shot taken
-2. **Current Match Statistics**: Shows you the performance of both teams during this game in a table
-3. **Historic Match Statistics**: Shows you all the historic data and performance of both teams during this and previous games in a table
-
-### 📺 Live Stats View (The Big Screen)
-*Designed for spectators and live streams.*
-Connect a large TV or projector to your computer and open this view.
-- Displays a real-time scoreboard.
-- Shows the Game Clock and Shot Clock clearly.
-- Animates latest events (Goals, Cards) for the audience.
-
----
-
-## ⏱️ Managing the Clocks
-KorfStat Pro features professional-grade timing tools:
-- **Shot Clock Decoupled**: The Shot Clock (25s) operates independently of the Game Clock. Starting the game doesn't force the shot clock to run, giving officials full control.
-- **Precision Timing**: The clocks are calibrated to be accurate to the second, matching "physics time" perfectly.
+> 📚 **Want to learn more?** For in-depth explanations of every feature, how to use them, and our future roadmap, please check out the **[KorfStat Pro Wiki](./wiki/)**! Specifically, our [Feature Lock and Roadmap](./wiki/Feature-Lock-and-Roadmap.md) outlines the full extent of the application's capabilities.
 
 ---
 

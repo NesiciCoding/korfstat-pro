@@ -1,13 +1,20 @@
-import { Team } from '../types';
+import { Team } from './index';
+
+import { BracketConfig, GroupConfig, Group } from './tournament';
 
 export interface Season {
     id: string;
     name: string;
+    format?: 'LEAGUE' | 'KNOCKOUT' | 'GROUP_KNOCKOUT';
     startDate: number;
     endDate?: number;
     teams: Team[];
     matches: string[]; // Match IDs
-    standings: Standing[];
+    standings: Standing[]; // For League or Group Stages
+    bracketMap?: Record<string, string>; // Maps node ID (e.g. 'SF1') to matchId
+    bracketConfig?: BracketConfig;
+    groupConfig?: GroupConfig;
+    groups?: Group[];
 }
 
 export interface Standing {
