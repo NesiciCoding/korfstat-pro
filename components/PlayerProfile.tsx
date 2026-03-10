@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MatchState } from '../types';
 import { calculateCareerStats, getPlayerTrend } from '../utils/statsCalculator';
 import { X, Trophy, Target, Activity, Calendar } from 'lucide-react';
@@ -11,6 +12,7 @@ interface PlayerProfileProps {
 }
 
 const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, matches, onClose }) => {
+    const { t } = useTranslation();
     const stats = useMemo(() => calculateCareerStats(player.id, matches), [player.id, matches]);
     const trend = useMemo(() => getPlayerTrend(player.id, matches), [player.id, matches]);
 
@@ -37,9 +39,9 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, matches, onClose 
                         <div>
                             <h2 className="text-2xl font-bold text-white">{player.firstName} {player.lastName}</h2>
                             <div className="flex items-center gap-3 text-indigo-100 mt-1">
-                                <span className="bg-indigo-500/50 px-2 py-0.5 rounded text-sm font-medium">{player.gender === 'M' ? 'Male' : 'Female'}</span>
+                                <span className="bg-indigo-500/50 px-2 py-0.5 rounded text-sm font-medium">{player.gender === 'M' ? t('clubManager.male') : t('clubManager.female')}</span>
                                 <span className="text-sm">•</span>
-                                <span className="text-sm opacity-90">{stats.matchesPlayed} Career Matches</span>
+                                <span className="text-sm opacity-90">{t('clubManager.careerMatches', { count: stats.matchesPlayed })}</span>
                             </div>
                         </div>
                     </div>
@@ -50,21 +52,21 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, matches, onClose 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                             <div className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase mb-1 flex items-center gap-1">
-                                <Target size={12} /> Goals
+                                <Target size={12} /> {t('clubManager.goals')}
                             </div>
                             <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{stats.goals}</div>
-                            <div className="text-xs text-gray-400">Total Scored</div>
+                            <div className="text-xs text-gray-400">{t('clubManager.totalScored')}</div>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                             <div className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase mb-1 flex items-center gap-1">
-                                <Activity size={12} /> Accuracy
+                                <Activity size={12} /> {t('clubManager.accuracy')}
                             </div>
                             <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{stats.shootingPercentage}%</div>
-                            <div className="text-xs text-gray-400">{stats.shots} Attempts</div>
+                            <div className="text-xs text-gray-400">{stats.shots} {t('clubManager.attempts')}</div>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                             <div className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase mb-1 flex items-center gap-1">
-                                <Trophy size={12} /> Win Rate
+                                <Trophy size={12} /> {t('clubManager.winRate')}
                             </div>
                             <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
                                 {stats.matchesPlayed > 0 ? Math.round((stats.wins / stats.matchesPlayed) * 100) : 0}%
@@ -73,31 +75,31 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, matches, onClose 
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                             <div className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase mb-1 flex items-center gap-1">
-                                <Target size={12} /> Penalties
+                                <Target size={12} /> {t('clubManager.penalties')}
                             </div>
                             <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                                 {stats.penalties.scored}/{stats.penalties.total}
                             </div>
-                            <div className="text-xs text-gray-400">Converted</div>
+                            <div className="text-xs text-gray-400">{t('clubManager.converted')}</div>
                         </div>
                     </div>
 
                     <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <Calendar size={18} /> Recent Match Log
+                        <Calendar size={18} /> {t('clubManager.recentLog')}
                     </h3>
 
                     {recentMatches.length === 0 ? (
                         <div className="text-center py-8 text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                            No match history found.
+                            {t('clubManager.noHistory')}
                         </div>
                     ) : (
                         <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold uppercase text-xs">
                                     <tr>
-                                        <th className="p-3">Opponent</th>
-                                        <th className="p-3 text-center">Result</th>
-                                        <th className="p-3 text-right">Goals</th>
+                                        <th className="p-3">{t('clubManager.opponent')}</th>
+                                        <th className="p-3 text-center">{t('clubManager.result')}</th>
+                                        <th className="p-3 text-right">{t('clubManager.goals')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -124,7 +126,7 @@ const PlayerProfile: React.FC<PlayerProfileProps> = ({ player, matches, onClose 
                 </div>
 
                 <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 text-center text-xs text-gray-500">
-                    Stats are calculated from saved match history.
+                    {t('clubManager.statsCalcDesc')}
                 </div>
             </div>
         </div>

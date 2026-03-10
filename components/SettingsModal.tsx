@@ -99,7 +99,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                         {/* Match Settings Section */}
                         <div className="space-y-3">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Match Functions</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{t('settings.matchFunctions')}</label>
 
                             {/* Sound */}
                             <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -107,7 +107,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                     <div className={`p-2 rounded-full ${settings.soundEnabled ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
                                         {settings.soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
                                     </div>
-                                    <span className="font-medium text-gray-900 dark:text-gray-100">Game Effects</span>
+                                    <span className="font-medium text-gray-900 dark:text-gray-100">{t('settings.gameEffects')}</span>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
@@ -122,14 +122,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                             {/* Match Type */}
                             <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                                <span className="text-gray-900 dark:text-gray-100">Match Type (Korfball)</span>
+                                <span className="text-gray-900 dark:text-gray-100">{t('settings.matchType')}</span>
                                 <select
                                     value={settings.matchType}
                                     onChange={(e) => updateSettings({ matchType: e.target.value as any })}
                                     className="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2"
                                 >
-                                    <option value="indoor">Indoor (Standard)</option>
-                                    <option value="beach">Beach Korfball</option>
+                                    <option value="indoor">{t('settings.indoor')}</option>
+                                    <option value="beach">{t('settings.beach')}</option>
                                 </select>
                             </div>
                         </div>
@@ -140,29 +140,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                             <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-gray-900 dark:text-gray-100 text-sm">Wear OS Control Mode</span>
+                                    <span className="text-gray-900 dark:text-gray-100 text-sm">{t('settings.wearOsMode')}</span>
                                     <select
                                         value={settings.watchControlMode}
                                         onChange={(e) => updateSettings({ watchControlMode: e.target.value as any })}
                                         className="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2"
                                     >
-                                        <option value="read-only">Read Only (Jury controls time)</option>
-                                        <option value="write">Write (Referee controls time)</option>
+                                        <option value="read-only">{t('settings.readOnly')}</option>
+                                        <option value="write">{t('settings.write')}</option>
                                     </select>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-gray-900 dark:text-gray-100 text-sm">Half Duration</span>
+                                    <span className="text-gray-900 dark:text-gray-100 text-sm">{t('settings.halfDuration')}</span>
                                     <select
                                         value={settings.defaultHalfDuration}
                                         onChange={(e) => updateSettings({ defaultHalfDuration: Number(e.target.value) })}
                                         className="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2"
                                     >
-                                        <option value={10}>10 Minutes</option>
-                                        <option value={12.5}>12.5 Minutes (Beach)</option>
-                                        <option value={15}>15 Minutes</option>
-                                        <option value={20}>20 Minutes</option>
-                                        <option value={25}>25 Minutes</option>
-                                        <option value={30}>30 Minutes</option>
+                                        <option value={10}>{t('settings.minutes', { count: 10 })}</option>
+                                        <option value={12.5}>{t('settings.minutes', { count: 12.5 })}</option>
+                                        <option value={15}>{t('settings.minutes', { count: 15 })}</option>
+                                        <option value={20}>{t('settings.minutes', { count: 20 })}</option>
+                                        <option value={25}>{t('settings.minutes', { count: 25 })}</option>
+                                        <option value={30}>{t('settings.minutes', { count: 30 })}</option>
                                     </select>
                                 </div>
 
@@ -197,18 +197,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                             <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
                                 <div>
-                                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Google Gemini API Key</label>
+                                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('settings.geminiApiKey')}</label>
                                     <input
                                         type="password"
                                         value={settings.geminiApiKey || ''}
                                         onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
                                         className="w-full bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg p-2"
-                                        placeholder="AI Studio API Key"
+                                        placeholder={t('settings.aiStudioKey')}
                                     />
-                                    <p className="text-[10px] text-gray-400 mt-1">Required for AI commentary and tactical analysis.</p>
+                                    <p className="text-[10px] text-gray-400 mt-1">{t('settings.geminiDesc')}</p>
                                 </div>
                                 <div>
-                                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">AI Model</label>
+                                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('settings.aiModel')}</label>
                                     <select
                                         value={settings.geminiModel}
                                         onChange={(e) => updateSettings({ geminiModel: e.target.value })}
@@ -234,9 +234,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                 >
                                     <div className="flex items-center gap-2">
                                         <Radio size={16} className={showCompanion ? 'text-indigo-500' : 'text-gray-500'} />
-                                        <span className="font-medium text-sm">Bitfocus Companion / Button-Box</span>
+                                        <span className="font-medium text-sm">{t('settings.companion')}</span>
                                     </div>
-                                    <span className="text-xs text-gray-400">{showCompanion ? 'Hide' : 'Configure →'}</span>
+                                    <span className="text-xs text-gray-400">{showCompanion ? t('settings.hide') : t('settings.configure')}</span>
                                 </button>
                                 {showCompanion && (
                                     <div className="mt-2 p-3 bg-gray-900 rounded-xl border border-gray-700">
@@ -248,11 +248,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                         {/* Social Graphics Output Config */}
                         <div className="space-y-3">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Social Graphics Output</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{t('settings.socialGraphics')}</label>
 
                             <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-5">
                                 <div className="space-y-2">
-                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">Layout Style</label>
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">{t('settings.layoutStyle')}</label>
                                     <select
                                         value={settings.socialGraphicConfig?.style || 'modern'}
                                         onChange={(e) => updateSettings({ 
@@ -263,14 +263,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                         })}
                                         className="w-full bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg p-2"
                                     >
-                                        <option value="modern">Modern Gradients</option>
-                                        <option value="minimal">Minimal Flat</option>
-                                        <option value="neon">Neon Cyber</option>
+                                        <option value="modern">{t('settings.modern')}</option>
+                                        <option value="minimal">{t('settings.minimal')}</option>
+                                        <option value="neon">{t('settings.neon')}</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2">
                                     <AssetUploader 
-                                        label="Background Image (1080x1080 / 1080x1920 recommended)" 
+                                        label={t('settings.bgImage')}
                                         currentUrl={settings.socialGraphicConfig?.backgroundImageUrl} 
                                         onUploadSuccess={(url) => updateSettings({ 
                                             socialGraphicConfig: { 
@@ -282,7 +282,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                 </div>
                                 <div className="space-y-2">
                                     <AssetUploader 
-                                        label="Sponsor / Partner Logo" 
+                                        label={t('settings.sponsorLogo')}
                                         currentUrl={settings.socialGraphicConfig?.sponsorLogoUrl} 
                                         onUploadSuccess={(url) => updateSettings({ 
                                             socialGraphicConfig: { 
@@ -299,13 +299,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                         {/* Danger Zone */}
                         <div className="space-y-3 pt-2">
-                            <h3 className="text-xs font-bold text-red-500 uppercase tracking-wider">Danger Zone</h3>
+                            <h3 className="text-xs font-bold text-red-500 uppercase tracking-wider">{t('settings.dangerZone')}</h3>
                             <button
                                 onClick={clearAllData}
                                 className="w-full flex items-center justify-center gap-2 p-3 text-red-600 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-900/50 rounded-lg transition-colors font-semibold text-sm"
                             >
                                 <Trash2 size={16} />
-                                Clear All Data
+                                {t('settings.clearAll')}
                             </button>
                         </div>
                     </>

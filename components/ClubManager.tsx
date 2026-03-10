@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Club } from '../types/club';
 import { ClubService } from '../services/clubService';
 import { Plus, Trash2, Edit2, Users, ArrowLeft, Download, BarChart2 } from 'lucide-react';
@@ -12,6 +13,7 @@ interface ClubManagerProps {
 }
 
 const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) => {
+    const { t } = useTranslation();
     const [clubs, setClubs] = useState<Club[]>([]);
     const [selectedClub, setSelectedClub] = useState<Club | null>(null);
     const [isCreating, setIsCreating] = useState(false);
@@ -27,7 +29,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
     const handleCreate = () => {
         const newClub: Club = {
             id: crypto.randomUUID(),
-            name: 'New Club',
+            name: `${t('settings.new')} ${t('settings.club')}`.trim() || 'New Club',
             shortName: 'NEW',
             primaryColor: '#000000',
             players: [],
@@ -41,7 +43,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
 
     const handleDelete = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (confirm('Are you sure you want to delete this club?')) {
+        if (confirm(t('clubManager.confirmDelete'))) {
             ClubService.deleteClub(id);
             loadClubs();
             if (selectedClub?.id === id) setSelectedClub(null);
@@ -51,10 +53,10 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
     const handleImportLegacy = () => {
         const count = ClubService.migrateLegacyTeams();
         if (count > 0) {
-            alert(`Migrated ${count} teams!`);
+            alert(t('clubManager.migrated', { count }));
             loadClubs();
         } else {
-            alert('No new unique teams found to migrate.');
+            alert(t('clubManager.noMigration'));
         }
     };
 
@@ -78,14 +80,14 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
                         </button>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                             <Users className="text-indigo-500" />
-                            Club Manager
+                            {t('clubManager.title')}
                         </h1>
                     </div>
                     <button
                         onClick={handleImportLegacy}
                         className="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium flex items-center gap-2"
                     >
-                        <Download size={16} /> Import Legacy Teams
+                        <Download size={16} /> {t('clubManager.importLegacy')}
                     </button>
                 </div>
 
@@ -98,7 +100,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
                         <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 group-hover:scale-110 transition-transform">
                             <Plus size={24} />
                         </div>
-                        <span className="font-semibold text-gray-900 dark:text-white">Create New Club</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{t('clubManager.createNew')}</span>
                     </div>
 
                     {/* Club List */}
@@ -128,13 +130,12 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
                                     <h3 className="font-bold text-lg text-gray-900 dark:text-white">{club.name}</h3>
                                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mt-1">
                                         <span className="flex items-center gap-1">
-                                            <Users size={14} /> {club.players.length} Players
+                                            <Users size={14} /> {club.players.length} {t('clubManager.players')}
                                         </span>
                                         {savedMatches.length > 0 && (
                                             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                                                 <BarChart2 size={14} />
-                                                {/* Calculate total club goals strictly for fun/summary? OR just say "Active in X matches" */}
-                                                Stats Available
+                                                {t('clubManager.statsAvailable')}
                                             </span>
                                         )}
                                     </div>
@@ -143,7 +144,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
 
                             {savedMatches.length > 0 && (
                                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                                    <div className="text-xs font-bold text-gray-400 uppercase mb-2">Internal Top Scorers</div>
+                                    <div className="text-xs font-bold text-gray-400 uppercase mb-2">{t('clubManager.topScorers')}</div>
                                     <div className="space-y-1">
                                         {club.players
                                             .map(p => ({ p, stats: calculateCareerStats(p.id, savedMatches) }))
@@ -158,7 +159,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
                                             ))
                                         }
                                         {club.players.every(p => calculateCareerStats(p.id, savedMatches).goals === 0) && (
-                                            <div className="text-xs text-gray-400 italic">No goals recorded yet</div>
+                                            <div className="text-xs text-gray-400 italic">{t('clubManager.noGoals')}</div>
                                         )}
                                     </div>
                                 </div>

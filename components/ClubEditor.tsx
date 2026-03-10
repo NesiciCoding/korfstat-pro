@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Club, ClubPlayer } from '../types/club';
 import { ClubService } from '../services/clubService';
 import { ArrowLeft, Plus, Save, Trash2, User, Users } from 'lucide-react';
@@ -32,6 +33,7 @@ const ColorPickerField = ({ label, color, onChange }: { label: string, color: st
 );
 
 const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = [] }) => {
+    const { t } = useTranslation();
     const [name, setName] = useState(club.name);
     const [shortName, setShortName] = useState(club.shortName);
     const [primaryColor, setPrimaryColor] = useState(club.primaryColor);
@@ -56,8 +58,8 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
     const addPlayer = () => {
         const newPlayer: ClubPlayer = {
             id: crypto.randomUUID(),
-            firstName: 'New',
-            lastName: 'Player',
+            firstName: t('settings.new'),
+            lastName: t('matchTracker.substitution'),
             gender: 'M',
             active: true,
             positions: ['ATTACK']
@@ -81,21 +83,21 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                         <button onClick={onBack} className="p-2 hover:bg-white dark:hover:bg-gray-800 rounded-full transition-colors">
                             <ArrowLeft className="text-gray-600 dark:text-gray-300" />
                         </button>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Edit Club</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('clubManager.editClub')}</h1>
                     </div>
                     <button
                         onClick={handleSave}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm"
                     >
-                        <Save size={20} /> Save Changes
+                        <Save size={20} /> {t('clubManager.saveChanges')}
                     </button>
                 </div>
 
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
-                    <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Club Details</h2>
+                    <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">{t('clubManager.clubDetails')}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Club Name</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('clubManager.clubName')}</label>
                             <input
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
@@ -103,7 +105,7 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Short Name</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('clubManager.shortName')}</label>
                             <input
                                 value={shortName}
                                 onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 3))}
@@ -111,12 +113,12 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                             />
                         </div>
                         <ColorPickerField 
-                            label="Primary Color" 
+                            label={t('clubManager.primaryColor')} 
                             color={primaryColor} 
                             onChange={setPrimaryColor} 
                         />
                         <ColorPickerField 
-                            label="Secondary Color" 
+                            label={t('clubManager.secondaryColor')} 
                             color={secondaryColor} 
                             onChange={setSecondaryColor} 
                         />
@@ -126,21 +128,21 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                            <Users size={20} /> Squad Roster ({players.length})
+                            <Users size={20} /> {t('clubManager.squadRoster', { count: players.length })}
                         </h2>
                         <button
                             onClick={addPlayer}
                             className="text-indigo-600 font-bold text-sm flex items-center gap-1 hover:bg-indigo-50 px-3 py-1 rounded"
                         >
-                            <Plus size={16} /> Add Player
+                            <Plus size={16} /> {t('clubManager.addPlayer')}
                         </button>
                     </div>
 
                     <div className="grid grid-cols-12 gap-3 mb-2 px-3 text-xs font-bold text-gray-400 uppercase tracking-wide">
-                        <div className="col-span-4 md:col-span-5">Player Details</div>
-                        <div className="col-span-2">Gender</div>
-                        <div className="col-span-2 text-center">Number</div>
-                        <div className="col-span-3 md:col-span-2 text-center">Career Stats</div>
+                        <div className="col-span-4 md:col-span-5">{t('clubManager.playerDetails')}</div>
+                        <div className="col-span-2">{t('clubManager.gender')}</div>
+                        <div className="col-span-2 text-center">{t('clubManager.number')}</div>
+                        <div className="col-span-3 md:col-span-2 text-center">{t('clubManager.careerStats')}</div>
                         <div className="col-span-1"></div>
                     </div>
 
@@ -157,13 +159,13 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                                             <input
                                                 value={player.firstName}
                                                 onChange={(e) => updatePlayer(player.id, 'firstName', e.target.value)}
-                                                placeholder="First Name"
+                                                placeholder={t('clubManager.firstName')}
                                                 className="w-full md:w-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 text-sm text-gray-900 dark:text-white"
                                             />
                                             <input
                                                 value={player.lastName}
                                                 onChange={(e) => updatePlayer(player.id, 'lastName', e.target.value)}
-                                                placeholder="Last Name"
+                                                placeholder={t('clubManager.lastName')}
                                                 className="w-full md:w-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 text-sm text-gray-900 dark:text-white"
                                             />
                                         </div>
@@ -189,11 +191,11 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                                     </div>
                                     <div
                                         className="col-span-3 md:col-span-2 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 transition-colors"
-                                        title="Click to view full profile"
+                                        title={t('clubManager.viewProfileTooltip')}
                                         onClick={() => setViewingPlayer(player)}
                                     >
                                         <div className="font-bold text-gray-900 dark:text-white text-sm">{stats.goals} G</div>
-                                        <div className="text-xs text-gray-400">{stats.matchesPlayed} Matches</div>
+                                        <div className="text-xs text-gray-400">{stats.matchesPlayed} {t('clubManager.matches')}</div>
                                     </div>
                                     <div className="col-span-1 flex justify-end">
                                         <button

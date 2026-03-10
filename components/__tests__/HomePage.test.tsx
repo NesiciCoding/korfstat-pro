@@ -44,7 +44,7 @@ describe('HomePage', () => {
 
         expect(screen.getByText('KorfStat Pro')).toBeInTheDocument();
         expect(screen.getByText('KorfStat Pro')).toBeInTheDocument();
-        expect(screen.getByText(/Command Center/i)).toBeInTheDocument();
+        expect(screen.getByText('home.commandCenter')).toBeInTheDocument();
     });
 
     it('displays active sessions count', () => {
@@ -57,7 +57,7 @@ describe('HomePage', () => {
         );
 
         expect(screen.getByTestId('active-sessions-count')).toHaveTextContent('3');
-        expect(screen.getByText(/Active Sessions/i)).toBeInTheDocument();
+        expect(screen.getByText('home.activeSessions')).toBeInTheDocument();
     });
 
     it('navigates to Match Setup when "Start New Match" is clicked', () => {
@@ -69,7 +69,7 @@ describe('HomePage', () => {
             />
         );
 
-        const newMatchButton = screen.getByRole('button', { name: /Start New Match/i });
+        const newMatchButton = screen.getByRole('button', { name: 'home.startNewMatch' });
         fireEvent.click(newMatchButton);
 
         expect(mockNavigate).toHaveBeenCalledWith('SETUP');
@@ -85,7 +85,7 @@ describe('HomePage', () => {
         );
 
         // Navigation cards are clickable divs, not buttons
-        const historyCard = screen.getByText(/Match History/i);
+        const historyCard = screen.getByText('views.matchHistory');
         fireEvent.click(historyCard);
 
         expect(mockNavigate).toHaveBeenCalledWith('MATCH_HISTORY');
@@ -102,8 +102,7 @@ describe('HomePage', () => {
             />
         );
 
-        expect(screen.getByText(/Resume Tracker/i)).toBeInTheDocument();
-        expect(screen.getByText(/Resume Tracker/i)).toBeInTheDocument();
+        expect(screen.getByText('home.resumeTracker')).toBeInTheDocument();
         // Team names are not displayed on HomePage, only match status
         // expect(screen.getByText(/Home Blazers/i)).toBeInTheDocument();
         // expect(screen.getByText(/Away Stars/i)).toBeInTheDocument();
@@ -120,7 +119,7 @@ describe('HomePage', () => {
             />
         );
 
-        const continueButton = screen.getByRole('button', { name: /Resume Tracker/i });
+        const continueButton = screen.getByRole('button', { name: /home\.resumeTracker/ });
         fireEvent.click(continueButton);
 
         expect(mockNavigate).toHaveBeenCalledWith('TRACK');
@@ -143,7 +142,7 @@ describe('HomePage', () => {
         // expect(screen.getByText('Away Stars')).toBeInTheDocument();
 
         // Check match active indicator
-        expect(screen.getByText(/MATCH ACTIVE/i)).toBeInTheDocument();
+        expect(screen.getByText('home.matchActive')).toBeInTheDocument();
     });
 
     it('does not show "Resume Tracker" when no active match', () => {
@@ -155,7 +154,7 @@ describe('HomePage', () => {
             />
         );
 
-        expect(screen.queryByText(/Resume Tracker/i)).not.toBeInTheDocument();
+        expect(screen.queryByText('home.resumeTracker')).not.toBeInTheDocument();
     });
 
     it('shows all navigation cards', () => {
@@ -168,8 +167,8 @@ describe('HomePage', () => {
         );
 
         // Check for main feature cards by text content
-        expect(screen.getByText(/Start New Match/i)).toBeInTheDocument();
-        expect(screen.getByText(/Match History/i)).toBeInTheDocument();
-        expect(screen.getByText(/Overall Stats/i)).toBeInTheDocument();
+        expect(screen.getByText('home.startNewMatch')).toBeInTheDocument();
+        expect(screen.getByText('views.matchHistory')).toBeInTheDocument();
+        expect(screen.getByText('views.overallStats')).toBeInTheDocument();
     });
 });

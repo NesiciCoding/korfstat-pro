@@ -15,21 +15,21 @@ describe('MatchSetup', () => {
     it('renders match configuration title', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        expect(screen.getByText('Match Setup Wizard')).toBeInTheDocument();
+        expect(screen.getByText('matchSetup.title')).toBeInTheDocument();
     });
 
     it('renders both team configuration sections', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        expect(screen.getByText('Home Team')).toBeInTheDocument();
-        expect(screen.getByText('Away Team')).toBeInTheDocument();
+        expect(screen.getByText('matchSetup.homeTeam')).toBeInTheDocument();
+        expect(screen.getByText('matchSetup.awayTeam')).toBeInTheDocument();
     });
 
     it('allows setting team names', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        const homeNameInput = screen.getByLabelText(/^Home Team Name$/i);
-        const awayNameInput = screen.getByLabelText(/^Away Team Name$/i);
+        const homeNameInput = screen.getByLabelText(/^matchSetup\.homeTeam matchSetup\.teamName$/i);
+        const awayNameInput = screen.getByLabelText(/^matchSetup\.awayTeam matchSetup\.teamName$/i);
 
         fireEvent.change(homeNameInput, { target: { value: 'Testing Blazers' } });
         fireEvent.change(awayNameInput, { target: { value: 'Testing Stars' } });
@@ -42,7 +42,7 @@ describe('MatchSetup', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
         // Each team should have default players
-        const playerInputs = screen.getAllByPlaceholderText('Name');
+        const playerInputs = screen.getAllByPlaceholderText('matchSetup.placeholderName');
         expect(playerInputs.length).toBe(20); // 10 per team
     });
 
@@ -57,28 +57,28 @@ describe('MatchSetup', () => {
     it('allows adding new players', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        const addHomePlayerBtn = screen.getByLabelText(/Add Player to Home Team/i);
-        const initialPlayerCount = screen.getAllByPlaceholderText('Name').length;
+        const addHomePlayerBtn = screen.getByLabelText(/matchSetup\.addPlayer matchSetup\.homeTeam/i);
+        const initialPlayerCount = screen.getAllByPlaceholderText('matchSetup.placeholderName').length;
 
         // Add a player to home team
         fireEvent.click(addHomePlayerBtn);
 
-        const newPlayerCount = screen.getAllByPlaceholderText('Name').length;
+        const newPlayerCount = screen.getAllByPlaceholderText('matchSetup.placeholderName').length;
         expect(newPlayerCount).toBe(initialPlayerCount + 1);
     });
 
     it('allows removing players', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        const initialPlayerCount = screen.getAllByPlaceholderText('Name').length;
+        const initialPlayerCount = screen.getAllByPlaceholderText('matchSetup.placeholderName').length;
 
         // Find and click first remove button by aria-label
-        const removeButtons = screen.getAllByRole('button', { name: /Remove Player/i });
+        const removeButtons = screen.getAllByRole('button', { name: /matchSetup\.removePlayer/i });
 
         if (removeButtons.length > 0) {
             fireEvent.click(removeButtons[0]);
 
-            const newPlayerCount = screen.getAllByPlaceholderText('Name').length;
+            const newPlayerCount = screen.getAllByPlaceholderText('matchSetup.placeholderName').length;
             expect(newPlayerCount).toBe(initialPlayerCount - 1);
         }
     });
@@ -86,7 +86,7 @@ describe('MatchSetup', () => {
     it('starts match when start button is clicked', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        const startButton = screen.getByRole('button', { name: /Start Match/i });
+        const startButton = screen.getByRole('button', { name: /matchSetup\.startMatch/i });
         fireEvent.click(startButton);
 
         expect(mockOnStartMatch).toHaveBeenCalled();
@@ -103,8 +103,8 @@ describe('MatchSetup', () => {
     it('submits a selected match configuration profile', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        fireEvent.change(screen.getByLabelText('Home Team Name'), { target: { value: 'Test Home' } });
-        fireEvent.change(screen.getByLabelText('Away Team Name'), { target: { value: 'Test Away' } });
+        fireEvent.change(screen.getByLabelText('matchSetup.homeTeam matchSetup.teamName'), { target: { value: 'Test Home' } });
+        fireEvent.change(screen.getByLabelText('matchSetup.awayTeam matchSetup.teamName'), { target: { value: 'Test Away' } });
 
         // Select the Short Scrimmage profile
         const profileButtons = screen.getAllByRole('button').filter(btn => btn.textContent?.includes('Short Scrimmage'));
@@ -112,7 +112,7 @@ describe('MatchSetup', () => {
            fireEvent.click(profileButtons[0]);
         }
 
-        fireEvent.click(screen.getByText('Start Match'));
+        fireEvent.click(screen.getByText('matchSetup.startMatch'));
 
         expect(mockOnStartMatch).toHaveBeenCalledWith(
             expect.objectContaining({ name: 'Test Home' }),
@@ -125,7 +125,7 @@ describe('MatchSetup', () => {
     it('allows changing team colors', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        const colorInputs = screen.getAllByTitle(/Primary Team Color/i);
+        const colorInputs = screen.getAllByTitle(/matchSetup\.primaryColorTitle/i);
         expect(colorInputs.length).toBe(2);
 
         fireEvent.change(colorInputs[0], { target: { value: '#00ff00' } });
@@ -153,7 +153,7 @@ describe('MatchSetup', () => {
     it('allows updating player name', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        const nameInputs = screen.getAllByPlaceholderText('Name');
+        const nameInputs = screen.getAllByPlaceholderText('matchSetup.placeholderName');
         const firstNameInput = nameInputs[0];
 
         fireEvent.change(firstNameInput, { target: { value: 'John Doe' } });
@@ -163,7 +163,7 @@ describe('MatchSetup', () => {
     it('prepares teams with onField status for starters', () => {
         render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
 
-        const startButton = screen.getByRole('button', { name: /Start Match/i });
+        const startButton = screen.getByRole('button', { name: /matchSetup\.startMatch/i });
         fireEvent.click(startButton);
 
         const homeTeam = mockOnStartMatch.mock.calls[0][0];

@@ -53,10 +53,7 @@ describe('analysisService', () => {
             };
 
             const insights = generateMatchInsights(matchState);
-            // Should only have scoring run insight, not efficiency (3/9 = 33% but misses come after the run)
-            // Actually, efficiency is 3/9 = 33%, which IS > 25%, so we'll get 2 insights
-            // Let's just check for the scoring run specifically
-            const scoringRunInsight = insights.find(i => i.title === 'Scoring Run');
+            const scoringRunInsight = insights.find(i => i.title === 'stats.scoringRun');
             expect(scoringRunInsight).toBeDefined();
             expect(scoringRunInsight?.type).toBe('POSITIVE');
             expect(scoringRunInsight?.description).toContain('Home Blazers');
@@ -84,7 +81,7 @@ describe('analysisService', () => {
             };
 
             const insights = generateMatchInsights(matchState);
-            const efficiencyInsight = insights.find(i => i.title === 'High Efficiency');
+            const efficiencyInsight = insights.find(i => i.title === 'stats.highEfficiency');
             expect(efficiencyInsight).toBeDefined();
             expect(efficiencyInsight?.type).toBe('POSITIVE');
             expect(efficiencyInsight?.description).toContain('Home Blazers');
@@ -117,7 +114,7 @@ describe('analysisService', () => {
             };
 
             const insights = generateMatchInsights(matchState);
-            const efInsight = insights.find(i => i.title === 'Shooting Struggles');
+            const efInsight = insights.find(i => i.title === 'stats.shootingStruggles');
             expect(efInsight).toBeDefined();
             expect(efInsight?.type).toBe('NEGATIVE');
             expect(efInsight?.description).toContain('Home Blazers');
@@ -161,7 +158,7 @@ describe('analysisService', () => {
             };
 
             const insights = generateMatchInsights(matchState);
-            const reboundInsight = insights.find(i => i.title === 'Rebound Dominance');
+            const reboundInsight = insights.find(i => i.title === 'stats.reboundDominance');
             expect(reboundInsight).toBeDefined();
             expect(reboundInsight?.type).toBe('POSITIVE');
             expect(reboundInsight?.description).toContain('Home Blazers');
@@ -186,7 +183,7 @@ describe('analysisService', () => {
             };
 
             const insights = generateMatchInsights(matchState);
-            const reboundInsight = insights.find(i => i.title === 'Rebound Dominance');
+            const reboundInsight = insights.find(i => i.title === 'stats.reboundDominance');
             expect(reboundInsight).toBeUndefined();
         });
 
@@ -236,8 +233,8 @@ describe('analysisService', () => {
 
             const insights = generateMatchInsights(matchState);
             expect(insights.length).toBeGreaterThanOrEqual(2); // Should have scoring run + rebound dominance at minimum
-            expect(insights.some(i => i.title === 'Scoring Run')).toBe(true);
-            expect(insights.some(i => i.title === 'Rebound Dominance')).toBe(true);
+            expect(insights.some(i => i.title === 'stats.scoringRun')).toBe(true);
+            expect(insights.some(i => i.title === 'stats.reboundDominance')).toBe(true);
         });
     });
 });

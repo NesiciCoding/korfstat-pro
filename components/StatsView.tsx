@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MatchState, TeamId, Player, ShotType } from '../types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import KorfballField from './KorfballField';
@@ -18,6 +19,7 @@ interface StatsViewProps {
 }
 
 const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAnalyze }) => {
+  const { t } = useTranslation();
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
   const [showSocialGraphic, setShowSocialGraphic] = useState(false);
@@ -30,7 +32,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
   const [showZoneStats, setShowZoneStats] = useState(false);
 
   // Guard clause for missing data
-  if (!matchState) return <div className="p-6 text-center">Loading match data...</div>;
+  if (!matchState) return <div className="p-6 text-center">{t('stats.loading')}</div>;
   const events = matchState.events || [];
 
   // --- Derived Stats ---
@@ -98,13 +100,13 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
               <ArrowLeft size={24} />
             </button>
             {onHome && (
-              <button onClick={onHome} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-600 dark:text-gray-400" title="Back to Home">
+              <button onClick={onHome} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-600 dark:text-gray-400" title={t('home.returnToActive')}>
                 <Home size={24} />
               </button>
             )}
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Match Statistics</h1>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Detailed breakdown and analysis</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('stats.title')}</h1>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">{t('stats.subtitle')}</p>
             </div>
           </div>
 
@@ -115,7 +117,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
                 className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm transition-all font-medium"
               >
                 <Video size={18} />
-                Video Analysis
+                {t('stats.videoAnalysis')}
               </button>
             )}
 
@@ -124,7 +126,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium border ${showInsights ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700'}`}
             >
               <span>📊</span>
-              Show Insights
+              {showInsights ? t('stats.hideInsights') : t('stats.showInsights')}
             </button>
 
             <button
@@ -132,7 +134,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
               className="flex items-center gap-2 px-6 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 shadow-sm transition-all font-medium"
             >
               <Download size={18} />
-              Export
+              {t('stats.export')}
               <ChevronDown size={16} className={`transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} />
             </button>
 
@@ -142,25 +144,25 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
                   onClick={() => setShowSocialGraphic(true)}
                   className="w-full text-left px-4 py-3 text-sm flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-600 dark:text-purple-400 font-bold border-b border-gray-100 dark:border-gray-700"
                 >
-                  <Video size={16} /> Social Graphic
+                  <Video size={16} /> {t('stats.socialGraphic')}
                 </button>
                 <button
                   onClick={() => { generatePDF(matchState); setShowExportMenu(false); }}
                   className="w-full text-left px-4 py-3 text-sm flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700"
                 >
-                  <Download size={16} /> PDF Report
+                  <Download size={16} /> {t('stats.pdfReport')}
                 </button>
                 <button
                   onClick={() => { generateExcel(matchState); setShowExportMenu(false); }}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-green-600 dark:hover:text-green-400 transition-colors border-b border-gray-100 dark:border-gray-700"
                 >
-                  <FileSpreadsheet size={16} /> Excel Spreadsheet
+                  <FileSpreadsheet size={16} /> {t('stats.excelSpreadsheet')}
                 </button>
                 <button
                   onClick={() => { generateJSON(matchState); setShowExportMenu(false); }}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <div className="font-mono text-xs border border-current rounded px-1">JSON</div> Raw Data
+                  <div className="font-mono text-xs border border-current rounded px-1">JSON</div> {t('stats.rawData')}
                 </button>
               </div>
             )}
@@ -172,7 +174,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-indigo-100 dark:border-indigo-900/30 animate-in fade-in slide-in-from-top-4">
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
               <span>📊</span>
-              Key Insights
+              {t('stats.keyInsights')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {insights.map((insight, idx) => (
@@ -196,7 +198,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
         {/* Score Graph */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-bold mb-4 dark:text-gray-200">Score Progression</h3>
+            <h3 className="text-lg font-bold mb-4 dark:text-gray-200">{t('stats.scoreProgression')}</h3>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={scoreData}>
@@ -217,7 +219,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
 
           {/* Shot Map - Heatmap Mode Enabled */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
-            <h3 className="text-lg font-bold mb-4 dark:text-gray-200">Shot Analysis</h3>
+            <h3 className="text-lg font-bold mb-4 dark:text-gray-200">{t('stats.shotAnalysis')}</h3>
 
             {/* Filters */}
             <div className="flex flex-col gap-2 mb-4">
@@ -226,7 +228,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
                 onChange={(e) => setFilterPlayerId(e.target.value)}
                 className="p-2 border rounded text-sm bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
               >
-                <option value="ALL">All Players</option>
+                <option value="ALL">{t('stats.allPlayers')}</option>
                 {matchState.homeTeam.players.map(p => <option key={p.id} value={p.id}>{matchState.homeTeam.name} - #{p.number} {p.name}</option>)}
                 {matchState.awayTeam.players.map(p => <option key={p.id} value={p.id}>{matchState.awayTeam.name} - #{p.number} {p.name}</option>)}
               </select>
@@ -236,12 +238,12 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
                 onChange={(e) => setFilterShotType(e.target.value as any)}
                 className="p-2 border rounded text-sm bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
               >
-                <option value="ALL">All Shot Types</option>
-                <option value="NEAR">Near</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="FAR">Long</option>
-                <option value="PENALTY">Penalty</option>
-                <option value="FREE_THROW">Free Pass</option>
+                <option value="ALL">{t('stats.allShotTypes')}</option>
+                <option value="NEAR">{t('stats.near')}</option>
+                <option value="MEDIUM">{t('stats.medium')}</option>
+                <option value="FAR">{t('stats.far')}</option>
+                <option value="PENALTY">{t('matchTracker.penalty')}</option>
+                <option value="FREE_THROW">{t('matchTracker.freePass')}</option>
               </select>
 
               <div className="flex gap-2 text-sm mt-2">
@@ -249,19 +251,19 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
                   onClick={() => { setHeatmapMode(false); setShowZoneStats(false); }}
                   className={`px-3 py-1.5 rounded-md transition-colors ${!heatmapMode && !showZoneStats ? 'bg-indigo-100 text-indigo-700 font-bold dark:bg-indigo-900 dark:text-indigo-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300'}`}
                 >
-                  Precise
+                  {t('stats.precise')}
                 </button>
                 <button
                   onClick={() => { setHeatmapMode(true); setShowZoneStats(false); }}
                   className={`px-3 py-1.5 rounded-md transition-colors ${heatmapMode && !showZoneStats ? 'bg-indigo-100 text-indigo-700 font-bold dark:bg-indigo-900 dark:text-indigo-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300'}`}
                 >
-                  Heatmap
+                  {t('stats.heatmap')}
                 </button>
                 <button
                   onClick={() => { setShowZoneStats(true); }}
                   className={`px-3 py-1.5 rounded-md transition-colors ${showZoneStats ? 'bg-indigo-100 text-indigo-700 font-bold dark:bg-indigo-900 dark:text-indigo-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300'}`}
                 >
-                  Zone Efficiency
+                  {t('stats.zoneWait')}
                 </button>
               </div>
             </div>
@@ -270,8 +272,8 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
               <KorfballField mode="view" events={filteredEvents} heatmapMode={heatmapMode} showZoneEfficiency={showZoneStats} />
             </div>
             <div className="mt-4 flex justify-center gap-4 text-sm dark:text-gray-300">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500 opacity-50"></div> Goal</div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-500 opacity-50"></div> Miss</div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500 opacity-50"></div> {t('stats.goal')}</div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-500 opacity-50"></div> {t('stats.miss')}</div>
             </div>
           </div>
         </div>

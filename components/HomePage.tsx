@@ -4,6 +4,7 @@ import {
   Monitor, Video, Tv, LayoutTemplate, Clock,
   Wifi, Users, Activity, Play, Globe, Trophy, Watch
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { MatchState } from '../types';
 
 interface HomePageProps {
@@ -13,6 +14,7 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], matchState }) => {
+  const { t } = useTranslation();
   const isMatchActive = matchState?.timer.isRunning || matchState?.isConfigured;
   // Check if a match configuration is active to enable tracker resumption
   const hasActiveMatch = matchState?.isConfigured;
@@ -36,7 +38,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
             </div>
             <div>
               <h1 className="text-xl font-bold text-white tracking-tight leading-none">KorfStat Pro</h1>
-              <p className="text-xs text-slate-400 font-medium">Command Center</p>
+              <p className="text-xs text-slate-400 font-medium">{t('home.commandCenter')}</p>
             </div>
           </div>
 
@@ -44,7 +46,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
             {/* Match Status Indicator */}
             <div className={`px-3 py-1 rounded-full text-xs font-bold border ${hasActiveMatch ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'} flex items-center gap-2`}>
               <div className={`w-2 h-2 rounded-full ${hasActiveMatch ? 'bg-green-500 animate-pulse' : 'bg-slate-500'}`}></div>
-              {hasActiveMatch ? 'MATCH ACTIVE' : 'NO ACTIVE MATCH'}
+              {hasActiveMatch ? t('home.matchActive') : t('home.noActiveMatch')}
             </div>
           </div>
         </div>
@@ -61,7 +63,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
 
             <div className="h-full bg-slate-950/50 rounded-xl p-6 flex flex-col justify-center relative z-10">
               <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <PlayCircle className="text-indigo-400" /> Match Control
+                <PlayCircle className="text-indigo-400" /> {t('home.matchControl')}
               </h2>
 
               <div className="flex gap-4">
@@ -77,8 +79,8 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                 >
                   <Play size={32} fill={hasActiveMatch ? "none" : "currentColor"} />
                   <div className="text-center">
-                    <div className="font-bold text-lg">Start New Match</div>
-                    {hasActiveMatch && <div className="text-xs mt-1">Match in progress</div>}
+                    <div className="font-bold text-lg">{t('home.startNewMatch')}</div>
+                    {hasActiveMatch && <div className="text-xs mt-1">{t('home.matchInProgress')}</div>}
                   </div>
                 </button>
 
@@ -90,13 +92,13 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   >
                     <Activity size={32} />
                     <div className="text-center">
-                      <div className="font-bold text-lg">Resume Tracker</div>
-                      <div className="text-xs text-emerald-100 mt-1">Return to active game</div>
+                      <div className="font-bold text-lg">{t('home.resumeTracker')}</div>
+                      <div className="text-xs text-emerald-100 mt-1">{t('home.returnToActive')}</div>
                     </div>
                   </button>
                 ) : (
                   <div className="flex-1 p-6 rounded-xl border border-slate-800 border-dashed flex flex-col items-center justify-center gap-2 text-slate-600">
-                    <div className="font-medium">No Match Active</div>
+                    <div className="font-medium">{t('home.noActiveMatch')}</div>
                   </div>
                 )}
               </div>
@@ -107,14 +109,14 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
           <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden flex flex-col">
             <div className="p-4 border-b border-slate-800 bg-slate-950/30 flex justify-between items-center">
               <h2 className="font-bold text-slate-200 flex items-center gap-2">
-                <Wifi size={18} className="text-emerald-400" /> Active Sessions
+                <Wifi size={18} className="text-emerald-400" /> {t('home.activeSessions')}
               </h2>
               <span data-testid="active-sessions-count" className="bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded-full font-mono">{uniqueSessions.length}</span>
             </div>
             <div className="flex-1 p-2 overflow-y-auto max-h-[200px] space-y-1">
               {uniqueSessions.length === 0 ? (
                 <div className="text-center p-8 text-slate-600 italic text-sm">
-                  Waiting for connections...
+                  {t('home.waitingConnections')}
                 </div>
               ) : (
                 uniqueSessions.map(session => (
@@ -146,25 +148,25 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
 
             {/* COL 1: LIVESTREAM */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">Livestream</h3>
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">{t('home.livestream')}</h3>
               <div className="space-y-3">
                 <NavCard
-                  title="Director Dashboard"
-                  desc="Control overlays and scene switching"
+                  title={t('views.director')}
+                  desc={t('views.directorDesc')}
                   icon={<Monitor />}
                   color="indigo"
                   onClick={() => onNavigate('DIRECTOR')}
                 />
                 <NavCard
-                  title="Livestream Stats"
-                  desc="Commentator view with live data"
+                  title={t('views.livestreamStats')}
+                  desc={t('views.livestreamStatsDesc')}
                   icon={<Globe />}
                   color="blue"
                   onClick={() => onNavigate('LIVESTREAM_STATS')}
                 />
                 <NavCard
-                  title="Stream Overlay"
-                  desc="Transparent layer for OBS"
+                  title={t('views.streamOverlay')}
+                  desc={t('views.streamOverlayDesc')}
                   icon={<Video />}
                   color="purple"
                   onClick={() => onNavigate('STREAM_OVERLAY')}
@@ -174,32 +176,32 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
 
             {/* COL 2: STATISTICS */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">Statistics</h3>
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">{t('home.statistics')}</h3>
               <div className="space-y-3">
                 <NavCard
-                  title="Match History"
-                  desc="Review past game logs"
+                  title={t('views.matchHistory')}
+                  desc={t('views.matchHistoryDesc')}
                   icon={<History />}
                   color="slate"
                   onClick={() => onNavigate('MATCH_HISTORY')}
                 />
                 <NavCard
-                  title="Overall Stats"
-                  desc="Aggregated team analytics"
+                  title={t('views.overallStats')}
+                  desc={t('views.overallStatsDesc')}
                   icon={<BarChart2 />}
                   color="emerald"
                   onClick={() => onNavigate('OVERALL_STATS')}
                 />
                 <NavCard
-                  title="Strategy Planner"
-                  desc="Tactical whiteboard"
+                  title={t('views.strategyPlanner')}
+                  desc={t('views.strategyPlannerDesc')}
                   icon={<BrainCircuit />}
                   color="amber"
                   onClick={() => onNavigate('STRATEGY')}
                 />
                 <NavCard
-                  title="Club Manager"
-                  desc="Manage clubs and rosters"
+                  title={t('views.clubManager')}
+                  desc={t('views.clubManagerDesc')}
                   icon={<Users />}
                   color="cyan"
                   onClick={() => onNavigate('CLUB_MANAGER')}
@@ -209,32 +211,32 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
 
             {/* COL 3: IN-HALL */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">In-Hall</h3>
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">{t('home.inHall')}</h3>
               <div className="space-y-3">
                 <NavCard
-                  title="Shot Clock"
-                  desc="Full screen timer"
+                  title={t('views.shotClock')}
+                  desc={t('views.shotClockDesc')}
                   icon={<Clock />}
                   color="red"
                   onClick={() => onNavigate('SHOT_CLOCK')}
                 />
                 <NavCard
-                  title="Live Screen"
-                  desc="Public scoreboard display"
+                  title={t('views.liveScreen')}
+                  desc={t('views.liveScreenDesc')}
                   icon={<Tv />}
                   color="orange"
                   onClick={() => onNavigate('LIVE')}
                 />
                 <NavCard
-                  title="Jury Interface"
-                  desc="Official table control"
+                  title={t('views.juryInterface')}
+                  desc={t('views.juryInterfaceDesc')}
                   icon={<LayoutTemplate />}
                   color="cyan"
                   onClick={() => onNavigate('JURY')}
                 />
                 <NavCard
-                  title="Spotter Interface"
-                  desc="Live event tracking"
+                  title={t('views.spotterInterface')}
+                  desc={t('views.spotterInterfaceDesc')}
                   icon={<Users />}
                   color="blue"
                   onClick={() => onNavigate('SPOTTER')}

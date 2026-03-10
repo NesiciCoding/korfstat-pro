@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { BracketNode, BracketParticipant } from '../types/tournament';
 import { MatchState, Team } from '../types';
 import { Trophy, Clock } from 'lucide-react';
@@ -12,6 +13,7 @@ interface TournamentBracketProps {
 }
 
 const TournamentBracket: React.FC<TournamentBracketProps> = ({ bracketMap, nodes, matches, teams, onMatchClick }) => {
+    const { t } = useTranslation();
     // Group nodes by round
     const maxRound = Math.max(...nodes.map(n => n.round), 0);
     const minRound = Math.min(...nodes.map(n => n.round), 0); // Usually 0 is Final
@@ -38,7 +40,7 @@ const TournamentBracket: React.FC<TournamentBracketProps> = ({ bracketMap, nodes
             );
         }
 
-        let label = 'TBD';
+        let label = t('season.tbd');
         if (participant.nameOverride) label = participant.nameOverride;
         
         return <span className="text-gray-400 italic text-sm">{label}</span>;
@@ -57,7 +59,7 @@ const TournamentBracket: React.FC<TournamentBracketProps> = ({ bracketMap, nodes
         
         // Let's assume elapsedSeconds > 0 means it started
         if (match.timer.elapsedSeconds === 0 && homeScore === 0 && awayScore === 0) {
-             return <span className="text-xs text-gray-400">Not Started</span>;
+             return <span className="text-xs text-gray-400">{t('season.notStarted')}</span>;
         }
 
         return (
@@ -104,11 +106,11 @@ const TournamentBracket: React.FC<TournamentBracketProps> = ({ bracketMap, nodes
         <div id="bracket-export-region" className="w-full overflow-x-auto py-8 px-4 bg-gray-50 dark:bg-gray-900 min-h-[500px]">
             <div className="flex gap-16 min-w-max items-center justify-center">
                 {rounds.map((roundGroup, idx) => {
-                    let roundName = 'Round';
-                    if (roundGroup.round === 0) roundName = 'Final';
-                    else if (roundGroup.round === 1) roundName = 'Semi-Finals';
-                    else if (roundGroup.round === 2) roundName = 'Quarter-Finals';
-                    else if (roundGroup.round === 3) roundName = 'Round of 16';
+                    let roundName = t('season.round');
+                    if (roundGroup.round === 0) roundName = t('season.final');
+                    else if (roundGroup.round === 1) roundName = t('season.semiFinals');
+                    else if (roundGroup.round === 2) roundName = t('season.quarterFinals');
+                    else if (roundGroup.round === 3) roundName = t('season.roundOf16');
 
                     return (
                         <div key={roundGroup.round} className="flex flex-col relative">
@@ -136,7 +138,7 @@ const TournamentBracket: React.FC<TournamentBracketProps> = ({ bracketMap, nodes
                 {thirdPlaceNode && (
                     <div className="flex flex-col ml-8 mt-auto mb-8 relative self-end">
                          <h4 className="text-center font-bold text-amber-600 dark:text-amber-500 uppercase text-xs mb-2 tracking-wider flex items-center justify-center gap-1">
-                             <Trophy size={12} /> 3rd Place Match
+                             <Trophy size={12} /> {t('season.thirdPlace')}
                          </h4>
                          {renderNode(thirdPlaceNode)}
                     </div>

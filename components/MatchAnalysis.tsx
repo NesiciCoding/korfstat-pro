@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MatchState, MatchEvent } from '../types';
 import VideoPlayer, { VideoPlayerRef } from './VideoPlayer';
 import VideoSyncControls from './VideoSyncControls';
@@ -10,6 +11,7 @@ interface MatchAnalysisProps {
 }
 
 const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
+    const { t } = useTranslation();
     const videoRef = useRef<VideoPlayerRef>(null);
     const [videoUrl, setVideoUrl] = useState<string | undefined>(match.videoUrl);
     const [videoOffset, setVideoOffset] = useState<number | undefined>(match.videoOffset);
@@ -36,7 +38,7 @@ const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
             const targetTime = Math.max(0, videoOffset + event.timestamp - 5);
             videoRef.current.seekTo(targetTime);
         } else {
-            alert("Please sync the video first!");
+            alert(t('stats.syncVideoAlert'));
         }
     };
 
@@ -64,7 +66,7 @@ const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
                             {match.homeTeam.name} vs {match.awayTeam.name}
                         </h1>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                            Match Analysis • {new Date(match.date || Date.now()).toLocaleDateString()}
+                            {t('stats.analysisTitle')} • {new Date(match.date || Date.now()).toLocaleDateString()}
                         </div>
                     </div>
                 </div>
@@ -84,8 +86,8 @@ const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
                         ) : (
                             <div className="text-white/50 text-center p-12">
                                 <Rewind className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                                <h3 className="text-xl font-medium mb-2">No Video Loaded</h3>
-                                <p>Select a video source from the controls below to start.</p>
+                                <h3 className="text-xl font-medium mb-2">{t('stats.noVideo')}</h3>
+                                <p>{t('stats.selectVideo')}</p>
                             </div>
                         )}
                     </div>
@@ -108,14 +110,14 @@ const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
                 <div className="w-full md:w-1/3 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col h-full overflow-hidden">
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
                         <h2 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                            <Play size={16} className="text-indigo-500" /> Event Timeline
+                            <Play size={16} className="text-indigo-500" /> {t('stats.eventTimeline')}
                         </h2>
-                        <p className="text-xs text-gray-500 mt-1">Click an event to jump up to 5s before it occurred.</p>
+                        <p className="text-xs text-gray-500 mt-1">{t('stats.timelineDesc')}</p>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-2 space-y-2">
                         {events.length === 0 ? (
-                            <div className="text-center py-8 text-gray-400">No major events recorded.</div>
+                            <div className="text-center py-8 text-gray-400">{t('stats.noEvents')}</div>
                         ) : events.map(event => (
                             <div
                                 key={event.id}
@@ -129,11 +131,11 @@ const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
                                     }`}></div>
                                 <div className="flex-1">
                                     <div className="text-sm font-bold text-gray-900 dark:text-white">
-                                        {event.type} {event.result === 'GOAL' && 'Goal!'}
+                                        {t(`matchTracker.${event.type.toLowerCase()}`, { defaultValue: event.type })} {event.result === 'GOAL' && t('matchTracker.goal') + '!'}
                                     </div>
                                     <div className="text-xs text-gray-500 dark:text-gray-400">
                                         {/* Ideally lookup player name here */}
-                                        Player {event.playerId ? '...' : ''}
+                                        {t('stats.player')} {event.playerId ? '...' : ''}
                                     </div>
                                 </div>
                                 <div className="opacity-0 group-hover:opacity-100 text-indigo-600 dark:text-indigo-400">

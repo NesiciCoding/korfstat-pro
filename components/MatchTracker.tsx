@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MatchState, TeamId, MatchEvent, SHOT_TYPES, ActionType, CardType, ShotType } from '../types';
+import { useTranslation } from 'react-i18next';
 
 import KorfballField, { getShotDistanceType } from './KorfballField';
 import { PieChart, Clock, Target, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, Shirt, AlertOctagon, Monitor, Gavel, Undo2, Volume2, VolumeX, CheckCircle, XCircle, Share2, Mic, MicOff } from 'lucide-react';
@@ -20,6 +21,7 @@ interface MatchTrackerProps {
 }
 
 const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, onFinishMatch, onViewChange }) => {
+  const { t } = useTranslation();
   const { settings, updateSettings } = useSettings();
   const soundEnabled = settings.soundEnabled;
   const { playShotClockBuzzer, playGameEndHorn } = useGameAudio(!soundEnabled);
@@ -535,19 +537,19 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
           {activeModal === 'END_HALF' && (
             <>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">End of 1st Half</h3>
-              <p className="text-gray-500 mb-6">What would you like to do next?</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('matchTracker.endHalf')}</h3>
+              <p className="text-gray-500 mb-6">{t('matchTracker.halfEndDesc')}</p>
               <div className="space-y-3">
                 <button onClick={() => startBreak(10)} className="w-full p-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg flex items-center justify-between">
-                  <span>Start 10m Break</span>
+                  <span>{t('matchTracker.break')}</span>
                   <Clock size={20} />
                 </button>
                 <button onClick={() => { setCustomDuration(10); setActiveModal('BREAK_SETUP'); }} className="w-full p-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-lg text-left">
-                  Custom Break Duration...
+                  {t('matchTracker.customBreak')}
                 </button>
                 <div className="border-t my-2"></div>
                 <button onClick={() => startNextPeriod(25)} className="w-full p-4 bg-green-50 hover:bg-green-100 text-green-700 font-bold rounded-lg text-left">
-                  Skip to 2nd Half (25m)
+                  {t('matchTracker.skipTo2ndHalf')}
                 </button>
               </div>
             </>
@@ -555,34 +557,34 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
           {activeModal === 'BREAK_SETUP' && (
             <>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Break Duration</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">{t('matchTracker.breakDuration')}</h3>
               <div className="flex items-center gap-4 mb-6">
                 <button onClick={() => setCustomDuration(Math.max(1, customDuration - 1))} className="p-3 bg-gray-100 rounded-lg font-bold">-</button>
                 <div className="text-3xl font-mono font-bold w-20 text-center">{customDuration}m</div>
                 <button onClick={() => setCustomDuration(customDuration + 1)} className="p-3 bg-gray-100 rounded-lg font-bold">+</button>
               </div>
               <button onClick={() => startBreak(customDuration)} className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg">
-                Start Break
+                {t('matchTracker.startBreak')}
               </button>
             </>
           )}
 
           {activeModal === 'END_MATCH' && (
             <>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">End of Period</h3>
-              <p className="text-gray-500 mb-6">The time is up. Finish match or play overtime?</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('matchTracker.endMatch')}</h3>
+              <p className="text-gray-500 mb-6">{t('matchTracker.periodEndDesc')}</p>
               <div className="space-y-3">
                 <button onClick={onFinishMatch} className="w-full p-4 bg-gray-900 text-white hover:bg-gray-800 font-bold rounded-lg flex items-center justify-between shadow-lg">
-                  <span>Finish Match & View Report</span>
+                  <span>{t('matchTracker.finishMatch')}</span>
                   <PieChart size={20} />
                 </button>
                 <div className="relative flex py-2 items-center">
                   <div className="flex-grow border-t border-gray-300"></div>
-                  <span className="flex-shrink mx-4 text-gray-400 text-sm font-bold">OR</span>
+                  <span className="flex-shrink mx-4 text-gray-400 text-sm font-bold">{t('common.or')}</span>
                   <div className="flex-grow border-t border-gray-300"></div>
                 </div>
                 <button onClick={() => { setCustomDuration(5); setActiveModal('OT_SETUP'); }} className="w-full p-4 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold rounded-lg flex items-center justify-between">
-                  <span>Start Overtime...</span>
+                  <span>{t('matchTracker.overtime')}</span>
                   <Timer size={20} />
                 </button>
               </div>
@@ -591,14 +593,14 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
           {activeModal === 'OT_SETUP' && (
             <>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Overtime Duration</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">{t('matchTracker.overtimeDuration')}</h3>
               <div className="flex items-center gap-4 mb-6">
                 <button onClick={() => setCustomDuration(Math.max(1, customDuration - 1))} className="p-3 bg-gray-100 rounded-lg font-bold">-</button>
                 <div className="text-3xl font-mono font-bold w-20 text-center">{customDuration}m</div>
                 <button onClick={() => setCustomDuration(customDuration + 1)} className="p-3 bg-gray-100 rounded-lg font-bold">+</button>
               </div>
               <button onClick={() => startNextPeriod(customDuration)} className="w-full py-3 bg-orange-600 text-white font-bold rounded-lg">
-                Start Overtime
+                {t('matchTracker.startOvertime')}
               </button>
             </>
           )}
@@ -799,19 +801,19 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                   <button onClick={() => {
                     const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
                     addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'PENALTY', result: 'GOAL', location: autoLoc });
-                  }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">Penalty <kbd className="text-[10px] bg-black/10 px-1 rounded">2</kbd></button>
+                  }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">{t('matchTracker.penalty')} <kbd className="text-[10px] bg-black/10 px-1 rounded">2</kbd></button>
                   <button onClick={() => {
                     const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
                     addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'FREE_THROW', result: 'GOAL', location: autoLoc });
-                  }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">Free Pass <kbd className="text-[10px] bg-black/10 px-1 rounded">3</kbd></button>
-                  <button onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: contextMenu.calculatedShotType, result: 'MISS', location: { x: contextMenu.x, y: contextMenu.y } })} className="px-3 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200 font-bold flex flex-col items-center">Miss <kbd className="text-[10px] bg-black/10 px-1 rounded">4</kbd></button>
+                  }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">{t('matchTracker.freePass')} <kbd className="text-[10px] bg-black/10 px-1 rounded">3</kbd></button>
+                  <button onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: contextMenu.calculatedShotType, result: 'MISS', location: { x: contextMenu.x, y: contextMenu.y } })} className="px-3 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200 font-bold flex flex-col items-center">{t('matchTracker.miss')} <kbd className="text-[10px] bg-black/10 px-1 rounded">4</kbd></button>
                 </div>
               </div>
             )}
 
             {(contextMenu.step as any) === 'SELECT_TEAM_FOR_SUB' && (
               <div className="space-y-4">
-                <h3 className="text-lg font-bold text-center mb-4">Select Team for Substitution</h3>
+                <h3 className="text-lg font-bold text-center mb-4">{t('matchTracker.selectTeamSub')}</h3>
                 <button
                   onClick={() => setContextMenu({ ...contextMenu, selectedTeam: 'HOME', step: 'SELECT_SUB_OUT' })}
                   className="w-full p-4 rounded-xl border flex items-center justify-between hover:bg-gray-50 transition-colors"
@@ -822,7 +824,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                     <span className="font-bold text-lg">{matchState.homeTeam.name}</span>
                   </div>
                   <div className="bg-gray-100 px-3 py-1 rounded text-sm text-gray-500 font-bold">
-                    {matchState.homeTeam.substitutionCount}/8 Subs
+                    {matchState.homeTeam.substitutionCount}/8 {t('matchTracker.subs')}
                   </div>
                 </button>
                 <button
@@ -835,7 +837,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                     <span className="font-bold text-lg">{matchState.awayTeam.name}</span>
                   </div>
                   <div className="bg-gray-100 px-3 py-1 rounded text-sm text-gray-500 font-bold">
-                    {matchState.awayTeam.substitutionCount}/8 Subs
+                    {matchState.awayTeam.substitutionCount}/8 {t('matchTracker.subs')}
                   </div>
                 </button>
               </div>
@@ -885,7 +887,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             <button
               onClick={() => updateSettings({ soundEnabled: !soundEnabled })}
               className={`p-2 rounded text-xs font-bold ${!soundEnabled ? 'bg-red-900/50 text-red-400 hover:bg-red-900' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'}`}
-              title={!soundEnabled ? "Unmute Audio" : "Mute Audio"}
+              title={!soundEnabled ? t('matchTracker.unmute') : t('matchTracker.mute')}
             >
               {!soundEnabled ? <VolumeX size={20} /> : <Volume2 size={20} />}
             </button>
@@ -893,7 +895,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             <button
               onClick={handleUndo}
               className="p-2 bg-gray-700 hover:bg-red-600 rounded text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Undo Last Action"
+              title={t('common.undo')}
               disabled={matchState.events.length === 0}
             >
               <Undo2 size={20} /> <span className="hidden lg:inline ml-1 text-[10px] opacity-70">DEL</span>
@@ -902,20 +904,20 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             <button
               onClick={toggleListening}
               className={`p-2 rounded text-xs font-bold transition-all ${isListening ? 'bg-red-600 animate-pulse text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'}`}
-              title={isListening ? "Stop Voice Control" : "Start Voice Control"}
+              title={isListening ? t('matchTracker.stopVoice') : t('matchTracker.startVoice')}
             >
               {isListening ? <Mic size={20} /> : <MicOff size={20} />}
             </button>
-            {isListening && <span className="text-[10px] text-red-400 font-mono animate-pulse uppercase tracking-wider">Listening</span>}
+            {isListening && <span className="text-[10px] text-red-400 font-mono animate-pulse uppercase tracking-wider">{t('matchTracker.listening')}</span>}
             <div className="w-px h-8 bg-gray-700 mx-1"></div>
-            <button onClick={startTimeout} className="p-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white shadow flex items-center gap-1" title="Time-out"><Clock size={20} /><span className="hidden lg:inline font-mono text-[10px]">T</span></button>
+            <button onClick={startTimeout} className="p-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white shadow flex items-center gap-1" title={t('matchTracker.timeout')}><Clock size={20} /><span className="hidden lg:inline font-mono text-[10px]">T</span></button>
             <div className="w-px h-8 bg-gray-700 mx-2"></div>
             <button
               onClick={() => setShowShareModal(true)}
               className="p-2 bg-gray-700 hover:bg-indigo-600 rounded text-xs font-bold"
-              title="Share Result"
+              title={t('matchTracker.shareResult')}
             >
-              <Share2 size={16} /> <span className="hidden lg:inline ml-1 font-mono text-[10px]">Share</span>
+              <Share2 size={16} /> <span className="hidden lg:inline ml-1 font-mono text-[10px]">{t('matchTracker.share')}</span>
             </button>
             <div className="w-px h-8 bg-gray-700 mx-2"></div>
             {/* Navigation buttons removed as per user request */}
@@ -997,8 +999,8 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             <div className="text-xl font-bold mb-4" style={{ color: matchState.timeout.teamId === 'HOME' ? matchState.homeTeam.color : matchState.awayTeam.color }}>
               {matchState.timeout.teamId === 'HOME' ? matchState.homeTeam.name : matchState.awayTeam.name}
             </div>
-            {matchState.timeout.remainingSeconds <= 15 && <div className="text-red-500 font-bold animate-pulse text-xl">ENDING SOON</div>}
-            <button onClick={cancelTimeout} className="mt-8 px-6 py-2 bg-white/20 hover:bg-white/30 rounded-full font-bold">Resume Match</button>
+            {matchState.timeout.remainingSeconds <= 15 && <div className="text-red-500 font-bold animate-pulse text-xl">{t('matchTracker.endingSoon')}</div>}
+            <button onClick={cancelTimeout} className="mt-8 px-6 py-2 bg-white/20 hover:bg-white/30 rounded-full font-bold">{t('matchTracker.resumeMatch')}</button>
           </div>
         </div>
       )}
@@ -1006,10 +1008,10 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-indigo-900/90 backdrop-blur-md">
           <div className="text-center text-white">
             <h2 className="text-8xl font-black font-mono mb-4">{formatTime(Math.ceil(matchState.break.durationSeconds))}</h2>
-            <div className="text-2xl font-bold uppercase tracking-widest mb-8">HALFTIME BREAK</div>
+            <div className="text-2xl font-bold uppercase tracking-widest mb-8">{t('matchTracker.halftimeBreak')}</div>
 
             <button onClick={endBreak} className="mt-8 px-8 py-4 bg-white text-indigo-900 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-xl">
-              Start 2nd Half
+              {t('matchTracker.start2ndHalf')}
             </button>
           </div>
         </div>
@@ -1018,29 +1020,29 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 px-6 py-3 rounded-full shadow-xl border border-gray-200 dark:border-gray-700 flex items-center gap-6 z-40 transform transition-all hover:scale-105">
         <button onClick={() => handleShortcutAction('GOAL')} className="flex flex-col items-center gap-1 text-green-600 hover:text-green-700 font-bold group">
           <Target size={24} className="group-hover:scale-110 transition-transform" />
-          <span className="text-[10px]">Goal</span>
+          <span className="text-[10px]">{t('matchTracker.goal')}</span>
         </button>
         <button onClick={() => handleShortcutAction('MISS')} className="flex flex-col items-center gap-1 text-red-500 hover:text-red-700 font-bold group">
           <Target size={24} className="opacity-70 group-hover:scale-110 transition-transform" />
-          <span className="text-[10px]">Miss</span>
+          <span className="text-[10px]">{t('matchTracker.miss')}</span>
         </button>
         <div className="w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
         <button onClick={() => handleShortcutAction('PENALTY')} className="flex flex-col items-center gap-1 text-yellow-600 hover:text-yellow-700 font-bold group">
           <AlertOctagon size={24} className="group-hover:scale-110 transition-transform" />
-          <span className="text-[10px]">Penalty</span>
+          <span className="text-[10px]">{t('matchTracker.penalty')}</span>
         </button>
         <button onClick={() => handleShortcutAction('FREE_THROW')} className="flex flex-col items-center gap-1 text-blue-600 hover:text-blue-700 font-bold group">
           <Target size={24} className="group-hover:scale-110 transition-transform" />
-          <span className="text-[10px]">Free Pass</span>
+          <span className="text-[10px]">{t('matchTracker.freePass')}</span>
         </button>
         <div className="w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
         <button onClick={() => handleShortcutAction('TURNOVER')} className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-700 font-bold group">
           <ArrowRightLeft size={24} className="group-hover:scale-110 transition-transform" />
-          <span className="text-[10px]">Turnover</span>
+          <span className="text-[10px]">{t('matchTracker.turnover')}</span>
         </button>
         <button onClick={() => handleShortcutAction('REBOUND')} className="flex flex-col items-center gap-1 text-orange-500 hover:text-orange-700 font-bold group">
           <Shield size={24} className="group-hover:scale-110 transition-transform" />
-          <span className="text-[10px]">Rebound</span>
+          <span className="text-[10px]">{t('matchTracker.rebound')}</span>
         </button>
       </div>
 

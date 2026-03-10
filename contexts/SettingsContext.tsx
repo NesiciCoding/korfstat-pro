@@ -114,7 +114,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const clearAllData = () => {
-        if (window.confirm("Are you sure you want to clear ALL data? This includes match history and saved strategies.")) {
+        if (window.confirm(i18n.t('common.confirmClearAll'))) {
             localStorage.clear();
             window.location.reload();
         }

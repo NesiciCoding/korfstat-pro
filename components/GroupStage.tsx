@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Group } from '../types/tournament';
 import { MatchState, Team } from '../types';
 import { Standing } from '../types/season';
@@ -11,6 +12,7 @@ interface GroupStageProps {
 }
 
 export const GroupStage: React.FC<GroupStageProps> = ({ groups, matches, teams }) => {
+    const { t } = useTranslation();
 
     const calculateGroupStandings = (group: Group): Standing[] => {
         // Find matches where both teams are in this group
@@ -26,7 +28,7 @@ export const GroupStage: React.FC<GroupStageProps> = ({ groups, matches, teams }
             const teamInfo = teams.find(t => t.id === teamId);
             standingsMap.set(teamId, {
                 teamId: teamId,
-                teamName: teamInfo?.name || 'Unknown',
+                teamName: teamInfo?.name || t('season.tbd'),
                 played: 0, won: 0, lost: 0, draw: 0,
                 points: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0
             });
@@ -76,11 +78,11 @@ export const GroupStage: React.FC<GroupStageProps> = ({ groups, matches, teams }
                             <table className="w-full text-sm text-left">
                                 <thead className="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-900/50">
                                     <tr>
-                                        <th className="px-3 py-2 rounded-l-lg">Pos</th>
-                                        <th className="px-3 py-2">Team</th>
-                                        <th className="px-2 py-2 text-center">P</th>
-                                        <th className="px-2 py-2 text-center">+/-</th>
-                                        <th className="px-3 py-2 text-center rounded-r-lg font-bold">Pts</th>
+                                        <th className="px-3 py-2 rounded-l-lg">{t('season.pos')}</th>
+                                        <th className="px-3 py-2">{t('season.team')}</th>
+                                        <th className="px-2 py-2 text-center">{t('season.played')}</th>
+                                        <th className="px-2 py-2 text-center">{t('season.gd')}</th>
+                                        <th className="px-3 py-2 text-center rounded-r-lg font-bold">{t('season.pts')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -95,7 +97,7 @@ export const GroupStage: React.FC<GroupStageProps> = ({ groups, matches, teams }
                                     ))}
                                     {standings.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="text-center py-4 text-gray-400">No teams assigned yet.</td>
+                                            <td colSpan={5} className="text-center py-4 text-gray-400">{t('season.noTeams')}</td>
                                         </tr>
                                     )}
                                 </tbody>
