@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { MatchState, OverlayMessage, TeamId } from '../types';
 import StreamOverlay from './StreamOverlay'; // For Preview
 import CommentaryFeed from './CommentaryFeed';
-import { Monitor, Type, MessageSquare, Zap, Play, Square, LayoutTemplate, ALargeSmall, Maximize, History, Palette, Settings } from 'lucide-react';
+import SocialGraphicGenerator from './SocialGraphicGenerator';
+import { Monitor, Type, MessageSquare, Zap, Play, Square, LayoutTemplate, ALargeSmall, Maximize, History, Palette, Settings, Video } from 'lucide-react';
 import { THEME_PRESETS, FONT_OPTIONS } from '../config/broadcastThemes';
 
 interface DirectorDashboardProps {
@@ -23,6 +24,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
     });
 
     const [activeTab, setActiveTab] = useState<'QUICK' | 'CUSTOM' | 'THEME'>('QUICK');
+    const [showSocialGraphic, setShowSocialGraphic] = useState(false);
 
     // Helper to push state update
     const pushOverride = (override: OverlayMessage | null) => {
@@ -97,6 +99,18 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                     <div className="bg-red-600 text-white px-3 py-1 rounded font-black tracking-tighter animate-pulse">LIVE</div>
                     <div className="h-6 w-px bg-slate-700"></div>
                     <h1 className="font-bold text-lg text-slate-100 italic">DIRECTOR CONSOLE</h1>
+                </div>
+
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setShowSocialGraphic(true)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold shadow-md shadow-purple-500/20 transition-all flex items-center gap-2"
+                    >
+                        <Video size={18} /> Social Graphic
+                    </button>
+                    <div className="text-sm font-mono text-slate-400 bg-slate-800 px-3 py-1 rounded border border-slate-700">
+                        {matchState.period} • {Math.floor(matchState.clockInfo.elapsedSeconds / 60)}:{(matchState.clockInfo.elapsedSeconds % 60).toString().padStart(2, '0')}
+                    </div>
                 </div>
             </div>
 

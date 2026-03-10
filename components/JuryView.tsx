@@ -8,9 +8,10 @@ interface JuryViewProps {
     matchState: MatchState;
     onUpdateMatch: (newState: MatchState) => void;
     onBack: () => void;
+    sendHapticSignal: (type: 'TIMEOUT_PING' | 'SUB_PING' | 'SHOT_CLOCK_PING' | 'GAME_CLOCK_PING') => void;
 }
 
-const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack }) => {
+const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, sendHapticSignal }) => {
     const [showShotClockEdit, setShowShotClockEdit] = useState(false);
     const [newShotClockTime, setNewShotClockTime] = useState(25);
     const [showGameClockEdit, setShowGameClockEdit] = useState(false);
@@ -276,11 +277,31 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack }
                             ) : (
                                 <button
                                     onClick={startTimeout}
-                                    className="w-full p-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-bold text-white"
+                                    className="w-full p-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-bold text-white mb-2"
                                 >
                                     Start 60s Time-out
                                 </button>
                             )}
+                        </div>
+                        
+                        {/* Referee Comm Signals */}
+                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                            <h3 className="font-bold text-slate-300 mb-4 flex items-center gap-2">⌚ Referee Signals</h3>
+                            <div className="grid grid-cols-2 gap-2 text-sm font-bold">
+                                <button onClick={() => sendHapticSignal('TIMEOUT_PING')} className="p-3 bg-purple-600/20 text-purple-400 border border-purple-500/50 rounded-lg hover:bg-purple-600/30">
+                                    Ping Timeout
+                                </button>
+                                <button onClick={() => sendHapticSignal('SUB_PING')} className="p-3 bg-blue-600/20 text-blue-400 border border-blue-500/50 rounded-lg hover:bg-blue-600/30">
+                                    Ping Sub
+                                </button>
+                                <button onClick={() => sendHapticSignal('SHOT_CLOCK_PING')} className="p-3 bg-yellow-600/20 text-yellow-500 border border-yellow-500/50 rounded-lg hover:bg-yellow-600/30">
+                                    Ping Shot Clock
+                                </button>
+                                <button onClick={() => sendHapticSignal('GAME_CLOCK_PING')} className="p-3 bg-green-600/20 text-green-400 border border-green-500/50 rounded-lg hover:bg-green-600/30">
+                                    Ping Time
+                                </button>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">Sends a direct vibration pattern to the Ref's watch.</p>
                         </div>
                     </div>
                 </div>

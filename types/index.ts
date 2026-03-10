@@ -130,6 +130,7 @@ export interface SavedTeam {
   id: string; // Unique ID
   name: string;
   color: string;
+  secondaryColor?: string;
   players: Player[]; // Complete roster including default numbers/positions
 }
 

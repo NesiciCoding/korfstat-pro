@@ -177,8 +177,8 @@ export default function LandingGateway({ onNavigate, activeSessions, matchState 
 
       </div>
 
-      <button onClick={() => onNavigate('HOME')} className="mt-12 text-sm text-gray-500 hover:text-white transition-colors underline underline-offset-4 cursor-pointer z-10 relative">
-        Skip to Legacy Homepage Route
+      <button onClick={() => onNavigate('TRACK')} className="mt-12 text-sm text-gray-500 hover:text-white transition-colors underline underline-offset-4 cursor-pointer z-10 relative">
+        Skip to Match Tracker
       </button>
     </div>
   );

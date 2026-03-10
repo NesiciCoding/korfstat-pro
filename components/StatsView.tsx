@@ -7,6 +7,7 @@ import { Download, ArrowLeft, Home, FileSpreadsheet, ChevronDown, Video } from '
 import { generatePDF, generateJSON } from '../services/reportGenerator';
 import { generateExcel } from '../services/excelGenerator';
 import { generateMatchInsights } from '../services/analysisService';
+import SocialGraphicGenerator from './SocialGraphicGenerator';
 
 interface StatsViewProps {
   matchState: MatchState;
@@ -18,6 +19,7 @@ interface StatsViewProps {
 const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAnalyze }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
+  const [showSocialGraphic, setShowSocialGraphic] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<{ player: Player, teamId: TeamId } | null>(null);
 
   // Filters
@@ -202,22 +204,28 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
             </button>
 
             {showExportMenu && (
-              <div className="absolute right-0 top-12 mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+                <button
+                  onClick={() => setShowSocialGraphic(true)}
+                  className="w-full text-left px-4 py-3 text-sm flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-purple-600 dark:text-purple-400 font-bold border-b border-gray-100 dark:border-gray-700"
+                >
+                  <Video size={16} /> Social Graphic
+                </button>
                 <button
                   onClick={() => { generatePDF(matchState); setShowExportMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  className="w-full text-left px-4 py-3 text-sm flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700"
                 >
                   <Download size={16} /> PDF Report
                 </button>
                 <button
                   onClick={() => { generateExcel(matchState); setShowExportMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-green-600 dark:hover:text-green-400 transition-colors border-t border-gray-100 dark:border-gray-700"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-green-600 dark:hover:text-green-400 transition-colors border-b border-gray-100 dark:border-gray-700"
                 >
                   <FileSpreadsheet size={16} /> Excel Spreadsheet
                 </button>
                 <button
                   onClick={() => { generateJSON(matchState); setShowExportMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-t border-gray-100 dark:border-gray-700"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   <div className="font-mono text-xs border border-current rounded px-1">JSON</div> Raw Data
                 </button>
@@ -436,13 +444,18 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
         {selectedPlayer && (
           <PlayerProfileModal
             player={selectedPlayer.player}
-            teamName={selectedPlayer.teamId === 'HOME' ? matchState.homeTeam.name : matchState.awayTeam.name}
-            teamColor={selectedPlayer.teamId === 'HOME' ? matchState.homeTeam.color : matchState.awayTeam.color}
-            events={matchState.events}
+            teamId={selectedPlayer.teamId}
+            matchState={matchState}
             onClose={() => setSelectedPlayer(null)}
           />
         )}
 
+      {showSocialGraphic && (
+        <SocialGraphicGenerator
+          matchState={matchState}
+          onClose={() => setShowSocialGraphic(false)}
+        />
+      )}
       </div>
     </div>
   );

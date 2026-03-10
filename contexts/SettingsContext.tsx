@@ -25,6 +25,13 @@ export interface Settings {
 
     // Wear OS Sync
     watchControlMode: 'read-only' | 'write';
+
+    // Social Graphics
+    socialGraphicConfig?: {
+        backgroundImageUrl?: string;
+        sponsorLogoUrl?: string;
+        style: 'modern' | 'minimal' | 'neon';
+    };
 }
 
 interface SettingsContextType {
@@ -47,6 +54,9 @@ const defaultSettings: Settings = {
     defaultHomeColor: '#EF4444', // Red-500
     defaultAwayColor: '#3B82F6', // Blue-500
     watchControlMode: 'read-only',
+    socialGraphicConfig: {
+        style: 'modern'
+    }
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

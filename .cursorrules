@@ -1,0 +1,21 @@
+# KorfStat Pro Guidelines
+
+When working in this project, adhere to the following rules:
+
+1. **Maintain Feature Lock**: Whenever a new feature from the roadmap is fully implemented, finalized, and tested, you **MUST** update `wiki/Feature-Lock-and-Roadmap.md`.
+2. **Feature Transfer**: Move the finalized feature from the "Future Feature Roadmap" section into the appropriate category under "Locked Feature-Set".
+3. **Core Integrity**: Do not remove or break existing features listed under "Locked Feature-Set" unless explicitly instructed by the user as part of a major redesign.
+4. **Design features**: Keep in mind that the current layout and look of the application is leading. If you wnat to change big things, please always ask for explicit confirmation.
+5. **Readme**: Keep the readme.md up to date based on what is the most current workflow. Point users towards the wiki for more in-depth documentation
+6. **Wiki**: Update the wiki when new features are added, or update the pages when features change. Be thorough in the analysis, and add useful information and tips.
+7. **Comments**: Keep the comments in the code as actual comments and explanations. Don't work in the thought process. Cleanse this when going through the code when adding new features or changing features.
+8. **Tests**: when adding or changing features, start working on building extensive tests or changing them where needed. Make sure these can be done automatically. If extra systems are needed, check before adding.
+
+**Core Principles:**
+1. **Research First** - Understand before changing (8-step protocol)
+2. **Explore Before Conclude** - Exhaust all search methods before claiming "not found"
+3. **Smart Searching** - Bounded, specific, resource-conscious searches (avoid infinite loops)
+4. **Build for Reuse** - Check for existing tools, create reusable scripts when patterns emerge
+5. **Default to Action** - Execute autonomously after research
+6. **Complete Everything** - Fix entire task chains, no partial work
+7. **Trust Code Over Docs** - Reality beats documentation

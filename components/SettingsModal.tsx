@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { X, Moon, Sun, Monitor, Volume2, VolumeX, Trash2, Radio, Languages } from 'lucide-react';
-import { useSettings, Settings } from '../contexts/SettingsContext';
 import { useTranslation } from 'react-i18next';
+import { useSettings, Settings } from '../contexts/SettingsContext';
 import CompanionSetup from './CompanionSetup';
-
+import AssetUploader from './AssetUploader';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -243,6 +243,55 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                         <CompanionSetup />
                                     </div>
                                 )}
+                            </div>
+                        </div>
+
+                        {/* Social Graphics Output Config */}
+                        <div className="space-y-3">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Social Graphics Output</label>
+
+                            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-5">
+                                <div className="space-y-2">
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">Layout Style</label>
+                                    <select
+                                        value={settings.socialGraphicConfig?.style || 'modern'}
+                                        onChange={(e) => updateSettings({ 
+                                            socialGraphicConfig: { 
+                                                ...(settings.socialGraphicConfig || { style: 'modern' }), 
+                                                style: e.target.value as any 
+                                            } 
+                                        })}
+                                        className="w-full bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg p-2"
+                                    >
+                                        <option value="modern">Modern Gradients</option>
+                                        <option value="minimal">Minimal Flat</option>
+                                        <option value="neon">Neon Cyber</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <AssetUploader 
+                                        label="Background Image (1080x1080 / 1080x1920 recommended)" 
+                                        currentUrl={settings.socialGraphicConfig?.backgroundImageUrl} 
+                                        onUploadSuccess={(url) => updateSettings({ 
+                                            socialGraphicConfig: { 
+                                                ...(settings.socialGraphicConfig || { style: 'modern' }), 
+                                                backgroundImageUrl: url 
+                                            } 
+                                        })} 
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <AssetUploader 
+                                        label="Sponsor / Partner Logo" 
+                                        currentUrl={settings.socialGraphicConfig?.sponsorLogoUrl} 
+                                        onUploadSuccess={(url) => updateSettings({ 
+                                            socialGraphicConfig: { 
+                                                ...(settings.socialGraphicConfig || { style: 'modern' }), 
+                                                sponsorLogoUrl: url 
+                                            } 
+                                        })} 
+                                    />
+                                </div>
                             </div>
                         </div>
 

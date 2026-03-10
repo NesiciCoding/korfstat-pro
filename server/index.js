@@ -49,10 +49,18 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
 
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins.length > 0 && allowedOrigins[0] !== '*' ? allowedOrigins : "*",
+        origin: "*",
         methods: ["GET", "POST"],
-        credentials: true
-    }
+        credentials: false
+    },
+    // Allow clients to connect directly via WebSocket (skip XHR polling)
+    // This is needed for Android/Wear OS clients
+    transports: ['polling', 'websocket'],
+    allowUpgrades: true,
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    // Allow Engine.IO v3 clients (Java socket.io-client 2.x sends EIO=3)
+    allowEIO3: true
 });
 
 // Serve static frontend files from Vite dist folder
@@ -450,6 +458,19 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Relay haptic signals directly to the watch
+    socket.on('haptic-signal', (payload) => {
+        io.emit('haptic-signal', payload);
+    });
+
+    // Relay write-mode actions from the watch back to the web app
+    socket.on('watch-action', (payload) => {
+        console.log('[Watch] Received watch-action:', payload?.action);
+        // Broadcast to all OTHER clients (web app) as a spotter-action so the
+        // existing action handler in the web app can process it without extra code.
+        socket.broadcast.emit('watch-action', payload);
+    });
+
     socket.on('match-update', (state) => {
         currentState = state;
 
@@ -465,6 +486,38 @@ io.on('connection', (socket) => {
         // Broadcast simplified ticker data to all clients (including external tickers)
         const tickerData = getTickerData(state);
         io.emit('ticker-update', tickerData);
+        
+        // --- Watch Flattening specific mapping ---
+        if (state) {
+            try {
+               let homeScore = 0;
+               let awayScore = 0;
+               if (state.events) {
+                   homeScore = state.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === state.homeTeam.id).length;
+                   awayScore = state.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === state.awayTeam.id).length;
+               }
+               
+               const watchPayload = {
+                   homeScore: homeScore,
+                   awayScore: awayScore,
+                   isGameTimeRunning: state.timer ? state.timer.isRunning : false,
+                   isShotClockRunning: state.shotClock ? state.shotClock.isRunning : false,
+                   gameTime: state.timer ? ((state.halfDurationSeconds - state.timer.elapsedSeconds) * 1000) : 0,
+                   shotClock: state.shotClock ? (state.shotClock.seconds * 1000) : 0,
+                   period: state.currentHalf || 1,
+                   subPending: false, 
+                   latestSubId: '',
+                   subOut: '',
+                   subIn: '',
+                   isReadOnly: true,
+                   timeoutTeam: state.timeout && state.timeout.isActive ? "ACTIVE" : "NONE"
+               };
+               
+               // Broadcast flattened representation explicitly for wear OS clients parsing Maps
+               io.emit('watch-update', watchPayload);
+               
+            } catch(e) {}
+        }
     });
 
     socket.on('request-active-sessions', () => {
@@ -592,8 +645,8 @@ app.get('/{*path}', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
-server.listen(PORT, () => {
-    console.log(`✅ KorfStat Pro Server running on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ KorfStat Pro Server running on port ${PORT} (all interfaces)`);
     console.log(`📡 WebSocket server ready for real-time sync`);
     console.log(`🏥 Health check available at http://localhost:${PORT}/health`);
 });

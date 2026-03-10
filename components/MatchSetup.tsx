@@ -102,6 +102,8 @@ interface TeamSetupProps {
   setName: (s: string) => void;
   color: string;
   setColor: (s: string) => void;
+  secondaryColor?: string;
+  setSecondaryColor: (s: string) => void;
   logoUrl?: string;
   setLogoUrl: (s: string) => void;
   players: Player[];
@@ -122,6 +124,8 @@ const TeamSetup: React.FC<TeamSetupProps> = ({
   setName,
   color,
   setColor,
+  secondaryColor,
+  setSecondaryColor,
   logoUrl,
   setLogoUrl,
   players,
@@ -250,14 +254,26 @@ const TeamSetup: React.FC<TeamSetupProps> = ({
 
           <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
 
-          <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Jersey</label>
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            className="w-8 h-8 p-0 rounded cursor-pointer border-none"
-            title="Select Team Color"
-          />
+          <div className="flex flex-col gap-1 items-end">
+              <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase leading-none">Primary</label>
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-6 h-6 p-0 rounded cursor-pointer border-none"
+                title="Primary Team Color"
+              />
+          </div>
+          <div className="flex flex-col gap-1 items-end">
+              <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase leading-none">Secondary</label>
+              <input
+                type="color"
+                value={secondaryColor || '#000000'}
+                onChange={(e) => setSecondaryColor(e.target.value)}
+                className="w-6 h-6 p-0 rounded cursor-pointer border-none"
+                title="Secondary Team Color"
+              />
+          </div>
         </div>
       </div>
 
@@ -348,10 +364,12 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
   console.log('[MatchSetup] Rendering. SavedMatches length:', savedMatches?.length);
   const [homeName, setHomeName] = useState('Home Team');
   const [homeColor, setHomeColor] = useState('#2563eb'); // Blue-600
+  const [homeSecondaryColor, setHomeSecondaryColor] = useState<string>('#1e40af'); // Blue-800
   const [homeLogoUrl, setHomeLogoUrl] = useState<string | undefined>();
   
   const [awayName, setAwayName] = useState('Away Team');
   const [awayColor, setAwayColor] = useState('#dc2626'); // Red-600
+  const [awaySecondaryColor, setAwaySecondaryColor] = useState<string>('#991b1b'); // Red-800
   const [awayLogoUrl, setAwayLogoUrl] = useState<string | undefined>();
 
   const [selectedProfile, setSelectedProfile] = useState<MatchProfile>(DEFAULT_PROFILES[0]);
@@ -418,11 +436,12 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
     }
   });
 
-  const handleSaveTeam = (name: string, color: string, players: Player[]) => {
+  const handleSaveTeam = (name: string, color: string, secondaryColor: string, players: Player[]) => {
     const newTeam: SavedTeam = {
       id: crypto.randomUUID(),
       name,
       color,
+      secondaryColor,
       players
     };
 
@@ -433,7 +452,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
     if (existingIndex >= 0) {
       if (!confirm(`Team "${name}" already exists. Overwrite?`)) return;
       newSavedTeams = [...savedTeams];
-      newSavedTeams[existingIndex] = { ...newSavedTeams[existingIndex], color, players };
+      newSavedTeams[existingIndex] = { ...newSavedTeams[existingIndex], color, secondaryColor, players };
     } else {
       newSavedTeams = [...savedTeams, newTeam];
     }
@@ -443,9 +462,10 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
     alert(`Team "${name}" saved!`);
   };
 
-  const handleLoadTeam = (team: SavedTeam, setTeamName: (s: string) => void, setTeamColor: (s: string) => void, setTeamPlayers: (p: Player[]) => void, prefix: string) => {
+  const handleLoadTeam = (team: SavedTeam, setTeamName: (s: string) => void, setTeamColor: (s: string) => void, setTeamSecondaryColor: (s: string) => void, setTeamPlayers: (p: Player[]) => void, prefix: string) => {
     setTeamName(team.name);
     setTeamColor(team.color);
+    if (team.secondaryColor) setTeamSecondaryColor(team.secondaryColor);
     // Regenerate IDs to prevent conflicts if loaded multiple times or mixed
     const playersWithFreshIds = team.players.map((p, i) => ({
       ...p,
@@ -455,17 +475,19 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
   };
 
   const handleStart = () => {
-    const prepareTeam = (id: TeamId, name: string, players: Player[], color: string): Team => ({
+    const prepareTeam = (id: TeamId, name: string, players: Player[], color: string, secondaryColor: string, logoUrl?: string): Team => ({
       id,
       name,
       color,
+      secondaryColor,
+      logoUrl,
       substitutionCount: 0,
       players: players.map(p => ({ ...p, onField: p.isStarter }))
     });
 
     onStartMatch(
-      prepareTeam('HOME', homeName, homePlayers, homeColor),
-      prepareTeam('AWAY', awayName, awayPlayers, awayColor),
+      prepareTeam('HOME', homeName, homePlayers, homeColor, homeSecondaryColor, homeLogoUrl),
+      prepareTeam('AWAY', awayName, awayPlayers, awayColor, awaySecondaryColor, awayLogoUrl),
       selectedProfile,
       selectedSeasonId || undefined
     );
@@ -485,10 +507,12 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
     setClubs(ClubService.getAllClubs());
   }, []);
 
-  const handleLoadClub = (club: Club, setTeamName: (s: string) => void, setTeamColor: (s: string) => void, setTeamPlayers: (p: Player[]) => void) => {
+  const handleLoadClub = (club: Club, setTeamName: (s: string) => void, setTeamColor: (s: string) => void, setTeamSecondaryColor: (s: string) => void, setTeamLogo: (s: string | undefined) => void, setTeamPlayers: (p: Player[]) => void) => {
     console.log('Loading club:', club.name);
     setTeamName(club.name);
     setTeamColor(club.primaryColor);
+    if (club.secondaryColor) setTeamSecondaryColor(club.secondaryColor);
+    setTeamLogo(club.logoUrl);
 
     const mappedPlayers: Player[] = club.players.map((p) => ({
       id: p.id, // Use persistent ID
@@ -567,14 +591,15 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
           teamId="HOME"
           name={homeName} setName={setHomeName}
           color={homeColor} setColor={setHomeColor}
+          secondaryColor={homeSecondaryColor} setSecondaryColor={setHomeSecondaryColor}
           logoUrl={homeLogoUrl} setLogoUrl={setHomeLogoUrl}
           players={homePlayers} setPlayers={setHomePlayers}
           suggestions={allPlayers}
           savedTeams={savedTeams}
           clubs={clubs}
-          onSaveTeam={() => handleSaveTeam(homeName, homeColor, homePlayers)}
-          onLoadTeam={(team) => handleLoadTeam(team, setHomeName, setHomeColor, setHomePlayers, 'h')}
-          onLoadClub={(club) => handleLoadClub(club, setHomeName, setHomeColor, setHomePlayers)}
+          onSaveTeam={() => handleSaveTeam(homeName, homeColor, homeSecondaryColor, homePlayers)}
+          onLoadTeam={(team) => handleLoadTeam(team, setHomeName, setHomeColor, setHomeSecondaryColor, setHomePlayers, 'h')}
+          onLoadClub={(club) => handleLoadClub(club, setHomeName, setHomeColor, setHomeSecondaryColor, setHomeLogoUrl, setHomePlayers)}
           onDeleteTeam={handleDeleteTeam}
         />
 
@@ -582,14 +607,15 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
           teamId="AWAY"
           name={awayName} setName={setAwayName}
           color={awayColor} setColor={setAwayColor}
+          secondaryColor={awaySecondaryColor} setSecondaryColor={setAwaySecondaryColor}
           logoUrl={awayLogoUrl} setLogoUrl={setAwayLogoUrl}
           players={awayPlayers} setPlayers={setAwayPlayers}
           suggestions={allPlayers}
           savedTeams={savedTeams}
           clubs={clubs}
-          onSaveTeam={() => handleSaveTeam(awayName, awayColor, awayPlayers)}
-          onLoadTeam={(team) => handleLoadTeam(team, setAwayName, setAwayColor, setAwayPlayers, 'a')}
-          onLoadClub={(club) => handleLoadClub(club, setAwayName, setAwayColor, setAwayPlayers)}
+          onSaveTeam={() => handleSaveTeam(awayName, awayColor, awaySecondaryColor, awayPlayers)}
+          onLoadTeam={(team) => handleLoadTeam(team, setAwayName, setAwayColor, setAwaySecondaryColor, setAwayPlayers, 'a')}
+          onLoadClub={(club) => handleLoadClub(club, setAwayName, setAwayColor, setAwaySecondaryColor, setAwayLogoUrl, setAwayPlayers)}
           onDeleteTeam={handleDeleteTeam}
         />
       </div>

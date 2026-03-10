@@ -213,15 +213,29 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
                                     />
                                 )}
                                 {theme !== 'neon' && (
-                                    <div
-                                        className="absolute left-0 top-0 bottom-0 w-2"
-                                        style={{ backgroundColor: matchState.homeTeam.color }}
-                                    />
+                                    <>
+                                        <div
+                                            className="absolute inset-0 opacity-20"
+                                            style={{
+                                                background: `linear-gradient(to right, ${matchState.homeTeam.color}, ${matchState.homeTeam.secondaryColor || matchState.homeTeam.color})`
+                                            }}
+                                        />
+                                        <div
+                                            className="absolute left-0 top-0 bottom-0 w-2"
+                                            style={{ backgroundColor: matchState.homeTeam.color }}
+                                        />
+                                    </>
                                 )}
-                                <span className={`font-bold text-2xl uppercase tracking-wider truncate ${theme === 'neon' ? 'pl-4' : 'pl-3'}`}>
-                                    {matchState.homeTeam.name}
-                                </span>
-                                <span className={`font-black text-6xl font-mono leading-none ${theme === 'neon' ? 'text-cyan-400' : ''}`}>
+                                
+                                <div className={`relative flex items-center gap-3 ${theme === 'neon' ? 'pl-4' : 'pl-3'}`}>
+                                    {matchState.homeTeam.logoUrl && (
+                                        <img src={matchState.homeTeam.logoUrl} className="w-8 h-8 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" alt="" />
+                                    )}
+                                    <span className="font-bold text-2xl uppercase tracking-wider truncate max-w-[130px]">
+                                        {matchState.homeTeam.name}
+                                    </span>
+                                </div>
+                                <span className={`relative z-10 font-black text-6xl font-mono leading-none ${theme === 'neon' ? 'text-cyan-400' : 'drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]'}`}>
                                     {getScore(matchState, 'HOME')}
                                 </span>
                             </div>
@@ -278,15 +292,29 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
                                     />
                                 )}
                                 {theme !== 'neon' && (
-                                    <div
-                                        className="absolute right-0 top-0 bottom-0 w-2"
-                                        style={{ backgroundColor: matchState.awayTeam.color }}
-                                    />
+                                    <>
+                                        <div
+                                            className="absolute inset-0 opacity-20"
+                                            style={{
+                                                background: `linear-gradient(to left, ${matchState.awayTeam.color}, ${matchState.awayTeam.secondaryColor || matchState.awayTeam.color})`
+                                            }}
+                                        />
+                                        <div
+                                            className="absolute right-0 top-0 bottom-0 w-2"
+                                            style={{ backgroundColor: matchState.awayTeam.color }}
+                                        />
+                                    </>
                                 )}
-                                <span className={`font-bold text-2xl uppercase tracking-wider truncate ${theme === 'neon' ? 'pr-4' : 'pr-3'}`}>
-                                    {matchState.awayTeam.name}
-                                </span>
-                                <span className={`font-black text-6xl font-mono leading-none ${theme === 'neon' ? 'text-cyan-400' : ''}`}>
+                                
+                                <div className={`relative flex flex-row-reverse items-center gap-3 ${theme === 'neon' ? 'pr-4' : 'pr-3'}`}>
+                                    {matchState.awayTeam.logoUrl && (
+                                        <img src={matchState.awayTeam.logoUrl} className="w-8 h-8 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" alt="" />
+                                    )}
+                                    <span className="font-bold text-2xl uppercase tracking-wider truncate max-w-[130px] text-right">
+                                        {matchState.awayTeam.name}
+                                    </span>
+                                </div>
+                                <span className={`relative z-10 font-black text-6xl font-mono leading-none ${theme === 'neon' ? 'text-cyan-400' : 'drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]'}`}>
                                     {getScore(matchState, 'AWAY')}
                                 </span>
                             </div>
@@ -317,9 +345,13 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
                                 {theme === 'modern' && (
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
                                 )}
-                                <span className="relative z-10">
-                                    {override?.type === 'POPUP' ? override.text : visiblePopup?.text}
-                                </span>
+                                <div className="relative z-10 flex items-center justify-center gap-3">
+                                    {visiblePopup?.teamId && (() => {
+                                        const t = visiblePopup.teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
+                                        return t.logoUrl ? <img src={t.logoUrl} className="w-8 h-8 object-contain drop-shadow" alt="" /> : null;
+                                    })()}
+                                    <span>{override?.type === 'POPUP' ? override.text : visiblePopup?.text}</span>
+                                </div>
                             </div>
 
                             {/* Bottom Card */}

@@ -40,6 +40,13 @@ export default defineConfig(({ mode }) => {
             const tTeam = data.timeoutTeam || "NONE";
             cmd += ` --es timeoutTeam "${tTeam}"`;
             
+            if (data.hapticSignal !== undefined) {
+                cmd += ` --es hapticSignal "${data.hapticSignal}"`;
+            }
+            if (data.hapticSignalId !== undefined) {
+                cmd += ` --es hapticSignalId "${data.hapticSignalId}"`;
+            }
+
             exec(cmd, (error) => {
               res.setHeader('Content-Type', 'application/json');
               if (error) {

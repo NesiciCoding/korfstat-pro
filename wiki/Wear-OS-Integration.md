@@ -43,6 +43,13 @@ The watch automatically vibrates in response to important events, even if the re
 | Substitution pending | Double buzz pattern (buzz-pause-buzz) |
 | Timeout requested | Double buzz pattern |
 
+### Manual Referee Comm Signals
+Table officials have access to a "Referee Signals" panel in the **Jury View** to send discrete manual pings via ADB/Data Layer:
+- **Ping Timeout**: 3 quick buzzes
+- **Ping Sub**: 1 long buzz
+- **Ping Shot Clock**: 2 medium buzzes
+- **Ping Time**: 1 short sharp tap
+
 ---
 
 ## For Developers: Setting Up the Connection

@@ -16,6 +16,7 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
     const [name, setName] = useState(club.name);
     const [shortName, setShortName] = useState(club.shortName);
     const [primaryColor, setPrimaryColor] = useState(club.primaryColor);
+    const [secondaryColor, setSecondaryColor] = useState(club.secondaryColor || '#000000');
     const [players, setPlayers] = useState<ClubPlayer[]>(club.players);
     const [viewingPlayer, setViewingPlayer] = useState<ClubPlayer | null>(null);
 
@@ -25,6 +26,7 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
             name,
             shortName,
             primaryColor,
+            secondaryColor,
             players, // In a real app we might rely on the service more granularly, but here we save the whole object
             updatedAt: Date.now()
         };
@@ -72,7 +74,7 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
 
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
                     <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Club Details</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Club Name</label>
                             <input
@@ -82,7 +84,7 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Short Name (3 chars)</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Short Name</label>
                             <input
                                 value={shortName}
                                 onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 3))}
@@ -101,7 +103,23 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                                 <input
                                     value={primaryColor}
                                     onChange={(e) => setPrimaryColor(e.target.value)}
-                                    className="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 font-mono uppercase text-gray-900 dark:text-white"
+                                    className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 font-mono uppercase text-gray-900 dark:text-white text-sm"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Secondary Color</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="color"
+                                    value={secondaryColor}
+                                    onChange={(e) => setSecondaryColor(e.target.value)}
+                                    className="w-10 h-10 p-0 border-none rounded cursor-pointer"
+                                />
+                                <input
+                                    value={secondaryColor}
+                                    onChange={(e) => setSecondaryColor(e.target.value)}
+                                    className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-2 font-mono uppercase text-gray-900 dark:text-white text-sm"
                                 />
                             </div>
                         </div>

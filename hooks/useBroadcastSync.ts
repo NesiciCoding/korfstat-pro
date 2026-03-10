@@ -105,7 +105,22 @@ export const useBroadcastSync = (
 
         socket.on('disconnect', () => {
             console.log('[Sync] Socket Disconnected');
-            // Optionally clear active sessions or mark as offline?
+        });
+
+        // Listen for write-mode actions sent by the Wear OS watch
+        socket.on('watch-action', (payload: { action: string }) => {
+            console.log('[Sync] Received watch-action from watch:', payload?.action);
+            if (onSpotterActionRef.current) {
+                // Map watch action names to the spotter action format the web app understands
+                const actionMap: Record<string, string> = {
+                    'TOGGLE_GAME_TIME':  'TOGGLE_TIMER',
+                    'RESET_SHOT_CLOCK':  'RESET_SHOT_CLOCK',
+                };
+                const mappedAction = actionMap[payload?.action];
+                if (mappedAction) {
+                    onSpotterActionRef.current({ action: mappedAction });
+                }
+            }
         });
 
         return () => {
@@ -200,6 +215,27 @@ export const useBroadcastSync = (
         return [...activeSessions, watchSession];
     }, [activeSessions, watchSession]);
 
-    return { broadcastUpdate, broadcastUpdateDebounced, activeSessions: combinedSessions, registerView };
+    const sendHapticSignal = useCallback((signalType: 'TIMEOUT_PING' | 'SUB_PING' | 'SHOT_CLOCK_PING' | 'GAME_CLOCK_PING') => {
+        if (socketRef.current?.connected) {
+             socketRef.current.emit('haptic-signal', {
+                 hapticSignal: signalType,
+                 hapticSignalId: crypto.randomUUID()
+             });
+        }
+        
+        // Still fire HTTP call for legacy adb emulator mocking support
+        try {
+            fetch('http://localhost:3000/api/sync-watch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    hapticSignal: signalType,
+                    hapticSignalId: crypto.randomUUID()
+                })
+            }).catch(e => console.error('[Watch Sync Failed]', e));
+        } catch(e) {}
+    }, []);
+
+    return { broadcastUpdate, broadcastUpdateDebounced, activeSessions: combinedSessions, registerView, sendHapticSignal };
 }; // End of file
 

@@ -165,12 +165,65 @@ function AppContent() {
   }, []);
 
   const handleSpotterAction = useCallback((action: any) => {
-    console.log('[App] Received Spotter Action via Sync:', action);
-    // TODO: Implement actual logic to update matchState based on spotter action
-    // For now, we just log it, matching previous behavior in MatchTracker
+    const actionType: string = action?.action ?? action;
+    console.log('[App] Received Watch/Spotter Action:', actionType);
+
+    setMatchState(prev => {
+      const now = Date.now();
+
+      if (actionType === 'TOGGLE_TIMER') {
+        const nowRunning = !prev.timer.isRunning;
+
+        // When STOPPING: bake in any time that has elapsed since lastStartTime
+        // so the timer freezes at the live displayed value, not the stale base.
+        let frozenElapsed = prev.timer.elapsedSeconds;
+        let frozenShotClock = prev.shotClock.seconds;
+
+        if (!nowRunning && prev.timer.lastStartTime) {
+          const elapsedSinceLast = (now - prev.timer.lastStartTime) / 1000;
+          frozenElapsed = prev.timer.elapsedSeconds + elapsedSinceLast;
+
+          if (prev.shotClock.isRunning && prev.shotClock.lastStartTime) {
+            const shotClockConsumed = (now - prev.shotClock.lastStartTime) / 1000;
+            frozenShotClock = Math.max(0, prev.shotClock.seconds - shotClockConsumed);
+          }
+        }
+
+        return {
+          ...prev,
+          timer: {
+            ...prev.timer,
+            isRunning: nowRunning,
+            elapsedSeconds: frozenElapsed,
+            lastStartTime: nowRunning ? now : undefined,
+          },
+          shotClock: {
+            ...prev.shotClock,
+            isRunning: nowRunning,
+            seconds: frozenShotClock,
+            lastStartTime: nowRunning ? now : undefined,
+          }
+        };
+      }
+
+      if (actionType === 'RESET_SHOT_CLOCK') {
+        const shotClockDuration = prev.profile?.shotClockDurationSeconds ?? 25;
+        return {
+          ...prev,
+          shotClock: {
+            ...prev.shotClock,
+            seconds: shotClockDuration,
+            isRunning: prev.timer.isRunning,
+            lastStartTime: prev.timer.isRunning ? now : undefined,
+          }
+        };
+      }
+
+      return prev;
+    });
   }, []);
 
-  const { broadcastUpdate, activeSessions, registerView } = useBroadcastSync(matchState, handleRemoteUpdate, handleSpotterAction);
+  const { broadcastUpdate, activeSessions, registerView, sendHapticSignal } = useBroadcastSync(matchState, handleRemoteUpdate, handleSpotterAction);
 
   // Register View on Change
   useEffect(() => {
@@ -393,6 +446,7 @@ function AppContent() {
             matchState={derivedMatchState}
             onUpdateMatch={handleUpdateMatch}
             onBack={handleBackNavigation}
+            sendHapticSignal={sendHapticSignal}
           />
         </Suspense>
       )}
