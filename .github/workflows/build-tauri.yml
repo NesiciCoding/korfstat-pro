@@ -82,6 +82,13 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      # ── 6.5. Workaround Git 128 ──────────────────────────────────────────────
+      - name: Git Workaround (Safe Directory & Tags)
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --tags --force
+
       # ── 7. Build Tauri app ───────────────────────────────────────────────────
       - name: Build Tauri application
         uses: tauri-apps/tauri-action@v0
