@@ -1,6 +1,7 @@
 import React from 'react';
 import { MatchState } from '../types';
 import { getScore, formatTime } from '../utils/matchUtils';
+import SponsorRotatingBanner from './SponsorRotatingBanner';
 
 interface LiveStatsViewProps {
     matchState: MatchState;
@@ -70,6 +71,15 @@ const LiveStatsView: React.FC<LiveStatsViewProps> = ({ matchState }) => {
                         <div className="text-zinc-700 italic text-2xl text-center py-4">Waiting for match actions...</div>
                     )}
                 </div>
+            </div>
+
+            {/* Sponsor Panel */}
+            <div className="w-full max-w-7xl mt-12 bg-zinc-900/50 backdrop-blur rounded-xl p-6 border border-zinc-800 flex items-center justify-between">
+                <span className="text-zinc-500 font-bold uppercase tracking-widest text-lg">Proudly Sponsored by</span>
+                <SponsorRotatingBanner 
+                    className="h-16 w-64 bg-white/5 rounded-lg p-2" 
+                    imageClassName="object-contain"
+                />
             </div>
         </div>
     );

@@ -42,7 +42,11 @@
     "dangerZone": "Gevarenzone",
     "clearAll": "Wis Alle Gegevens",
     "new": "Nieuw",
-    "club": "Club"
+    "club": "Club",
+    "sponsors": "Sponsorbeheer",
+    "rotationInterval": "Rotatie Interval (sec)",
+    "addSponsor": "Sponsor Logo Toevoegen",
+    "noSponsors": "Geen sponsors toegevoegd"
   },
   "common": {
     "cancel": "Annuleren",
@@ -81,7 +85,7 @@
     "livestreamStats": "Livestream Stats",
     "livestreamStatsDesc": "Commentatorweergave met live data",
     "streamOverlay": "Stream Overlay",
-    "streamOverlayDesc": "Transparante laag voor OBS",
+    "streamOverlayDesc": "Transparante laag voor livestreams",
     "matchHistory": "Wedstrijdhistorie",
     "matchHistoryDesc": "Bekijk eerdere logboeken",
     "overallStats": "Totaalstats",
@@ -97,7 +101,9 @@
     "juryInterface": "Jury Interface",
     "juryInterfaceDesc": "Officiële jurybediening",
     "spotterInterface": "Spotter Interface",
-    "spotterInterfaceDesc": "Live gebeurtenissen volgen"
+    "spotterInterfaceDesc": "Live gebeurtenissen volgen",
+    "seasonManager": "Seizoensbeheer",
+    "seasonManagerDesc": "Beheer competities, toernooien en standen"
   },
   "matchTracker": {
     "matchControl": "Wedstrijdbeheer",
@@ -241,11 +247,11 @@
     "lost": "V",
     "gf": "DV",
     "ga": "DT",
-    "gd": "+/-",
+    "gd": "DS",
     "pts": "Pnt",
     "noMatches": "Nog geen wedstrijden gespeeld in dit seizoen.",
     "groupStage": "Groepsfase",
-    "bracket": "Toernooi Schema",
+    "bracket": "Toernooischema",
     "exportBracket": "Schema Exporteren",
     "info": "Seizoen Informatie",
     "started": "Gestart:",

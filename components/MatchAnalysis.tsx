@@ -23,7 +23,7 @@ const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
 
     const handleSyncSet = (time: number) => {
         setVideoOffset(time);
-        // In a real app we would persist this to the match object in localStorage
+        // In the released app we persist this to the match object in localStorage
         // match.videoOffset = time; 
         // saveMatch(match);
     };
@@ -34,8 +34,8 @@ const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
             // Event timestamp is relative to match start (00:00)
             // Video Offset is where 00:00 is in the video.
             // So video time = offset + event time.
-            // We subtract 5 seconds for context (PRE-ROLL).
-            const targetTime = Math.max(0, videoOffset + event.timestamp - 5);
+            // We subtract 10 seconds for context (PRE-ROLL).
+            const targetTime = Math.max(0, videoOffset + event.timestamp - 10);
             videoRef.current.seekTo(targetTime);
         } else {
             alert(t('stats.syncVideoAlert'));

@@ -109,7 +109,11 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                         <Video size={18} /> Social Graphic
                     </button>
                     <div className="text-sm font-mono text-slate-400 bg-slate-800 px-3 py-1 rounded border border-slate-700">
-                        {matchState.period} • {Math.floor(matchState.clockInfo.elapsedSeconds / 60)}:{(matchState.clockInfo.elapsedSeconds % 60).toString().padStart(2, '0')}
+                        {matchState?.isConfigured && matchState?.timer ? (
+                            <>Half {matchState.currentHalf} • {Math.floor(matchState.timer.elapsedSeconds / 60)}:{(Math.floor(matchState.timer.elapsedSeconds % 60)).toString().padStart(2, '0')}</>
+                        ) : (
+                            'No Active Match'
+                        )}
                     </div>
                 </div>
             </div>

@@ -14,6 +14,14 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], matchState }) => {
+  const [serverIp, setServerIp] = React.useState<string>('localhost');
+  
+  React.useEffect(() => {
+    if (window.location.hostname !== 'localhost') {
+        setServerIp(window.location.hostname);
+    }
+  }, []);
+
   const { t } = useTranslation();
   const isMatchActive = matchState?.timer.isRunning || matchState?.isConfigured;
   // Check if a match configuration is active to enable tracker resumption
@@ -47,6 +55,11 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
             <div className={`px-3 py-1 rounded-full text-xs font-bold border ${hasActiveMatch ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'} flex items-center gap-2`}>
               <div className={`w-2 h-2 rounded-full ${hasActiveMatch ? 'bg-green-500 animate-pulse' : 'bg-slate-500'}`}></div>
               {hasActiveMatch ? t('home.matchActive') : t('home.noActiveMatch')}
+            </div>
+            
+            <div className="hidden md:flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full text-[10px] font-mono text-slate-400 border border-slate-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              {serverIp}:3002
             </div>
           </div>
         </div>
@@ -205,6 +218,13 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   icon={<Users />}
                   color="cyan"
                   onClick={() => onNavigate('CLUB_MANAGER')}
+                />
+                <NavCard
+                  title={t('views.seasonManager')}
+                  desc={t('views.seasonManagerDesc')}
+                  icon={<Trophy />}
+                  color="yellow"
+                  onClick={() => onNavigate('SEASON_MANAGER')}
                 />
               </div>
             </div>

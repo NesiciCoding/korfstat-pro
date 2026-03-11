@@ -120,7 +120,7 @@ const CompanionSetup: React.FC = () => {
     }
   };
 
-  // Build the connection string encoded in the QR code
+  // Build the connection string encoded into a QR code
   const connectionString = setupInfo
     ? `korfstat://${setupInfo.localIp}:${setupInfo.serverPort}?token=${setupInfo.token}`
     : `${serverBase}`;
@@ -146,13 +146,12 @@ const CompanionSetup: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Status Bar */}
-      <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-        status.checking
+      <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${status.checking
           ? 'bg-gray-800/60 border-gray-700 text-gray-400'
           : status.connected
-          ? 'bg-emerald-900/30 border-emerald-700/60 text-emerald-400'
-          : 'bg-red-900/20 border-red-700/40 text-red-400'
-      }`}>
+            ? 'bg-emerald-900/30 border-emerald-700/60 text-emerald-400'
+            : 'bg-red-900/20 border-red-700/40 text-red-400'
+        }`}>
         {status.checking ? (
           <RefreshCw size={15} className="animate-spin" />
         ) : status.connected ? (
@@ -164,10 +163,10 @@ const CompanionSetup: React.FC = () => {
           {status.checking
             ? 'Checking server…'
             : status.connected
-            ? status.active
-              ? `Server online · Match active · ${status.scoreDisplay}`
-              : 'Server online · No active match'
-            : 'Server offline — start the server first'}
+              ? status.active
+                ? `Server online · Match active · ${status.scoreDisplay}`
+                : 'Server online · No active match'
+              : 'Server offline — start the server first'}
         </span>
         <button onClick={checkStatus} className="ml-auto opacity-60 hover:opacity-100 transition-opacity">
           <RefreshCw size={13} />
@@ -184,7 +183,7 @@ const CompanionSetup: React.FC = () => {
             className="rounded-lg w-[100px] h-[100px]"
             style={{ imageRendering: 'pixelated' }}
           />
-          <p className="text-[10px] text-gray-500 text-center leading-tight">Scan in<br/>Companion</p>
+          <p className="text-[10px] text-gray-500 text-center leading-tight">Scan in<br />Companion</p>
         </div>
 
         {/* Connection Details */}
@@ -206,11 +205,10 @@ const CompanionSetup: React.FC = () => {
       <div className="flex gap-2">
         <button
           onClick={downloadProfile}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${
-            downloadSucceeded
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all ${downloadSucceeded
               ? 'bg-emerald-600 text-white'
               : 'bg-indigo-600 hover:bg-indigo-500 text-white'
-          }`}
+            }`}
         >
           {downloadSucceeded ? <CheckCircle size={16} /> : <Download size={16} />}
           {downloadSucceeded ? 'Downloaded!' : 'Download Companion Profile'}
@@ -246,11 +244,10 @@ const CompanionSetup: React.FC = () => {
           />
           <button
             onClick={savePushUrl}
-            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-              pushSaved
+            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${pushSaved
                 ? 'bg-emerald-600 text-white'
                 : 'bg-indigo-600 hover:bg-indigo-500 text-white'
-            }`}
+              }`}
           >
             {pushSaved ? <CheckCircle size={16} /> : 'Save'}
           </button>

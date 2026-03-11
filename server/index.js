@@ -29,14 +29,14 @@ app.use('/uploads', express.static(uploadsDir));
 
 // Configure Multer storage
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadsDir)
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext)
-  }
+    destination: function (req, file, cb) {
+        cb(null, uploadsDir)
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        const ext = path.extname(file.originalname);
+        cb(null, file.fieldname + '-' + uniqueSuffix + ext)
+    }
 });
 const upload = multer({ storage: storage });
 
@@ -147,21 +147,21 @@ app.get('/api/companion/buttons', companionAuth, (req, res) => {
     const isRunning = s?.clock?.isRunning ?? false;
 
     res.json([
-        { id: 'clock_toggle',    label: isRunning ? '⏸ Pause Clock' : '▶ Start Clock', color: isRunning ? '#f59e0b' : '#22c55e', action: 'POST /api/companion/clock/toggle' },
-        { id: 'clock_reset',     label: '⟳ Reset Clock',   color: '#6366f1', action: 'POST /api/companion/clock/reset' },
-        { id: 'shot_reset',      label: '⏱ Shot Clock',    color: '#8b5cf6', action: 'POST /api/companion/shotclock/reset' },
-        { id: 'goal_home',       label: `⚽ Goal ${home}`, color: '#ef4444', action: 'POST /api/companion/goal/home' },
-        { id: 'goal_away',       label: `⚽ Goal ${away}`, color: '#3b82f6', action: 'POST /api/companion/goal/away' },
-        { id: 'undo_home',       label: `↩ Undo ${home}`,  color: '#78716c', action: 'POST /api/companion/goal/home/undo' },
-        { id: 'undo_away',       label: `↩ Undo ${away}`,  color: '#78716c', action: 'POST /api/companion/goal/away/undo' },
-        { id: 'foul_home',       label: `⚠ Foul ${home}`, color: '#f97316', action: 'POST /api/companion/foul/home' },
-        { id: 'foul_away',       label: `⚠ Foul ${away}`, color: '#f97316', action: 'POST /api/companion/foul/away' },
-        { id: 'period_next',     label: '⏭ Next Period',   color: '#0ea5e9', action: 'POST /api/companion/period/next' },
-        { id: 'gfx_lineup',     label: '📋 Show Lineup',  color: '#14b8a6', action: 'POST /api/companion/graphics/lineup' },
-        { id: 'gfx_halftime',   label: '🕐 Halftime',     color: '#14b8a6', action: 'POST /api/companion/graphics/halftime' },
-        { id: 'gfx_goal',       label: '🎉 Goal Graphic', color: '#14b8a6', action: 'POST /api/companion/graphics/goal_celebration' },
-        { id: 'gfx_dismiss',    label: '✖ Dismiss GFX',  color: '#6b7280', action: 'POST /api/companion/graphics/dismiss' },
-        { id: 'status',         label: 'Score Display',   color: '#1e293b', action: 'GET /api/companion/status' },
+        { id: 'clock_toggle', label: isRunning ? '⏸ Pause Clock' : '▶ Start Clock', color: isRunning ? '#f59e0b' : '#22c55e', action: 'POST /api/companion/clock/toggle' },
+        { id: 'clock_reset', label: '⟳ Reset Clock', color: '#6366f1', action: 'POST /api/companion/clock/reset' },
+        { id: 'shot_reset', label: '⏱ Shot Clock', color: '#8b5cf6', action: 'POST /api/companion/shotclock/reset' },
+        { id: 'goal_home', label: `⚽ Goal ${home}`, color: '#ef4444', action: 'POST /api/companion/goal/home' },
+        { id: 'goal_away', label: `⚽ Goal ${away}`, color: '#3b82f6', action: 'POST /api/companion/goal/away' },
+        { id: 'undo_home', label: `↩ Undo ${home}`, color: '#78716c', action: 'POST /api/companion/goal/home/undo' },
+        { id: 'undo_away', label: `↩ Undo ${away}`, color: '#78716c', action: 'POST /api/companion/goal/away/undo' },
+        { id: 'foul_home', label: `⚠ Foul ${home}`, color: '#f97316', action: 'POST /api/companion/foul/home' },
+        { id: 'foul_away', label: `⚠ Foul ${away}`, color: '#f97316', action: 'POST /api/companion/foul/away' },
+        { id: 'period_next', label: '⏭ Next Period', color: '#0ea5e9', action: 'POST /api/companion/period/next' },
+        { id: 'gfx_lineup', label: '📋 Show Lineup', color: '#14b8a6', action: 'POST /api/companion/graphics/lineup' },
+        { id: 'gfx_halftime', label: '🕐 Halftime', color: '#14b8a6', action: 'POST /api/companion/graphics/halftime' },
+        { id: 'gfx_goal', label: '🎉 Goal Graphic', color: '#14b8a6', action: 'POST /api/companion/graphics/goal_celebration' },
+        { id: 'gfx_dismiss', label: '✖ Dismiss GFX', color: '#6b7280', action: 'POST /api/companion/graphics/dismiss' },
+        { id: 'status', label: 'Score Display', color: '#1e293b', action: 'GET /api/companion/status' },
     ]);
 });
 
@@ -246,7 +246,7 @@ app.get('/api/companion/setup-info', async (req, res) => {
             }
             if (localIp !== '127.0.0.1') break;
         }
-    } catch {}
+    } catch { }
     res.json({
         serverUrl: `http://${localIp}:${PORT}`,
         serverPort: PORT,
@@ -285,20 +285,20 @@ app.get('/api/companion/profile.json', companionAuth, (req, res) => {
             },
         },
         buttons: [
-            { location: '0/0', label: '▶ Clock',       style: { color: '#22c55e', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/clock/toggle' } }] },
-            { location: '0/1', label: '⟳ Reset',      style: { color: '#6366f1', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/clock/reset' } }] },
-            { location: '0/2', label: '⏱ Shot Cl.',   style: { color: '#8b5cf6', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/shotclock/reset' } }] },
-            { location: '1/0', label: `⚽ ${home}`,   style: { color: '#ef4444', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/home' } }] },
-            { location: '1/1', label: `⚽ ${away}`,   style: { color: '#3b82f6', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/away' } }] },
-            { location: '1/2', label: `↩ ${home}`,   style: { color: '#78716c', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/home/undo' } }] },
-            { location: '1/3', label: `↩ ${away}`,   style: { color: '#78716c', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/away/undo' } }] },
-            { location: '2/0', label: `⚠ ${home}`,   style: { color: '#f97316', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/foul/home' } }] },
-            { location: '2/1', label: `⚠ ${away}`,   style: { color: '#f97316', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/foul/away' } }] },
-            { location: '2/2', label: '⏭ Period',     style: { color: '#0ea5e9', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/period/next' } }] },
-            { location: '3/0', label: '📋 Lineup',    style: { color: '#14b8a6', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/lineup' } }] },
-            { location: '3/1', label: '🕐 Halftime',  style: { color: '#14b8a6', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/halftime' } }] },
-            { location: '3/2', label: '🎉 Goal GFX',  style: { color: '#14b8a6', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/goal_celebration' } }] },
-            { location: '3/3', label: '✖ Dismiss',   style: { color: '#6b7280', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/dismiss' } }] },
+            { location: '0/0', label: '▶ Clock', style: { color: '#22c55e', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/clock/toggle' } }] },
+            { location: '0/1', label: '⟳ Reset', style: { color: '#6366f1', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/clock/reset' } }] },
+            { location: '0/2', label: '⏱ Shot Cl.', style: { color: '#8b5cf6', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/shotclock/reset' } }] },
+            { location: '1/0', label: `⚽ ${home}`, style: { color: '#ef4444', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/home' } }] },
+            { location: '1/1', label: `⚽ ${away}`, style: { color: '#3b82f6', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/away' } }] },
+            { location: '1/2', label: `↩ ${home}`, style: { color: '#78716c', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/home/undo' } }] },
+            { location: '1/3', label: `↩ ${away}`, style: { color: '#78716c', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/away/undo' } }] },
+            { location: '2/0', label: `⚠ ${home}`, style: { color: '#f97316', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/foul/home' } }] },
+            { location: '2/1', label: `⚠ ${away}`, style: { color: '#f97316', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/foul/away' } }] },
+            { location: '2/2', label: '⏭ Period', style: { color: '#0ea5e9', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/period/next' } }] },
+            { location: '3/0', label: '📋 Lineup', style: { color: '#14b8a6', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/lineup' } }] },
+            { location: '3/1', label: '🕐 Halftime', style: { color: '#14b8a6', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/halftime' } }] },
+            { location: '3/2', label: '🎉 Goal GFX', style: { color: '#14b8a6', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/goal_celebration' } }] },
+            { location: '3/3', label: '✖ Dismiss', style: { color: '#6b7280', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/dismiss' } }] },
         ],
     };
 
@@ -357,7 +357,7 @@ async function pushToCompanion(state) {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(String(value)),
-            }).catch(() => {}) // silently absorb network errors
+            }).catch(() => { }) // silently absorb network errors
         )
     );
     console.log(`[Companion Push] Variables pushed to ${companionPushUrl}`);
@@ -486,37 +486,37 @@ io.on('connection', (socket) => {
         // Broadcast simplified ticker data to all clients (including external tickers)
         const tickerData = getTickerData(state);
         io.emit('ticker-update', tickerData);
-        
+
         // --- Watch Flattening specific mapping ---
         if (state) {
             try {
-               let homeScore = 0;
-               let awayScore = 0;
-               if (state.events) {
-                   homeScore = state.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === state.homeTeam.id).length;
-                   awayScore = state.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === state.awayTeam.id).length;
-               }
-               
-               const watchPayload = {
-                   homeScore: homeScore,
-                   awayScore: awayScore,
-                   isGameTimeRunning: state.timer ? state.timer.isRunning : false,
-                   isShotClockRunning: state.shotClock ? state.shotClock.isRunning : false,
-                   gameTime: state.timer ? ((state.halfDurationSeconds - state.timer.elapsedSeconds) * 1000) : 0,
-                   shotClock: state.shotClock ? (state.shotClock.seconds * 1000) : 0,
-                   period: state.currentHalf || 1,
-                   subPending: false, 
-                   latestSubId: '',
-                   subOut: '',
-                   subIn: '',
-                   isReadOnly: true,
-                   timeoutTeam: state.timeout && state.timeout.isActive ? "ACTIVE" : "NONE"
-               };
-               
-               // Broadcast flattened representation explicitly for wear OS clients parsing Maps
-               io.emit('watch-update', watchPayload);
-               
-            } catch(e) {}
+                let homeScore = 0;
+                let awayScore = 0;
+                if (state.events) {
+                    homeScore = state.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === state.homeTeam.id).length;
+                    awayScore = state.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === state.awayTeam.id).length;
+                }
+
+                const watchPayload = {
+                    homeScore: homeScore,
+                    awayScore: awayScore,
+                    isGameTimeRunning: state.timer ? state.timer.isRunning : false,
+                    isShotClockRunning: state.shotClock ? state.shotClock.isRunning : false,
+                    gameTime: state.timer ? ((state.halfDurationSeconds - state.timer.elapsedSeconds) * 1000) : 0,
+                    shotClock: state.shotClock ? (state.shotClock.seconds * 1000) : 0,
+                    period: state.currentHalf || 1,
+                    subPending: false,
+                    latestSubId: '',
+                    subOut: '',
+                    subIn: '',
+                    isReadOnly: true,
+                    timeoutTeam: state.timeout && state.timeout.isActive ? "ACTIVE" : "NONE"
+                };
+
+                // Broadcast flattened representation explicitly for wear OS clients parsing Maps
+                io.emit('watch-update', watchPayload);
+
+            } catch (e) { }
         }
     });
 
@@ -649,5 +649,6 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ KorfStat Pro Server running on port ${PORT} (all interfaces)`);
     console.log(`📡 WebSocket server ready for real-time sync`);
     console.log(`🏥 Health check available at http://localhost:${PORT}/health`);
+    console.log('Happy Korfing!');
 });
 

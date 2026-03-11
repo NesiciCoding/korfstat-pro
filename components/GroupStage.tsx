@@ -17,12 +17,12 @@ export const GroupStage: React.FC<GroupStageProps> = ({ groups, matches, teams }
     const calculateGroupStandings = (group: Group): Standing[] => {
         // Find matches where both teams are in this group
         const groupTeamIds = group.teamIds;
-        const groupMatches = matches.filter(m => 
+        const groupMatches = matches.filter(m =>
             groupTeamIds.includes(m.homeTeam.id) && groupTeamIds.includes(m.awayTeam.id)
         );
 
         const standingsMap = new Map<string, Standing>();
-        
+
         // Initialize all teams in group with 0 stats
         group.teamIds.forEach(teamId => {
             const teamInfo = teams.find(t => t.id === teamId);
@@ -66,7 +66,7 @@ export const GroupStage: React.FC<GroupStageProps> = ({ groups, matches, teams }
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full py-4">
             {groups.map((group, groupIdx) => {
                 const standings = calculateGroupStandings(group);
-                
+
                 return (
                     <div key={group.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-700">
                         <div className="flex justify-between items-center mb-4">

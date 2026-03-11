@@ -125,6 +125,7 @@ const SocialShareModal: React.FC<SocialShareModalProps> = ({ matchState, onClose
             ctx.fillStyle = subTextColor;
             ctx.fillText(`Top Scorer: ${topScorer.name} (${topScorer.goals})`, width / 2, height - 120);
         }
+        // TODO add the option to show the photo of the MVP in the social media share modal
 
     };
 

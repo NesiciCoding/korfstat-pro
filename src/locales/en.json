@@ -42,7 +42,11 @@
     "dangerZone": "Danger Zone",
     "clearAll": "Clear All Data",
     "new": "New",
-    "club": "Club"
+    "club": "Club",
+    "sponsors": "Sponsor Management",
+    "rotationInterval": "Rotation Interval (sec)",
+    "addSponsor": "Add Sponsor Logo",
+    "noSponsors": "No sponsors added"
   },
   "common": {
     "cancel": "Cancel",
@@ -97,7 +101,9 @@
     "juryInterface": "Jury Interface",
     "juryInterfaceDesc": "Official table control",
     "spotterInterface": "Spotter Interface",
-    "spotterInterfaceDesc": "Live event tracking"
+    "spotterInterfaceDesc": "Live event tracking",
+    "seasonManager": "Season Manager",
+    "seasonManagerDesc": "Manage leagues, tournaments and standings"
   },
   "matchTracker": {
     "matchControl": "Match Control",

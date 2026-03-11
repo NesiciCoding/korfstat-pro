@@ -34,7 +34,7 @@ interface Frame {
   id: string;
   tokens: Token[];
   drawings: DrawingPath[];
-  duration: number; // ms, default 1000?
+  duration: number; // Counted in ms
   note?: string;
 }
 
@@ -411,7 +411,6 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
       ctx.fill();
     }
   };
-
 
   // ----- Event Handlers (Mouse/Touch) -----
   const getPos = (e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent) => {

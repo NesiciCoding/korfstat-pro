@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { MatchState } from '../types';
-import { 
-  Monitor, 
-  Settings as SettingsIcon, 
-  Watch, 
-  Tv, 
-  Video, 
-  Clock, 
-  Gamepad2, 
+import {
+  Monitor,
+  Settings as SettingsIcon,
+  Watch,
+  Tv,
+  Video,
+  Clock,
+  Gamepad2,
   History,
   LayoutDashboard
 } from 'lucide-react';
@@ -20,12 +20,12 @@ interface LandingGatewayProps {
 
 export default function LandingGateway({ onNavigate, activeSessions, matchState }: LandingGatewayProps) {
   const [serverIp, setServerIp] = useState<string>('localhost');
-  
+
   useEffect(() => {
-    // In a real deployed Tauri app, we'd fetch the actual local IPv4 address
-    // For now we just use the window location
+    // In a real deployed Tauri app, we'll fetch the actual local IPv4 address
+    // For now we use the window location
     if (window.location.hostname !== 'localhost') {
-        setServerIp(window.location.hostname);
+      setServerIp(window.location.hostname);
     }
   }, []);
 
@@ -44,7 +44,7 @@ export default function LandingGateway({ onNavigate, activeSessions, matchState 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
           {/* Main Action - Start Match */}
-          <button 
+          <button
             onClick={() => onNavigate('SETUP')}
             className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-8 flex flex-col items-center justify-center text-white shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 group"
           >
@@ -65,7 +65,7 @@ export default function LandingGateway({ onNavigate, activeSessions, matchState 
           </button>
 
           <button onClick={() => onNavigate('OVERALL_STATS')} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-gray-100 flex flex-col items-center justify-center transition-all hover:-translate-y-1 group">
-             <div className="bg-emerald-100 p-3 rounded-xl mb-3 group-hover:bg-emerald-200 transition-colors">
+            <div className="bg-emerald-100 p-3 rounded-xl mb-3 group-hover:bg-emerald-200 transition-colors">
               <LayoutDashboard size={32} className="text-emerald-600" />
             </div>
             <h3 className="text-lg font-bold text-gray-800">Overall Statistics</h3>
@@ -73,7 +73,7 @@ export default function LandingGateway({ onNavigate, activeSessions, matchState 
           </button>
 
           <button onClick={() => onNavigate('STRATEGY')} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-gray-100 flex flex-col items-center justify-center transition-all hover:-translate-y-1 group">
-             <div className="bg-purple-100 p-3 rounded-xl mb-3 group-hover:bg-purple-200 transition-colors">
+            <div className="bg-purple-100 p-3 rounded-xl mb-3 group-hover:bg-purple-200 transition-colors">
               <Monitor size={32} className="text-purple-600" />
             </div>
             <h3 className="text-lg font-bold text-gray-800">Strategy Board</h3>
@@ -103,11 +103,11 @@ export default function LandingGateway({ onNavigate, activeSessions, matchState 
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-6xl">
-        
+
         {/* Core Officials */}
         <div className="space-y-5">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider pl-2">Match Officials</h2>
-          
+
           <button onClick={() => onNavigate('TRACK')} className="col-span-1 w-full bg-gray-800 hover:bg-gray-750 border border-gray-700 rounded-2xl p-6 flex items-start gap-4 transition-all hover:border-blue-500 group text-left">
             <div className="bg-blue-600/20 p-3 rounded-xl group-hover:bg-blue-600/30 transition-colors">
               <LayoutDashboard size={28} className="text-blue-400" />
@@ -152,10 +152,21 @@ export default function LandingGateway({ onNavigate, activeSessions, matchState 
               <p className="text-gray-400 text-sm mt-1 leading-relaxed">Fullscreen scoreboard optimized for TVs and projectors in the hall.</p>
             </div>
           </button>
+
+          <button onClick={() => window.open(window.location.href.split('?')[0] + '?view=SHOTCLOCK', '_blank')} className="col-span-1 w-full bg-gray-800 hover:bg-gray-750 border border-gray-700 rounded-2xl p-6 flex items-start gap-4 transition-all hover:border-emerald-500 group text-left">
+            <div className="bg-emerald-600/20 p-3 rounded-xl group-hover:bg-emerald-600/30 transition-colors">
+              <Clock size={28} className="text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-100 group-hover:text-emerald-400 transition-colors">Shotclock</h3>
+              <p className="text-gray-400 text-sm mt-1 leading-relaxed">Fullscreen shotclock optimized for screens at the sides of the pitch.</p>
+            </div>
+          </button>
         </div>
 
+
         {/* Remote Sync */}
-         <div className="space-y-5">
+        <div className="space-y-5">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider pl-2">Remote Sync</h2>
 
           <button onClick={() => onNavigate('DIRECTOR')} className="col-span-1 w-full bg-gray-800 hover:bg-gray-750 border border-gray-700 rounded-2xl p-6 flex items-start gap-4 transition-all hover:border-red-500 group text-left">

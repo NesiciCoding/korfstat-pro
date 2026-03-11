@@ -295,6 +295,70 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                             </div>
                         </div>
 
+                        {/* Sponsor Multi-Asset Management */}
+                        <div className="space-y-3">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{t('settings.sponsors')}</label>
+                            
+                            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-5">
+                                {/* Interval Control */}
+                                <div className="space-y-2">
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">{t('settings.rotationInterval')}</label>
+                                    <div className="flex items-center gap-4">
+                                        <input 
+                                            type="range"
+                                            min="5"
+                                            max="60"
+                                            step="5"
+                                            value={settings.sponsorRotationInterval}
+                                            onChange={(e) => updateSettings({ sponsorRotationInterval: parseInt(e.target.value) })}
+                                            className="flex-1 accent-indigo-600"
+                                        />
+                                        <span className="text-sm font-mono font-bold text-indigo-600 dark:text-indigo-400 w-8">{settings.sponsorRotationInterval}s</span>
+                                    </div>
+                                </div>
+
+                                {/* Logo List */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">{t('settings.sponsors')}</label>
+                                    
+                                    {(settings.sponsorLogos || []).length > 0 ? (
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {settings.sponsorLogos.map((url, idx) => (
+                                                <div key={idx} className="group relative aspect-video bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
+                                                    <img 
+                                                        src={url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${url}`} 
+                                                        alt={`Sponsor ${idx + 1}`}
+                                                        className="w-full h-full object-contain p-2"
+                                                    />
+                                                    <button 
+                                                        onClick={() => updateSettings({ 
+                                                            sponsorLogos: settings.sponsorLogos.filter((_, i) => i !== idx) 
+                                                        })}
+                                                        className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                                            <p className="text-xs text-gray-400 italic">{t('settings.noSponsors')}</p>
+                                        </div>
+                                    )}
+
+                                    <AssetUploader 
+                                        label={t('settings.addSponsor')}
+                                        onUploadSuccess={(url) => {
+                                            if (url) {
+                                                updateSettings({ sponsorLogos: [...(settings.sponsorLogos || []), url] });
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         <hr className="border-gray-200 dark:border-gray-700" />
 
                         {/* Danger Zone */}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MatchState, TeamId, MatchEvent } from '../types';
 import { Clock, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, Shirt } from 'lucide-react';
+import SponsorRotatingBanner from './SponsorRotatingBanner';
 import { getScore, formatTime } from '../utils/matchUtils';
 import { THEME_PRESETS, FONT_OPTIONS } from '../config/broadcastThemes';
 
@@ -99,7 +100,7 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
         }
     }, [activePopup]);
 
-    // URL param to toggle bg
+    // URL param to toggle background
     const params = new URLSearchParams(window.location.search);
     const transparent = params.get('bg') === 'transparent';
     const bgColor = transparent ? 'transparent' : '#00b140'; // Chroma Green
@@ -226,7 +227,7 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
                                         />
                                     </>
                                 )}
-                                
+
                                 <div className={`relative flex items-center gap-3 ${theme === 'neon' ? 'pl-4' : 'pl-3'}`}>
                                     {matchState.homeTeam.logoUrl && (
                                         <img src={matchState.homeTeam.logoUrl} className="w-8 h-8 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" alt="" />
@@ -253,7 +254,7 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
                                     className={`text-5xl font-mono font-black transition-colors ${matchState.timer.isRunning ? 'text-white' : 'text-red-400 animate-pulse'
                                         } ${theme === 'neon' ? 'drop-shadow-[0_0_10px_rgba(0,255,247,0.5)]' : ''}`}
                                 >
-                                    {formatTime(Math.max(0, matchState.halfDurationSeconds - matchState.timer.elapsedSeconds))}
+                                    {formatTime(Math.max(0, matchState.halfDurationSeconds - (matchState.timer?.elapsedSeconds || 0)))}
                                 </div>
 
                                 {/* Shot Clock */}
@@ -305,7 +306,7 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
                                         />
                                     </>
                                 )}
-                                
+
                                 <div className={`relative flex flex-row-reverse items-center gap-3 ${theme === 'neon' ? 'pr-4' : 'pr-3'}`}>
                                     {matchState.awayTeam.logoUrl && (
                                         <img src={matchState.awayTeam.logoUrl} className="w-8 h-8 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" alt="" />
@@ -424,6 +425,12 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
                         </div>
                     </div>
                 )}
+
+                {/* Sponsor Banner - Bottom Left */}
+                <SponsorRotatingBanner
+                    className="absolute bottom-6 left-10 w-48 h-24 bg-black/40 backdrop-blur-md rounded-xl p-3 border border-indigo-500/30 z-20"
+                    imageClassName="object-contain"
+                />
 
             </div>
         </>

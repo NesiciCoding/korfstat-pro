@@ -29,7 +29,8 @@ const CommentaryFeed: React.FC<CommentaryFeedProps> = ({ matchState, compact = f
         }
     }, [items]);
 
-    // Check for interesting events to auto-trigger textual updates (non-AI simple log)
+    // Check for  events to auto-trigger textual updates (non-AI simple log)
+    // Can be expanded when there is more data available with new updates.
     useEffect(() => {
         if (matchState.events.length === 0) return;
 
@@ -76,7 +77,7 @@ const CommentaryFeed: React.FC<CommentaryFeedProps> = ({ matchState, compact = f
 
         setIsGenerating(false);
     };
-
+    //return the full rendering of the page.
     return (
         <div className={`flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden ${compact ? 'h-64' : 'h-96'}`}>
             <div className="p-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">

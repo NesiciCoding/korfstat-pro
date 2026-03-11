@@ -47,12 +47,12 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
             name: newSeasonName,
             format: newSeasonFormat,
             startDate: Date.now(),
-            teams: [], 
+            teams: [],
             matches: [],
             standings: [],
             bracketMap: {},
-            bracketConfig: ['KNOCKOUT', 'GROUP_KNOCKOUT'].includes(newSeasonFormat) 
-                ? { teamCount: newBracketSize, thirdPlaceMatch: true } 
+            bracketConfig: ['KNOCKOUT', 'GROUP_KNOCKOUT'].includes(newSeasonFormat)
+                ? { teamCount: newBracketSize, thirdPlaceMatch: true }
                 : undefined,
             groups: initialGroups
         };
@@ -63,7 +63,8 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
 
     // Recalculate standings for the active season based on linked matches
     const calculateStandings = (season: Season) => {
-        const seasonMatches = matches.filter(m => m.seasonId === season.id); // Assuming we link matches via seasonId
+        const seasonMatches = matches.filter(m => m.seasonId === season.id);
+        // Assuming we link matches via seasonId
         // OR if we store match IDs in the season object. Let's support both for robustness.
         // Ideally, match objects should store their season ID.
 
@@ -112,13 +113,13 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
 
             if (homeGoals > awayGoals) {
                 home.won++;
-                home.points += 2; // Korfball typically 2 points for win? Or 3? Let's assume 2 for now, or 3 standard.
-                // Actually international standard is 3 for win in regular time? Let's go with 2 (Dutch standard often) or 3.
-                // I'll stick to 3 for modern standard.
+                home.points += 2;
+                //Standard point allocation in the Netherlands and Belgium for a win is 2 points.
+                //Could be adapted to other points if needed
                 away.lost++;
             } else if (awayGoals > homeGoals) {
                 away.won++;
-                away.points += 3;
+                away.points += 2;
                 home.lost++;
             } else {
                 home.draw++;
@@ -162,116 +163,116 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
                                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                             <Table size={20} /> {t('season.leagueTable')}
                                         </h3>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-900/50">
-                                            <tr>
-                                                <th className="px-4 py-3 rounded-l-lg">{t('season.pos')}</th>
-                                                <th className="px-4 py-3">{t('season.team')}</th>
-                                                <th className="px-4 py-3 text-center">{t('season.played')}</th>
-                                                <th className="px-4 py-3 text-center">{t('season.won')}</th>
-                                                <th className="px-4 py-3 text-center">{t('season.draw')}</th>
-                                                <th className="px-4 py-3 text-center">{t('season.lost')}</th>
-                                                <th className="px-4 py-3 text-center">{t('season.gf')}</th>
-                                                <th className="px-4 py-3 text-center">{t('season.ga')}</th>
-                                                <th className="px-4 py-3 text-center">{t('season.gd')}</th>
-                                                <th className="px-4 py-3 text-center rounded-r-lg font-bold">{t('season.pts')}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {calculateStandings(activeSeason).map((team, index) => (
-                                                <tr key={team.teamId} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                                    <td className="px-4 py-3 font-medium">{index + 1}</td>
-                                                    <td className="px-4 py-3 font-bold text-gray-900 dark:text-gray-100">{team.teamName}</td>
-                                                    <td className="px-4 py-3 text-center">{team.played}</td>
-                                                    <td className="px-4 py-3 text-center">{team.won}</td>
-                                                    <td className="px-4 py-3 text-center">{team.draw}</td>
-                                                    <td className="px-4 py-3 text-center">{team.lost}</td>
-                                                    <td className="px-4 py-3 text-center text-gray-400">{team.goalsFor}</td>
-                                                    <td className="px-4 py-3 text-center text-gray-400">{team.goalsAgainst}</td>
-                                                    <td className="px-4 py-3 text-center font-medium">{team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}</td>
-                                                    <td className="px-4 py-3 text-center font-bold text-indigo-600 dark:text-indigo-400">{team.points}</td>
-                                                </tr>
-                                            ))}
-                                            {calculateStandings(activeSeason).length === 0 && (
-                                                <tr>
-                                                    <td colSpan={10} className="text-center py-8 text-gray-400">{t('season.noMatches')}</td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            )}
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm text-left">
+                                                <thead className="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-900/50">
+                                                    <tr>
+                                                        <th className="px-4 py-3 rounded-l-lg">{t('season.pos')}</th>
+                                                        <th className="px-4 py-3">{t('season.team')}</th>
+                                                        <th className="px-4 py-3 text-center">{t('season.played')}</th>
+                                                        <th className="px-4 py-3 text-center">{t('season.won')}</th>
+                                                        <th className="px-4 py-3 text-center">{t('season.draw')}</th>
+                                                        <th className="px-4 py-3 text-center">{t('season.lost')}</th>
+                                                        <th className="px-4 py-3 text-center">{t('season.gf')}</th>
+                                                        <th className="px-4 py-3 text-center">{t('season.ga')}</th>
+                                                        <th className="px-4 py-3 text-center">{t('season.gd')}</th>
+                                                        <th className="px-4 py-3 text-center rounded-r-lg font-bold">{t('season.pts')}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {calculateStandings(activeSeason).map((team, index) => (
+                                                        <tr key={team.teamId} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                                            <td className="px-4 py-3 font-medium">{index + 1}</td>
+                                                            <td className="px-4 py-3 font-bold text-gray-900 dark:text-gray-100">{team.teamName}</td>
+                                                            <td className="px-4 py-3 text-center">{team.played}</td>
+                                                            <td className="px-4 py-3 text-center">{team.won}</td>
+                                                            <td className="px-4 py-3 text-center">{team.draw}</td>
+                                                            <td className="px-4 py-3 text-center">{team.lost}</td>
+                                                            <td className="px-4 py-3 text-center text-gray-400">{team.goalsFor}</td>
+                                                            <td className="px-4 py-3 text-center text-gray-400">{team.goalsAgainst}</td>
+                                                            <td className="px-4 py-3 text-center font-medium">{team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}</td>
+                                                            <td className="px-4 py-3 text-center font-bold text-indigo-600 dark:text-indigo-400">{team.points}</td>
+                                                        </tr>
+                                                    ))}
+                                                    {calculateStandings(activeSeason).length === 0 && (
+                                                        <tr>
+                                                            <td colSpan={10} className="text-center py-8 text-gray-400">{t('season.noMatches')}</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
 
-                            {['KNOCKOUT', 'GROUP_KNOCKOUT'].includes(activeSeason.format || '') && (
-                                <div className="flex flex-col gap-6">
-                                    {activeSeason.format === 'GROUP_KNOCKOUT' && (
+                                {['KNOCKOUT', 'GROUP_KNOCKOUT'].includes(activeSeason.format || '') && (
+                                    <div className="flex flex-col gap-6">
+                                        {activeSeason.format === 'GROUP_KNOCKOUT' && (
+                                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+                                                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                                        <Table size={18} /> {t('season.groupStage')}
+                                                    </h3>
+                                                </div>
+                                                <div className="p-2">
+                                                    {(() => {
+                                                        const allTeams = new Map<string, Team>();
+                                                        matches.filter(m => m.seasonId === activeSeason.id).forEach(m => {
+                                                            allTeams.set(m.homeTeam.id, m.homeTeam);
+                                                            allTeams.set(m.awayTeam.id, m.awayTeam);
+                                                        });
+                                                        return (
+                                                            <GroupStage
+                                                                groups={activeSeason.groups || []}
+                                                                matches={matches.filter(m => m.seasonId === activeSeason.id)}
+                                                                teams={Array.from(allTeams.values())}
+                                                            />
+                                                        );
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
                                             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
                                                 <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                                    <Table size={18} /> {t('season.groupStage')}
+                                                    <GitMerge size={18} /> {t('season.bracket')}
                                                 </h3>
+                                                <button
+                                                    onClick={() => exportBracketToPDF('bracket-export-region', activeSeason.name)}
+                                                    className="px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg transition-colors"
+                                                >
+                                                    {t('season.exportBracket')}
+                                                </button>
                                             </div>
-                                            <div className="p-2">
+                                            <div className="w-full overflow-x-auto min-h-[500px]">
                                                 {(() => {
+                                                    const nodes = generateEmptyBracket(activeSeason.bracketConfig || { teamCount: 8, thirdPlaceMatch: true });
                                                     const allTeams = new Map<string, Team>();
                                                     matches.filter(m => m.seasonId === activeSeason.id).forEach(m => {
                                                         allTeams.set(m.homeTeam.id, m.homeTeam);
                                                         allTeams.set(m.awayTeam.id, m.awayTeam);
                                                     });
+
+                                                    const progressedNodes = updateBracketProgression(nodes, activeSeason.bracketMap || {}, matches);
                                                     return (
-                                                        <GroupStage 
-                                                            groups={activeSeason.groups || []} 
-                                                            matches={matches.filter(m => m.seasonId === activeSeason.id)} 
-                                                            teams={Array.from(allTeams.values())} 
+                                                        <TournamentBracket
+                                                            bracketMap={activeSeason.bracketMap || {}}
+                                                            nodes={progressedNodes}
+                                                            matches={matches}
+                                                            teams={Array.from(allTeams.values())}
+                                                            onMatchClick={(node, match) => {
+                                                                console.log('Clicked node', node.id, match?.id);
+                                                                alert(t('season.matchClickAlert', { id: node.id }));
+                                                            }}
                                                         />
                                                     );
                                                 })()}
                                             </div>
                                         </div>
-                                    )}
-
-                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
-                                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                            <GitMerge size={18} /> {t('season.bracket')}
-                                        </h3>
-                                        <button 
-                                            onClick={() => exportBracketToPDF('bracket-export-region', activeSeason.name)}
-                                            className="px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg transition-colors"
-                                        >
-                                            {t('season.exportBracket')}
-                                        </button>
                                     </div>
-                                    <div className="w-full overflow-x-auto min-h-[500px]">
-                                        {(() => {
-                                            const nodes = generateEmptyBracket(activeSeason.bracketConfig || { teamCount: 8, thirdPlaceMatch: true });
-                                            const allTeams = new Map<string, Team>();
-                                            matches.filter(m => m.seasonId === activeSeason.id).forEach(m => {
-                                                allTeams.set(m.homeTeam.id, m.homeTeam);
-                                                allTeams.set(m.awayTeam.id, m.awayTeam);
-                                            });
-                                            
-                                            const progressedNodes = updateBracketProgression(nodes, activeSeason.bracketMap || {}, matches);
-                                            return (
-                                                <TournamentBracket 
-                                                    bracketMap={activeSeason.bracketMap || {}} 
-                                                    nodes={progressedNodes} 
-                                                    matches={matches} 
-                                                    teams={Array.from(allTeams.values())} 
-                                                    onMatchClick={(node, match) => {
-                                                        console.log('Clicked node', node.id, match?.id);
-                                                        alert(t('season.matchClickAlert', { id: node.id }));
-                                                    }} 
-                                                />
-                                            );
-                                        })()}
-                                    </div>
-                                </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
 
                             {/* Stats / Info Sidebar */}
                             <div className="space-y-6">
@@ -317,7 +318,7 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
                                         onKeyDown={(e) => e.key === 'Enter' && handleCreateSeason()}
                                     />
                                     <div className="flex gap-2">
-                                        <select 
+                                        <select
                                             value={newSeasonFormat}
                                             onChange={(e) => setNewSeasonFormat(e.target.value as any)}
                                             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white text-sm"
@@ -331,7 +332,7 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
                                         <div className="flex flex-col gap-2">
                                             <div className="flex gap-2 items-center">
                                                 <label className="text-xs text-gray-500 whitespace-nowrap min-w-[80px]">{t('season.bracketSize')}</label>
-                                                <select 
+                                                <select
                                                     value={newBracketSize}
                                                     onChange={(e) => setNewBracketSize(Number(e.target.value))}
                                                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white text-sm"
@@ -345,7 +346,7 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
                                             {newSeasonFormat === 'GROUP_KNOCKOUT' && (
                                                 <div className="flex gap-2 items-center">
                                                     <label className="text-xs text-gray-500 whitespace-nowrap min-w-[80px]">{t('season.groupCount')}</label>
-                                                    <select 
+                                                    <select
                                                         value={newGroupCount}
                                                         onChange={(e) => setNewGroupCount(Number(e.target.value))}
                                                         className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white text-sm"

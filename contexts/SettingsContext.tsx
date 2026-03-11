@@ -32,6 +32,8 @@ export interface Settings {
         sponsorLogoUrl?: string;
         style: 'modern' | 'minimal' | 'neon';
     };
+    sponsorLogos: string[];
+    sponsorRotationInterval: number; // Seconds
 }
 
 interface SettingsContextType {
@@ -56,7 +58,9 @@ const defaultSettings: Settings = {
     watchControlMode: 'read-only',
     socialGraphicConfig: {
         style: 'modern'
-    }
+    },
+    sponsorLogos: [],
+    sponsorRotationInterval: 10
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

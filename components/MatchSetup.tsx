@@ -9,7 +9,8 @@ import AssetUploader from './AssetUploader';
 
 interface MatchSetupProps {
   onStartMatch: (home: Team, away: Team, profile?: MatchProfile, seasonId?: string) => void;
-  savedMatches: any[]; // Using any[] to avoid circular dependency import issues if simple
+  onNavigate: (view: any) => void;
+  savedMatches: any[];
 }
 
 interface PlayerRowProps {
@@ -32,72 +33,70 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ p, toggleStarter, updatePlayer, r
         <User size={16} />
       </button>
 
-    <input
-      type="number"
-      className="w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
-      value={p.number}
-      placeholder="#"
-      onChange={(e) => updatePlayer(p.id, 'number', parseInt(e.target.value) || 0)}
-    />
+      <input
+        type="number"
+        className="w-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-center font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
+        value={p.number}
+        placeholder="#"
+        onChange={(e) => updatePlayer(p.id, 'number', parseInt(e.target.value) || 0)}
+      />
 
-    <input
-      type="text"
-      className="flex-1 min-w-[120px] border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
-      value={p.name}
-      placeholder={t('matchSetup.placeholderName')}
-      list={`suggestions-${p.id}`}
-      onChange={(e) => {
-        const newName = e.target.value;
-        updatePlayer(p.id, 'name', newName);
+      <input
+        type="text"
+        className="flex-1 min-w-[120px] border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
+        value={p.name}
+        placeholder={t('matchSetup.placeholderName')}
+        list={`suggestions-${p.id}`}
+        onChange={(e) => {
+          const newName = e.target.value;
+          updatePlayer(p.id, 'name', newName);
 
-        // Auto-fill details if name matches known player
-        const match = suggestions.find(s => s.name.toLowerCase() === newName.toLowerCase());
-        if (match) {
-          // Preserve unique ID logic? 
-          // The user wants "Add a unique ID to each name".
-          // If we reuse the ID from history, it links stats.
-          updatePlayer(p.id, 'id', match.id); // Reuse ID
-          // updatePlayer(p.id, 'gender', match.gender); // Optional: autofill gender
-        }
-      }}
-    />
-    <datalist id={`suggestions-${p.id}`}>
-      {suggestions.map(s => (
-        <option key={s.id} value={s.name} />
-      ))}
-    </datalist>
+          // Auto-fill details if name matches known player
+          const match = suggestions.find(s => s.name.toLowerCase() === newName.toLowerCase());
+          if (match) {
+            updatePlayer(p.id, 'id', match.id); // Reuse ID
+            // updatePlayer(p.id, 'gender', match.gender); 
+            // Optional: autofill gender
+          }
+        }}
+      />
+      <datalist id={`suggestions-${p.id}`}>
+        {suggestions.map(s => (
+          <option key={s.id} value={s.name} />
+        ))}
+      </datalist>
 
-    <select
-      value={p.gender}
-      onChange={(e) => updatePlayer(p.id, 'gender', e.target.value)}
-      className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
-    >
-      <option value="M">M</option>
-      <option value="F">F</option>
-    </select>
-
-    <div className="flex bg-gray-100 dark:bg-gray-700 rounded p-0.5 transition-colors">
-      <button
-        onClick={() => updatePlayer(p.id, 'initialPosition', 'ATTACK')}
-        className={`p-1 rounded text-xs font-bold ${p.initialPosition === 'ATTACK' ? 'bg-white dark:bg-gray-600 shadow text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`}
-        title={t('matchSetup.attack')}
+      <select
+        value={p.gender}
+        onChange={(e) => updatePlayer(p.id, 'gender', e.target.value)}
+        className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-1 py-1 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
       >
-        <Sword size={14} />
-      </button>
-      <button
-        onClick={() => updatePlayer(p.id, 'initialPosition', 'DEFENSE')}
-        className={`p-1 rounded text-xs font-bold ${p.initialPosition === 'DEFENSE' ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
-        title={t('matchSetup.defense')}
-      >
-        <Shield size={14} />
+        <option value="M">M</option>
+        <option value="F">F</option>
+      </select>
+
+      <div className="flex bg-gray-100 dark:bg-gray-700 rounded p-0.5 transition-colors">
+        <button
+          onClick={() => updatePlayer(p.id, 'initialPosition', 'ATTACK')}
+          className={`p-1 rounded text-xs font-bold ${p.initialPosition === 'ATTACK' ? 'bg-white dark:bg-gray-600 shadow text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`}
+          title={t('matchSetup.attack')}
+        >
+          <Sword size={14} /> //attack icon
+        </button>
+        <button
+          onClick={() => updatePlayer(p.id, 'initialPosition', 'DEFENSE')}
+          className={`p-1 rounded text-xs font-bold ${p.initialPosition === 'DEFENSE' ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
+          title={t('matchSetup.defense')}
+        >
+          <Shield size={14} /> //defence icon
+        </button>
+      </div>
+
+      <button onClick={() => removePlayer(p.id)} className="text-gray-400 hover:text-red-600 p-1" aria-label={t('matchSetup.removePlayer')} title={t('matchSetup.removePlayer')}>
+        <Trash2 size={16} />
       </button>
     </div>
-
-    <button onClick={() => removePlayer(p.id)} className="text-gray-400 hover:text-red-600 p-1" aria-label={t('matchSetup.removePlayer')} title={t('matchSetup.removePlayer')}>
-      <Trash2 size={16} />
-    </button>
-  </div>
-);
+  );
 }
 
 interface TeamSetupProps {
@@ -119,6 +118,7 @@ interface TeamSetupProps {
   onLoadTeam: (team: SavedTeam) => void;
   onLoadClub: (club: Club) => void;
   onDeleteTeam?: (team: SavedTeam) => void;
+  onNavigate: (view: any) => void;
 }
 
 // Component for configuring a single team
@@ -140,7 +140,8 @@ const TeamSetup: React.FC<TeamSetupProps> = ({
   onSaveTeam,
   onLoadTeam,
   onLoadClub,
-  onDeleteTeam
+  onDeleteTeam,
+  onNavigate
 }) => {
   const { t } = useTranslation();
   const [showLoadMenu, setShowLoadMenu] = useState(false);
@@ -230,7 +231,15 @@ const TeamSetup: React.FC<TeamSetupProps> = ({
             </button>
             {showClubMenu && (
               <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg z-50 py-1">
-                <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase border-b border-gray-100 dark:border-gray-700">{t('matchSetup.loadClubHeading')}</div>
+                <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                  <span>{t('matchSetup.loadClubHeading')}</span>
+                  <button
+                    onClick={() => onNavigate('CLUB_MANAGER')}
+                    className="text-[10px] text-indigo-600 hover:text-indigo-500"
+                  >
+                    Edit
+                  </button>
+                </div>
                 {(!clubs || clubs.length === 0) ? (
                   <div className="px-3 py-2 text-sm text-gray-400 italic">{t('matchSetup.noClubsFound')}</div>
                 ) : (
@@ -260,33 +269,33 @@ const TeamSetup: React.FC<TeamSetupProps> = ({
           <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
 
           <div className="flex flex-col gap-1 items-end">
-              <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase leading-none">{t('matchSetup.primary')}</label>
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="w-6 h-6 p-0 rounded cursor-pointer border-none"
-                title={t('matchSetup.primaryColorTitle')}
-              />
+            <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase leading-none">{t('matchSetup.primary')}</label>
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="w-6 h-6 p-0 rounded cursor-pointer border-none"
+              title={t('matchSetup.primaryColorTitle')}
+            />
           </div>
           <div className="flex flex-col gap-1 items-end">
-              <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase leading-none">{t('matchSetup.secondary')}</label>
-              <input
-                type="color"
-                value={secondaryColor || '#000000'}
-                onChange={(e) => setSecondaryColor(e.target.value)}
-                className="w-6 h-6 p-0 rounded cursor-pointer border-none"
-                title={t('matchSetup.secondaryColorTitle')}
-              />
+            <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase leading-none">{t('matchSetup.secondary')}</label>
+            <input
+              type="color"
+              value={secondaryColor || '#000000'}
+              onChange={(e) => setSecondaryColor(e.target.value)}
+              className="w-6 h-6 p-0 rounded cursor-pointer border-none"
+              title={t('matchSetup.secondaryColorTitle')}
+            />
           </div>
         </div>
       </div>
 
       <div className="mb-4">
-        <AssetUploader 
-            label={t('matchSetup.teamLogo')} 
-            currentUrl={logoUrl} 
-            onUploadSuccess={setLogoUrl} 
+        <AssetUploader
+          label={t('matchSetup.teamLogo')}
+          currentUrl={logoUrl}
+          onUploadSuccess={setLogoUrl}
         />
       </div>
 
@@ -365,14 +374,14 @@ const TeamSetup: React.FC<TeamSetupProps> = ({
   );
 };
 
-const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = [] }) => {
+const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, savedMatches = [] }) => {
   const { t } = useTranslation();
   console.log('[MatchSetup] Rendering. SavedMatches length:', savedMatches?.length);
   const [homeName, setHomeName] = useState(t('matchSetup.homeTeam'));
   const [homeColor, setHomeColor] = useState('#2563eb'); // Blue-600
   const [homeSecondaryColor, setHomeSecondaryColor] = useState<string>('#1e40af'); // Blue-800
   const [homeLogoUrl, setHomeLogoUrl] = useState<string | undefined>();
-  
+
   const [awayName, setAwayName] = useState(t('matchSetup.awayTeam'));
   const [awayColor, setAwayColor] = useState('#dc2626'); // Red-600
   const [awaySecondaryColor, setAwaySecondaryColor] = useState<string>('#991b1b'); // Red-800
@@ -540,7 +549,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
       <div className="text-center mb-8">
         <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">{t('matchSetup.title')}</h1>
         <p className="text-gray-500 dark:text-gray-400 mb-6">{t('matchSetup.subtitle')}</p>
-        
+
         {/* Profile Selection */}
         <div className="max-w-4xl mx-auto mb-8">
           <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 text-left pl-2">{t('matchSetup.step1')}</h2>
@@ -556,14 +565,14 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
                   {selectedProfile?.id === profile.id && <span className="text-indigo-600"><Plus size={18} /></span>}
                 </div>
                 <p className="text-xs text-gray-500 mb-3">{profile.description}</p>
-                  <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
-                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">{profile.periods}x{profile.periodDurationSeconds / 60}m</span>
-                    {profile.hasShotClock ? (
-                      <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2 py-1 rounded">{t('matchSetup.shotClock', { count: profile.shotClockDurationSeconds })}</span>
-                    ) : (
-                      <span className="bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-1 rounded">{t('matchSetup.noClock')}</span>
-                    )}
-                  </div>
+                <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">{profile.periods}x{profile.periodDurationSeconds / 60}m</span>
+                  {profile.hasShotClock ? (
+                    <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2 py-1 rounded">{t('matchSetup.shotClock', { count: profile.shotClockDurationSeconds })}</span>
+                  ) : (
+                    <span className="bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-1 rounded">{t('matchSetup.noClock')}</span>
+                  )}
+                </div>
               </button>
             ))}
           </div>
@@ -607,6 +616,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
           onLoadTeam={(team) => handleLoadTeam(team, setHomeName, setHomeColor, setHomeSecondaryColor, setHomePlayers, 'h')}
           onLoadClub={(club) => handleLoadClub(club, setHomeName, setHomeColor, setHomeSecondaryColor, setHomeLogoUrl, setHomePlayers)}
           onDeleteTeam={handleDeleteTeam}
+          onNavigate={onNavigate}
         />
 
         <TeamSetup
@@ -623,6 +633,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, savedMatches = []
           onLoadTeam={(team) => handleLoadTeam(team, setAwayName, setAwayColor, setAwaySecondaryColor, setAwayPlayers, 'a')}
           onLoadClub={(club) => handleLoadClub(club, setAwayName, setAwayColor, setAwaySecondaryColor, setAwayLogoUrl, setAwayPlayers)}
           onDeleteTeam={handleDeleteTeam}
+          onNavigate={onNavigate}
         />
       </div>
 

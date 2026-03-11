@@ -11,7 +11,7 @@ interface ErrorBoundaryState {
     error: Error | null;
     errorInfo: ErrorInfo | null;
 }
-
+// ErrorBoundary component to catch errors in the application and display a fallback UI.
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     constructor(props: ErrorBoundaryProps) {
         super(props);

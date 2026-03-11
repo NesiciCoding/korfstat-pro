@@ -66,14 +66,6 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     prevGameTimeRef.current = currentGameTime;
   }, [matchState.shotClock.seconds, matchState.timer.elapsedSeconds, matchState.halfDurationSeconds, matchState.shotClock.lastStartTime, playShotClockBuzzer, playGameEndHorn]);
 
-  // --- Socket Listener for Spotter ---
-  // Moved to App.tsx via useBroadcastSync to prevent duplicate connections.
-  // MatchTracker now receives updates via props.matchState.
-
-
-
-
-
   // --- Keyboard Shortcuts Logic ---
 
   // Helper: check if we are in a specific context step
@@ -90,7 +82,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
       if (action === 'GOAL') addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location });
       else if (action === 'MISS') addEvent({ teamId, playerId, type: 'SHOT', result: 'MISS', shotType: 'RUNNING_IN', location });
       else if (action === 'FREE_THROW') {
-        // Auto-position 2.5m in front
+        // Auto-position 2.5m in front of the korf.
         // Left Korf (Home) -> 22.9%, Right Korf (Away) -> 77.1%
         const autoLoc = teamId === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
         addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'FREE_THROW', location: autoLoc });
@@ -241,28 +233,26 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     { key: 'h', action: () => setContextMenu({ visible: true, x: window.innerWidth / 2, y: window.innerHeight / 2, step: 'SELECT_PLAYER', selectedTeam: 'HOME' } as any) },
     { key: 'a', action: () => setContextMenu({ visible: true, x: window.innerWidth / 2, y: window.innerHeight / 2, step: 'SELECT_PLAYER', selectedTeam: 'AWAY' } as any) },
 
-    { key: 'g', action: () => handleShortcutAction('GOAL') },
-    { key: 'm', action: () => handleShortcutAction('MISS') },
-    { key: 'k', action: () => handleShortcutAction('FREE_THROW') }, // K for Free Kick/Throw
-    { key: 'p', action: () => handleShortcutAction('PENALTY') },
-    { key: 't', action: () => handleShortcutAction('TIMEOUT') },
-    { key: 's', action: () => handleShortcutAction('SUB') },
-    { key: 'c', action: () => handleShortcutAction('CARD') },
-
-    // New Actions
-    { key: 'o', action: () => handleShortcutAction('TURNOVER') },
-    { key: 'f', action: () => handleShortcutAction('FOUL') },
-    { key: 'r', action: () => handleShortcutAction('REBOUND') },
+    { key: 'g', action: () => handleShortcutAction('GOAL') }, //G for goal
+    { key: 'm', action: () => handleShortcutAction('MISS') }, //M for miss
+    { key: 'k', action: () => handleShortcutAction('FREE_THROW') }, // K for Free Throw
+    { key: 'p', action: () => handleShortcutAction('PENALTY') }, //P for penalty
+    { key: 't', action: () => handleShortcutAction('TIMEOUT') }, //T for time-out
+    { key: 's', action: () => handleShortcutAction('SUB') }, //S for substitution
+    { key: 'c', action: () => handleShortcutAction('CARD') }, //C for card
+    { key: 'o', action: () => handleShortcutAction('TURNOVER') }, //O for turnover
+    { key: 'f', action: () => handleShortcutAction('FOUL') }, //F for foul
+    { key: 'r', action: () => handleShortcutAction('REBOUND') }, //R for Rebound
 
     // Player Numbers
-    { key: '1', action: () => handlePlayerNumberSelection(0) },
-    { key: '2', action: () => handlePlayerNumberSelection(1) },
-    { key: '3', action: () => handlePlayerNumberSelection(2) },
-    { key: '4', action: () => handlePlayerNumberSelection(3) },
-    { key: '5', action: () => handlePlayerNumberSelection(4) },
-    { key: '6', action: () => handlePlayerNumberSelection(5) },
-    { key: '7', action: () => handlePlayerNumberSelection(6) },
-    { key: '8', action: () => handlePlayerNumberSelection(7) },
+    { key: '1', action: () => handlePlayerNumberSelection(0) }, //1 for first player in list
+    { key: '2', action: () => handlePlayerNumberSelection(1) }, //2 for second player in list
+    { key: '3', action: () => handlePlayerNumberSelection(2) }, //3 for third player in list
+    { key: '4', action: () => handlePlayerNumberSelection(3) }, //4 for fourth player in list
+    { key: '5', action: () => handlePlayerNumberSelection(4) }, //5 for fifth player in list
+    { key: '6', action: () => handlePlayerNumberSelection(5) }, //6 for sixth player in list
+    { key: '7', action: () => handlePlayerNumberSelection(6) }, //7 for seventh player in list
+    { key: '8', action: () => handlePlayerNumberSelection(7) }, //8 for eighth player in list
 
     {
       key: 'Enter', action: () => {
@@ -512,7 +502,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
       const autoLoc = teamId === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
       addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'PENALTY', location: autoLoc });
     }
-    // Add other types as needed
+    // Other types can be added as needed or wanted
   };
 
   const { isListening, toggleListening, transcript } = useVoiceCommands({
@@ -614,6 +604,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
     const activeTeam = contextMenu.selectedTeam === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
     // Sort players by number to ensure keyboard shortcuts correspond to visual order logically (1, 2, 3...)
+    // TO-DO Might want to change this to be based on the attack / defense
     const onFieldPlayers = (activeTeam?.players.filter(p => p.onField) || [])
       .sort((a, b) => parseInt(a.number) - parseInt(b.number));
     const benchPlayers = activeTeam?.players.filter(p => !p.onField) || [];
@@ -666,7 +657,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                 </div>
               </div>
             )}
-
+            //Player selection modal
             {contextMenu.step === 'SELECT_PLAYER' && (
               <>
                 <div className="grid grid-cols-4 gap-3 mb-4">
@@ -722,7 +713,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                 </div>
               </>
             )}
-
+            // Substitution in/out workflow
             {contextMenu.step === 'SELECT_SUB_OUT' && (
               <div className="grid grid-cols-4 gap-3">
                 {onFieldPlayers.length === 0 && (
@@ -748,14 +739,14 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                 ))}
               </div>
             )}
-
+            //Substitution exception handling
             {contextMenu.step === 'CONFIRM_SUB_EXCEPTION' && (
               <div className="flex gap-4 justify-center">
                 <button onClick={() => handleSubstitution('INJURY')} className="px-4 py-2 bg-orange-100 font-bold rounded">Injury</button>
                 <button onClick={() => handleSubstitution('RED_CARD')} className="px-4 py-2 bg-red-100 font-bold rounded text-red-700">Red Card</button>
               </div>
             )}
-
+            //Action selection
             {contextMenu.step === 'SELECT_ACTION' && (
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -784,7 +775,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                 </button>
               </div>
             )}
-
+            //Shot type selection
             {contextMenu.step === 'SELECT_SHOT_TYPE' && (
               <div className="space-y-4">
                 <button
@@ -810,7 +801,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                 </div>
               </div>
             )}
-
+            //Substitution team selector
             {(contextMenu.step as any) === 'SELECT_TEAM_FOR_SUB' && (
               <div className="space-y-4">
                 <h3 className="text-lg font-bold text-center mb-4">{t('matchTracker.selectTeamSub')}</h3>

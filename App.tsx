@@ -25,6 +25,7 @@ import SeasonManager from './components/SeasonManager';
 import ClubManager from './components/ClubManager';
 import MatchAnalysis from './components/MatchAnalysis'; // Not lazy for now, or lazy is fine
 import ErrorBoundary from './components/ErrorBoundary';
+import ShortcutsModal from './components/ShortcutsModal';
 
 import { MatchState, MatchEvent, TeamId, ShotType, Team, OverlayMessage } from './types';
 import { MatchProfile, DEFAULT_PROFILES } from './types/profile';
@@ -48,6 +49,7 @@ function AppContent() {
 
   const { settings } = useSettings();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   // Base Match State (Persistent Source of Truth)
   const [matchState, setMatchState] = useState<MatchState>(() => {
@@ -357,6 +359,17 @@ function AppContent() {
     }
   }, []);
 
+  // Global Keyboard listener for '?'
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '?' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+        setIsShortcutsOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleExitToHome = useCallback(() => {
     // Completely reset match state to allow new match
     const resetState: MatchState = {
@@ -402,12 +415,13 @@ function AppContent() {
       )}
 
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
 
       {/* Locked Screen */}
 
 
       {view === 'HOME' && (
-        <LandingGateway
+        <HomePage
           onNavigate={setView}
           activeSessions={activeSessions}
           matchState={derivedMatchState}
@@ -415,7 +429,7 @@ function AppContent() {
       )}
 
       {view === 'SETUP' && (
-        <MatchSetup onStartMatch={handleStartMatch} savedMatches={savedMatches} />
+        <MatchSetup onStartMatch={handleStartMatch} onNavigate={setView} savedMatches={savedMatches} />
       )}
 
       {view === 'TRACK' && (

@@ -13,6 +13,7 @@ The following features are currently implemented and are critical to the operati
 - **Club Manager**: Managing club details, teams, and player rosters.
 - **Settings & Configuration**: App-wide configuration, including keyboard shortcuts.
 - **Tournament Formats & Brackets**: Scalable tools for Leagues, Knockouts, and Group Stages, featuring visual generation and PDF bracket exports.
+- **Multi-language Support (Dutch/English)**: Full UI localization for the core Korfball demographic (NL/BE), integrated throughout the application and automated tests.
 
 ### Live Tracking & Officiating
 - **Match Tracker**: Real-time input of goals, fouls, substitutions, and timeouts.
@@ -26,6 +27,7 @@ The following features are currently implemented and are critical to the operati
 - **Livestream Statistics View**: Formatting stats for stream integration.
 - **Stream Overlay**: Fully customizable graphics with gradients, team logos, and themes for OBS/Vmix.
 - **Director Dashboard**: Control center for toggling stream graphics.
+- **Sponsor Management**: Rotating banner system for stream overlays and live stats.
 
 ### Analysis & Statistics
 - **Statistics View**: Detailed breakdown of match statistics, including **Interactive Court Heatmaps** (Precise vs. Heatmap vs. Zone Efficiency).
@@ -91,15 +93,8 @@ Features that add professional-grade depth to the analysis.
 ### High Impact, Low/Medium Time to Implement (The "Quick Wins")
 High-value additions that leverage existing infrastructure for maximum gain.
 
-11. **Full Dutch Localization (NL/BE)**
-    - **Description**: Complete translation of the UI to Dutch. Since Korfball is most popular in the Netherlands and Belgium, this is a core requirement for wide adoption.
-    - **Impact**: Very High (Essential for the target demographic).
-    - **Time**: Low (Already set up with `i18next`, just needs translation keys).
 
-12. **Sponsor Overlay & Graphic Rotation**
-    - **Description**: A management UI to upload sponsor banners that rotate on the Live Stats and Stream Overlay views, allowing clubs to monetize their matches.
-    - **Impact**: High (Adds direct financial value for clubs/leagues).
-    - **Time**: Low (Simple timer-based image rotation system).
+- [x] **Sponsor Overlay & Graphic Rotation**: A management UI to upload sponsor banners that rotate on the Live Stats and Stream Overlay views, allowing clubs to monetize their matches. (Added Mar 2026)
 
 13. **Match Templates / Quick-Start**
     - **Description**: Save "Favorite Matchups" (e.g., "1st Team vs Rivals") with pre-filled rosters, themes, and stream settings to start a match in seconds.

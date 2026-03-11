@@ -12,7 +12,7 @@ interface ClubEditorProps {
     onBack: () => void;
     savedMatches?: MatchState[];
 }
-
+// Colour picker field. Has the option to input two different colours, for use in the rest of the application
 const ColorPickerField = ({ label, color, onChange }: { label: string, color: string, onChange: (val: string) => void }) => (
     <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
@@ -34,11 +34,11 @@ const ColorPickerField = ({ label, color, onChange }: { label: string, color: st
 
 const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = [] }) => {
     const { t } = useTranslation();
-    const [name, setName] = useState(club.name);
-    const [shortName, setShortName] = useState(club.shortName);
-    const [primaryColor, setPrimaryColor] = useState(club.primaryColor);
-    const [secondaryColor, setSecondaryColor] = useState(club.secondaryColor || '#000000');
-    const [players, setPlayers] = useState<ClubPlayer[]>(club.players);
+    const [name, setName] = useState(club.name); //Club name, used in the overviews and brackets.
+    const [shortName, setShortName] = useState(club.shortName); //Short hand used in the live stream.
+    const [primaryColor, setPrimaryColor] = useState(club.primaryColor); //Primary colour that was chosen in the colour picker field
+    const [secondaryColor, setSecondaryColor] = useState(club.secondaryColor || '#000000'); //Secondary colour that was chosen in the colour picker field
+    const [players, setPlayers] = useState<ClubPlayer[]>(club.players); //Array of all the connected club players that can be used when assembling a team
     const [viewingPlayer, setViewingPlayer] = useState<ClubPlayer | null>(null);
 
     const handleSave = () => {
@@ -54,12 +54,12 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
         ClubService.saveClub(updatedClub);
         onBack();
     };
-
+    //Add player modal and data structure
     const addPlayer = () => {
         const newPlayer: ClubPlayer = {
             id: crypto.randomUUID(),
             firstName: t('settings.new'),
-            lastName: t('matchTracker.substitution'),
+            lastName: t('matchTracker.substitution'), //Agent -> Would this be the correct call? Seems like the var name and the t() don't match up
             gender: 'M',
             active: true,
             positions: ['ATTACK']
@@ -74,7 +74,7 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
     const removePlayer = (id: string) => {
         setPlayers(players.filter(p => p.id !== id));
     };
-
+    //Return what needs to be rendered by the application.
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
             <div className="max-w-4xl mx-auto">
@@ -112,15 +112,15 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                                 className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 uppercase font-mono text-gray-900 dark:text-white"
                             />
                         </div>
-                        <ColorPickerField 
-                            label={t('clubManager.primaryColor')} 
-                            color={primaryColor} 
-                            onChange={setPrimaryColor} 
+                        <ColorPickerField
+                            label={t('clubManager.primaryColor')}
+                            color={primaryColor}
+                            onChange={setPrimaryColor}
                         />
-                        <ColorPickerField 
-                            label={t('clubManager.secondaryColor')} 
-                            color={secondaryColor} 
-                            onChange={setSecondaryColor} 
+                        <ColorPickerField
+                            label={t('clubManager.secondaryColor')}
+                            color={secondaryColor}
+                            onChange={setSecondaryColor}
                         />
                     </div>
                 </div>

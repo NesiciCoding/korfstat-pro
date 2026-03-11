@@ -17,8 +17,8 @@ export const getShotDistanceType = (xPercentage: number, yPercentage: number): S
   const x = xPercentage * 2;
   const y = yPercentage;
 
-  // Left Korf: 33.3, 50
-  // Right Korf: 166.7, 50
+  // Left Korf coords: 33.3, 50
+  // Right Korf coords: 166.7, 50
 
   // Determine nearest korf based on field side (0-100 is left, 100-200 is right)
   const korfX = x < 100 ? 33.3 : 166.7;
@@ -28,8 +28,9 @@ export const getShotDistanceType = (xPercentage: number, yPercentage: number): S
   const dist = Math.sqrt(Math.pow(x - korfX, 2) + Math.pow(y - korfY, 2));
 
   // Approximate scale: Field length 40m = 200 units. 1 unit = 0.2m.
-  // Near < 3m (15 units)
-  // Medium < 8m (40 units)
+  // Near < 3m (< 15 units)
+  // Medium < 8m (> 15 units & < 40 units)
+  // Far > 8m (> 40 units)
   if (dist < 15) return 'NEAR';
   if (dist < 40) return 'MEDIUM';
   return 'FAR';
@@ -129,9 +130,6 @@ const KorfballField: React.FC<KorfballFieldProps> = ({
   };
 
   const ZoneOverlay = ({ x, y, rInner, rOuter, stats, label }: any) => {
-    // Full circle for Post, Arcs/Patches for others?
-    // Simplified: Just draw full concentric rings for now, Korfball is 360 gameplay
-
     const color = getZoneColor(stats);
     const opacity = getZoneOpacity(stats);
 

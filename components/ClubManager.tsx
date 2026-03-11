@@ -11,7 +11,7 @@ interface ClubManagerProps {
     onBack: () => void;
     savedMatches?: MatchState[];
 }
-
+//Club manager. This component is used to manage the clubs that are connected to the application.
 const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) => {
     const { t } = useTranslation();
     const [clubs, setClubs] = useState<Club[]>([]);
@@ -69,7 +69,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
             />
         );
     }
-
+    // Return everything that needs to be rendered.
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
             <div className="max-w-4xl mx-auto">
