@@ -29,10 +29,52 @@ function initDb() {
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS match_templates (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            data_json TEXT NOT NULL,
+            updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
     `);
 }
 
 initDb();
+
+export const saveMatchTemplate = (template) => {
+    if (!template || !template.id) return;
+    try {
+        const stmt = db.prepare(`
+            INSERT INTO match_templates (id, name, data_json, updatedAt) 
+            VALUES (@id, @name, @data, CURRENT_TIMESTAMP) 
+            ON CONFLICT(id) DO UPDATE SET 
+            name = excluded.name,
+            data_json = excluded.data_json, 
+            updatedAt = CURRENT_TIMESTAMP
+        `);
+        stmt.run({ id: template.id, name: template.name, data: JSON.stringify(template) });
+    } catch (err) {
+        console.error('Error saving template to DB:', err);
+    }
+};
+
+export const getAllTemplates = () => {
+    try {
+        const rows = db.prepare('SELECT data_json FROM match_templates ORDER BY updatedAt DESC').all();
+        return rows.map(r => JSON.parse(r.data_json));
+    } catch (err) {
+        console.error('Error loading templates from DB:', err);
+        return [];
+    }
+};
+
+export const deleteTemplate = (id) => {
+    try {
+        db.prepare('DELETE FROM match_templates WHERE id = ?').run(id);
+    } catch (err) {
+        console.error('Error deleting template from DB:', err);
+    }
+};
 
 export const saveMatchState = (state) => {
     if (!state || !state.id) return;

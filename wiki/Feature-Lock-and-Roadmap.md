@@ -13,7 +13,8 @@ The following features are currently implemented and are critical to the operati
 - **Club Manager**: Managing club details, teams, and player rosters.
 - **Settings & Configuration**: App-wide configuration, including keyboard shortcuts.
 - **Tournament Formats & Brackets**: Scalable tools for Leagues, Knockouts, and Group Stages, featuring visual generation and PDF bracket exports.
-- **Multi-language Support (Dutch/English)**: Full UI localization for the core Korfball demographic (NL/BE), integrated throughout the application and automated tests.
+- **Multi-language Support (Dutch/English)**: Full UI localization for the core Korfball demo-graphic (NL/BE), integrated throughout the application and automated tests.
+- **Global Navigation Framework**: Robust click-through traceability across all views, supported by a global 'Home' floater and persistent Settings/Shortcuts access. Verified 100% reachable.
 
 ### Live Tracking & Officiating
 - **Match Tracker**: Real-time input of goals, fouls, substitutions, and timeouts.
@@ -28,6 +29,11 @@ The following features are currently implemented and are critical to the operati
 - **Stream Overlay**: Fully customizable graphics with gradients, team logos, and themes for OBS/Vmix.
 - **Director Dashboard**: Control center for toggling stream graphics.
 - **Sponsor Management**: Rotating banner system for stream overlays and live stats.
+- **Sponsor Overlay & Graphic Rotation**: A management UI to upload sponsor banners that rotate on the Live Stats and Stream Overlay views, allowing clubs to monetize their matches.
+- **Public Live-Ticker Widget**: Embeddable real-time match scores and clock for external club websites, featuring automatic Web Socket updates.
+- **Match Day Program Generator (PDF)**: Automatically generate professional "Match Day Program" PDFs with rosters, season stats, and match previews for fans to print or download.
+- **Spectator "Goal of the Match" Voting**: Interactive fan engagement system allowing spectators to vote for their favorite goal via mobile, with live results displayed on stream and big screens.
+- **Match Templates / Quick-Start**: Ability to save and load "Favorite Matchups" with pre-filled rosters, themes, and stream settings to start a match in seconds.
 
 ### Analysis & Statistics
 - **Statistics View**: Detailed breakdown of match statistics, including **Interactive Court Heatmaps** (Precise vs. Heatmap vs. Zone Efficiency).
@@ -43,10 +49,10 @@ The following features are currently implemented and are critical to the operati
 - **Wear OS Integration**: Companion watch app for referees and officials. Supports direct Wi-Fi connection (configurable IP/port on the watch), bidirectional sync in write mode, and enhanced haptic comm signals — distinct patterns for timeouts, substitutions, shot clock, and game clock buzzes.
 - **Live API Webhooks**: Push-to-Companion webhook system for real-time match state publishing.
 
-### Infrastructure & Deployment
-- **Automated Cross-Platform Builds**: GitHub Actions workflow to automatically build and release `.dmg`, `.msi`, `.exe`, `.AppImage`, and `.deb` installers for macOS, Windows, and Linux.
-- **Auto-Updater**: Integrated Tauri v2 updater system for seamless application updates across all supported platforms.
-- **Stabilized CI/CD**: Robust Git configuration in CI (full clones, safe directory trust) to ensure reliable automated releases.
+### Quality Assurance & Testing
+- **Comprehensive Test Suite**: Over 110+ automated Vitest cases covering core utilities and components.
+- **Mocked Ecosystem**: Robust service mocking to allow high-fidelity UI testing without backend dependencies.
+- **Phase 13: Test Coverage Expansion (Finalized)**: Achieved >50% line coverage for both `App.tsx` (55.78%) and `MatchTracker.tsx` (54.56%). Secured keyboard shortcut stability and navigation traceability through robust Vitest suites.
 
 ---
 
@@ -59,16 +65,19 @@ These are game-changing features that require significant architectural work.
 
 5. **Cloud Sync / Multi-Device Database**
    - **Description**: Transition from purely local-network real-time sync to a cloud-backed system (e.g., Supabase/Firebase) where multiple users can log in from anywhere to view or manage the same club data.
+   - **Drafted Research**: [Cloud Sync Integration](cloud_sync_research.md)
    - **Impact**: Very High (Enables remote analysts and persistent cross-device storage).
    - **Time**: Very High (Requires backend infra and auth).
 
 6. **Automated Video Clipping (Highlight Generation)**
-   - **Description**: Integration with local video feeds or OBS to automatically save a video replay 10 seconds before/after a goal is recorded.
-   - **Impact**: Very High (Massive value for social media and analysis).
-   - **Time**: High (Requires complex WebSocket communication with streaming software).
+   - **Video Clipping & Broadcaster Integration**: Full-scale integration with OBS and vMix to automate highlight generation, scene changes, and broadcast graphics.
+    - **Drafted Research**: [Video Clipping Integration](Video-Clipping-Integration.md)
+    - **Impact**: Very High (Enables TV-quality automated production).
+    - **Time**: High (Requires multi-protocol support and robust event-triggering logic).
 
 7. **Advanced Player Profiles & Career Statistics**
    - **Description**: A dedicated section to see cumulative statistics across seasons, line graphs of shooting percentages, and personal bests.
+   - **Drafted Research**: [Player Profiles Integration](player_profiles_research.md)
    - **Impact**: High (Engaging for players and deep analysis for coaches).
    - **Time**: High (Complex database queries and new UI charts).
 
@@ -92,29 +101,3 @@ Features that add professional-grade depth to the analysis.
 
 ### High Impact, Low/Medium Time to Implement (The "Quick Wins")
 High-value additions that leverage existing infrastructure for maximum gain.
-
-
-- [x] **Sponsor Overlay & Graphic Rotation**: A management UI to upload sponsor banners that rotate on the Live Stats and Stream Overlay views, allowing clubs to monetize their matches. (Added Mar 2026)
-
-13. **Match Templates / Quick-Start**
-    - **Description**: Save "Favorite Matchups" (e.g., "1st Team vs Rivals") with pre-filled rosters, themes, and stream settings to start a match in seconds.
-    - **Impact**: Medium/High (Reduces stress and prep time on match day).
-    - **Time**: Low (Small DB expansion and a "Save Template" feature).
-
-14. **Public Live-Ticker Widget**
-    - **Description**: An embeddable iframe or JS snippet that clubs can put on their own website to show a live-updating score and game clock for their active matches.
-    - **Impact**: Medium/High (Drives traffic to club sites and engages fans).
-    - **Time**: Low/Medium (Requires a simplified public view of the match state).
-
-15. **Match Day Program Generator (PDF)**
-    - **Description**: Automatically generate a "Match Day Program" PDF with the rosters, season stats, and last match recap that fans can print or download via QR code at the arena.
-    - **Impact**: High (Professionalizes the match day experience).
-    - **Time**: Medium (Uses existing PDF export engine).
-
-16. **Spectator "Goal of the Match" Voting**
-    - **Description**: A phone-optimized link for spectators to vote on the best goal, with live results shown on the "Big Screen" during player awards.
-    - **Impact**: High (Interactive fan engagement).
-    - **Time**: Low/Medium (Requires a simple voting backend and UI).
-
-
-

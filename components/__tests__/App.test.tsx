@@ -1,14 +1,181 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from '../../App';
 
-describe('App', () => {
-    it('renders without crashing', () => {
+// Mock components with ABSOLUTE paths
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/MatchSetup', () => ({ default: ({ onStartMatch }: any) => <div data-testid="match-setup"><button onClick={() => onStartMatch({ id: 'H', players: [] }, { id: 'A', players: [] })}>Start</button></div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/MatchTracker', () => ({ default: ({ onFinishMatch }: any) => <div data-testid="match-tracker"><button onClick={onFinishMatch}>Finish</button></div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/JuryView', () => ({ default: ({ onBack }: any) => <div data-testid="jury-view"><button onClick={onBack}>Back</button></div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/SettingsModal', () => ({ default: ({ isOpen, onClose }: any) => isOpen ? <div data-testid="settings-modal"><button onClick={onClose}>Close</button></div> : null }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/ClubManager', () => ({ default: () => <div data-testid="club-manager">Club Manager</div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/SeasonManager', () => ({ default: () => <div data-testid="season-manager">Season Manager</div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/StatsView', () => ({ default: ({ onBack }: any) => <div data-testid="stats-view">Stats View<button onClick={onBack}>Back</button></div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/LiveStatsView', () => ({ default: () => <div data-testid="live-stats-view">Live Stats View</div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/LivestreamView', () => ({ default: () => <div data-testid="livestream-view">Livestream View</div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/StreamOverlay', () => ({ default: () => <div data-testid="stream-overlay">Overlay</div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/DirectorDashboard', () => ({ default: () => <div data-testid="director-dashboard">Director Dashboard</div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/ShotClockView', () => ({ default: () => <div data-testid="shot-clock-view">Shot Clock</div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/SpotterView', () => ({ default: () => <div data-testid="spotter-view">Spotter View</div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/MatchHistory', () => ({ 
+    default: ({ matches, onDeleteMatch, onAnalyzeMatch, onBack }: any) => (
+        <div data-testid="match-history">
+            {matches.map((m: any) => (
+                <div key={m.id}>
+                    <button onClick={() => onDeleteMatch(m.id)}>Delete {m.id}</button>
+                    <button onClick={() => onAnalyzeMatch(m)}>Analyze {m.id}</button>
+                </div>
+            ))}
+            <button onClick={onBack}>Back</button>
+        </div>
+    )
+}));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/MatchAnalysis', () => ({ default: ({ onBack }: any) => <div data-testid="match-analysis"><button onClick={onBack}>Back</button></div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/ShortcutsModal', () => ({ default: ({ isOpen, onClose }: any) => isOpen ? <div data-testid="shortcuts-modal">shortcuts.title<button onClick={onClose}>Close</button></div> : null }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/OverallStats', () => ({ default: () => <div data-testid="overall-stats">Overall Stats</div> }));
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/StrategyPlanner', () => ({ default: () => <div data-testid="strategy-planner">Strategy Planner</div> }));
+
+// Mock i18next
+vi.mock('i18next', () => ({
+  default: {
+    use: () => ({ init: vi.fn(), use: vi.fn() }),
+    init: vi.fn(),
+    changeLanguage: vi.fn().mockImplementation(() => Promise.resolve()),
+    language: 'en',
+    t: (key: string) => key,
+  },
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { changeLanguage: vi.fn().mockImplementation(() => Promise.resolve()), language: 'en' },
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
+// Mock LOCAL i18n to prevent real init
+vi.mock('/Users/wmeetsma/Documents/korfstat-pro/i18n', () => ({
+  default: {
+    changeLanguage: vi.fn().mockImplementation(() => Promise.resolve()),
+    language: 'en',
+    t: (key: string) => key,
+  },
+}));
+
+// Mock matchMedia
+Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+    })),
+});
+
+describe('App Navigation', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        localStorage.clear();
+    });
+
+    it('renders home page by default', async () => {
         render(<App />);
-        // Since I don't know the exact content of App, I'll just check if it renders successfully.
-        // Ideally I would check for a specific element, but for a smoke test this is a start.
-        // If App has a title "KorfStat Pro" or similar, I could check that.
-        // Let's assume there is some content.
-        expect(document.body).toBeInTheDocument();
+        expect(await screen.findByText(/KorfStat Pro/i)).toBeInTheDocument();
+    });
+
+    it('navigates through all major views using global home button', async () => {
+        render(<App />);
+        
+        const views = [
+            { id: 'nav-club-manager', testId: 'club-manager' },
+            { id: 'nav-season-manager', testId: 'season-manager' },
+            { id: 'nav-match-history', testId: 'match-history' },
+            { id: 'nav-overall-stats', testId: 'overall-stats' },
+            { id: 'nav-strategy', testId: 'strategy-planner' },
+            { id: 'nav-director', testId: 'director-dashboard' },
+            { id: 'nav-spotter', testId: 'spotter-view' },
+            { id: 'nav-live-stats', testId: 'livestream-view' }
+        ];
+
+        for (const view of views) {
+            fireEvent.click(await screen.findByTestId(view.id));
+            expect(await screen.findByTestId(view.testId)).toBeInTheDocument();
+            
+            const homeBtn = screen.getByTitle(/Go to Home/i);
+            fireEvent.click(homeBtn);
+            
+            await waitFor(() => {
+                expect(screen.getByTestId('start-match-btn')).toBeInTheDocument();
+            });
+        }
+    });
+
+    it('successfully starts a match, finishes it, and returns to stats', async () => {
+        render(<App />);
+        fireEvent.click(await screen.findByTestId('start-match-btn'));
+        fireEvent.click(await screen.findByText('Start'));
+        expect(await screen.findByTestId('match-tracker')).toBeInTheDocument();
+
+        // Finish Match
+        fireEvent.click(screen.getByText('Finish'));
+        expect(await screen.findByTestId('stats-view')).toBeInTheDocument();
+        fireEvent.click(screen.getByText('Back')); // Go back from stats
+    });
+
+    it('toggles shortcuts modal with "?" key', async () => {
+        render(<App />);
+        fireEvent.keyDown(window, { key: '?' });
+        expect(await screen.findByTestId('shortcuts-modal')).toBeInTheDocument();
+    });
+
+    it('handles match deletion from history', async () => {
+        const mockMatch = { id: 'delete-me', isConfigured: true, homeTeam: { name: 'H', players: [], color: '', id: 'H', substitutionCount: 0 }, awayTeam: { name: 'A', players: [], color: '', id: 'A', substitutionCount: 0 }, events: [] };
+        localStorage.setItem('korfstat_matches', JSON.stringify([mockMatch]));
+        
+        render(<App />);
+        fireEvent.click(await screen.findByTestId('nav-match-history'));
+        
+        const deleteBtn = await screen.findByText('Delete delete-me');
+        fireEvent.click(deleteBtn);
+        
+        expect(screen.queryByText('Delete delete-me')).not.toBeInTheDocument();
+    });
+
+    it('handles back navigation to tracker', async () => {
+        render(<App />);
+        fireEvent.click(await screen.findByTestId('nav-jury'));
+        const backBtn = await screen.findByText('Back');
+        fireEvent.click(backBtn);
+        expect(await screen.findByTestId('match-tracker')).toBeInTheDocument();
+    });
+
+    it('navigates to match analysis from history', async () => {
+        const mockMatch = { 
+            id: 'analyze-me', 
+            isConfigured: true, 
+            homeTeam: { name: 'H', players: [], color: '', id: 'H', substitutionCount: 0 }, 
+            awayTeam: { name: 'A', players: [], color: '', id: 'A', substitutionCount: 0 }, 
+            events: [],
+            currentHalf: 1,
+            timer: { elapsedSeconds: 0, isRunning: false },
+            shotClock: { seconds: 25, isRunning: false },
+            timeout: { isActive: false, startTime: 0, remainingSeconds: 60 }
+        };
+        localStorage.setItem('korfstat_matches', JSON.stringify([mockMatch]));
+
+        render(<App />);
+        fireEvent.click(await screen.findByTestId('nav-match-history'));
+        
+        const analyzeBtn = await screen.findByText('Analyze analyze-me');
+        fireEvent.click(analyzeBtn);
+        
+        expect(await screen.findByTestId('match-analysis')).toBeInTheDocument();
+        fireEvent.click(screen.getByText('Back'));
+        expect(await screen.findByTestId('match-history')).toBeInTheDocument();
     });
 });

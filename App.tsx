@@ -26,6 +26,8 @@ import ClubManager from './components/ClubManager';
 import MatchAnalysis from './components/MatchAnalysis'; // Not lazy for now, or lazy is fine
 import ErrorBoundary from './components/ErrorBoundary';
 import ShortcutsModal from './components/ShortcutsModal';
+const LiveTicker = lazy(() => import('./components/LiveTicker'));
+const SpectatorVoting = lazy(() => import('./components/SpectatorVoting'));
 
 import { MatchState, MatchEvent, TeamId, ShotType, Team, OverlayMessage } from './types';
 import { MatchProfile, DEFAULT_PROFILES } from './types/profile';
@@ -37,10 +39,10 @@ import { calculateDerivedMatchState } from './utils/matchLogic';
 
 function AppContent() {
   // Initialize view from URL parameter
-  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS'>(() => {
+  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS' | 'TICKER'>(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
-    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS'];
+    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'TICKER', 'VOTING'];
     if (viewParam && validViews.includes(viewParam)) {
       return viewParam as any;
     }
@@ -107,10 +109,6 @@ function AppContent() {
   const [tick, setTick] = useState(0); // Force re-render for timer updates
 
   // Load match history (Legacy localStorage migration could go here)
-
-
-
-
   // Clean up legacy listeners if necessary, but we replaced the useEffect blocks.
 
   // Render Loop (visual updates only)
@@ -225,7 +223,7 @@ function AppContent() {
     });
   }, []);
 
-  const { broadcastUpdate, activeSessions, registerView, sendHapticSignal } = useBroadcastSync(matchState, handleRemoteUpdate, handleSpotterAction);
+  const { broadcastUpdate, activeSessions, registerView, sendHapticSignal, socket } = useBroadcastSync(matchState, handleRemoteUpdate, handleSpotterAction);
 
   // Register View on Change
   useEffect(() => {
@@ -402,8 +400,8 @@ function AppContent() {
         <Settings size={20} />
       </button>
 
-      {/* Home Floater — shown on every non-HOME view */}
-      {view !== 'HOME' && (
+      {/* Home Floater — shown on every non-HOME and non-TICKER view */}
+      {view !== 'HOME' && view !== 'TICKER' && (
         <button
           onClick={() => setView('HOME')}
           className="fixed bottom-4 right-4 z-[90] flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all text-sm font-medium"
@@ -414,8 +412,12 @@ function AppContent() {
         </button>
       )}
 
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-      <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+      {view !== 'TICKER' && (
+        <>
+          <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+          <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+        </>
+      )}
 
       {/* Locked Screen */}
 
@@ -434,12 +436,14 @@ function AppContent() {
 
       {view === 'TRACK' && (
         <Suspense fallback={<div className="loading-fallback">Loading Match Tracker...</div>}>
-          <MatchTracker
-            matchState={derivedMatchState}
-            onUpdateMatch={handleUpdateMatch}
-            onFinishMatch={handleFinishMatch}
-            onViewChange={setView}
-          />
+            <MatchTracker
+              matchState={derivedMatchState}
+              onUpdateMatch={handleUpdateMatch}
+              onFinishMatch={handleFinishMatch}
+              onViewChange={setView}
+              socket={socket}
+              onSpotterAction={handleSpotterAction}
+            />
         </Suspense>
       )}
 
@@ -507,6 +511,7 @@ function AppContent() {
       {view === 'STREAM_OVERLAY' && (
         <StreamOverlay
           matchState={derivedMatchState}
+          socket={socket}
         />
       )}
 
@@ -550,6 +555,17 @@ function AppContent() {
           match={matchState} // We rely on matchState being set before switching to this view
           onBack={() => setView('MATCH_HISTORY')}
         />
+      )}
+
+      {view === 'TICKER' && (
+        <Suspense fallback={<div className="loading-fallback">Loading Ticker...</div>}>
+          <LiveTicker />
+        </Suspense>
+      )}
+      {view === 'VOTING' && (
+        <Suspense fallback={<div className="loading-fallback">Loading Voting...</div>}>
+          <SpectatorVoting />
+        </Suspense>
       )}
     </div>
   );

@@ -6,6 +6,9 @@ import { Club } from '../types/club';
 import { ClubService } from '../services/clubService';
 import { Plus, Trash2, PlayCircle, Play, User, Users, Shield, Sword, Paintbrush, Save, Download, ChevronDown, Database } from 'lucide-react';
 import AssetUploader from './AssetUploader';
+import { generateMatchDayProgram } from '../services/reportGenerator';
+import { TemplateService } from '../services/templateService';
+import { MatchTemplate } from '../types';
 
 interface MatchSetupProps {
   onStartMatch: (home: Team, away: Team, profile?: MatchProfile, seasonId?: string) => void;
@@ -440,6 +443,19 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
 
   const [duration, setDuration] = useState(25); // Minutes
 
+  // Templates State
+  const [templates, setTemplates] = useState<MatchTemplate[]>([]);
+  const [templateName, setTemplateName] = useState('');
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
+
+  React.useEffect(() => {
+    const fetchTemplates = async () => {
+      const data = await TemplateService.getAllTemplates();
+      setTemplates(data);
+    };
+    fetchTemplates();
+  }, []);
+
   // Saved Teams State
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>(() => {
     try {
@@ -508,6 +524,24 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
     );
   };
 
+  const handleGenerateProgram = () => {
+    const prepareTeam = (id: TeamId, name: string, players: Player[], color: string, secondaryColor: string, logoUrl?: string): Team => ({
+      id,
+      name,
+      color,
+      secondaryColor,
+      logoUrl,
+      substitutionCount: 0,
+      players: players.map(p => ({ ...p, onField: p.isStarter }))
+    });
+
+    const home = prepareTeam('HOME', homeName, homePlayers, homeColor, homeSecondaryColor, homeLogoUrl);
+    const away = prepareTeam('AWAY', awayName, awayPlayers, awayColor, awaySecondaryColor, awayLogoUrl);
+    const season = seasons.find(s => s.id === selectedSeasonId);
+
+    generateMatchDayProgram(home, away, selectedProfile, season?.name);
+  };
+
   const handleDeleteTeam = (teamToDelete: SavedTeam) => {
     if (!confirm(t('matchSetup.deleteConfirm', { name: teamToDelete.name }))) return;
 
@@ -544,8 +578,154 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
     setTeamPlayers(mappedPlayers);
   };
 
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) {
+      alert(t('matchSetup.templateNameRequired')); // I should add this key or just use templateName
+      return;
+    }
+
+    const template: MatchTemplate = {
+      id: crypto.randomUUID(),
+      name: templateName,
+      homeTeam: {
+        name: homeName,
+        color: homeColor,
+        secondaryColor: homeSecondaryColor,
+        logoUrl: homeLogoUrl,
+        players: homePlayers
+      },
+      awayTeam: {
+        name: awayName,
+        color: awayColor,
+        secondaryColor: awaySecondaryColor,
+        logoUrl: awayLogoUrl,
+        players: awayPlayers
+      },
+      profileId: selectedProfile.id,
+      seasonId: selectedSeasonId || undefined
+    };
+
+    const success = await TemplateService.saveTemplate(template);
+    if (success) {
+      const updated = await TemplateService.getAllTemplates();
+      setTemplates(updated);
+      setTemplateName('');
+      alert(t('matchSetup.templateSaved', { name: template.name }));
+    }
+  };
+
+  const handleLoadTemplate = (template: MatchTemplate) => {
+    if (template.homeTeam.name) setHomeName(template.homeTeam.name);
+    if (template.homeTeam.color) setHomeColor(template.homeTeam.color);
+    if (template.homeTeam.secondaryColor) setHomeSecondaryColor(template.homeTeam.secondaryColor);
+    if (template.homeTeam.logoUrl) setHomeLogoUrl(template.homeTeam.logoUrl);
+    if (template.homeTeam.players) setHomePlayers(template.homeTeam.players);
+
+    if (template.awayTeam.name) setAwayName(template.awayTeam.name);
+    if (template.awayTeam.color) setAwayColor(template.awayTeam.color);
+    if (template.awayTeam.secondaryColor) setAwaySecondaryColor(template.awayTeam.secondaryColor);
+    if (template.awayTeam.logoUrl) setAwayLogoUrl(template.awayTeam.logoUrl);
+    if (template.awayTeam.players) setAwayPlayers(template.awayTeam.players);
+
+    if (template.profileId) {
+      const profile = DEFAULT_PROFILES.find(p => p.id === template.profileId);
+      if (profile) setSelectedProfile(profile);
+    }
+    if (template.seasonId) setSelectedSeasonId(template.seasonId);
+    
+    setShowTemplateMenu(false);
+  };
+
+  const handleDeleteTemplate = async (id: string, name: string) => {
+    if (!confirm(t('matchSetup.deleteConfirm', { name }))) return;
+    const success = await TemplateService.deleteTemplate(id);
+    if (success) {
+      setTemplates(templates.filter(t => t.id !== id));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 flex flex-col transition-colors duration-300">
+      {/* Template Management Bar */}
+      <div className="max-w-7xl mx-auto w-full mb-6 flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
+            <Database size={20} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider leading-none mb-1">{t('matchSetup.templates')}</h3>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">{t('matchSetup.loadTemplate')}</p>
+          </div>
+        </div>
+
+        <div className="flex-1 max-w-md flex items-center gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder={t('matchSetup.templateName')}
+              className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+            />
+          </div>
+          <button
+            onClick={handleSaveTemplate}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-bold transition-all shadow-sm"
+          >
+            <Save size={16} />
+            {t('common.save')}
+          </button>
+        </div>
+
+        <div className="relative">
+          <button
+            onClick={() => setShowTemplateMenu(!showTemplateMenu)}
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all shadow-sm"
+          >
+            <Download size={16} />
+            {t('matchSetup.loadTemplate')}
+            <ChevronDown size={14} className={`transition-transform ${showTemplateMenu ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showTemplateMenu && (
+            <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[100] py-2 overflow-hidden animate-in fade-in slide-in-from-top-2">
+              <div className="px-4 py-2 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase border-b border-gray-100 dark:border-gray-700 mb-1">
+                {t('matchSetup.loadTemplate')}
+              </div>
+              {templates.length === 0 ? (
+                <div className="px-4 py-3 text-sm text-gray-400 italic text-center">
+                  {t('matchSetup.noTemplates')}
+                </div>
+              ) : (
+                <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                  {templates.map(tmpl => (
+                    <div key={tmpl.id} className="flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/40 px-4 py-2 group transition-colors">
+                      <button
+                        onClick={() => handleLoadTemplate(tmpl)}
+                        className="flex-1 text-left"
+                      >
+                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                          {tmpl.name}
+                        </div>
+                        <div className="text-[9px] text-gray-400 dark:text-gray-500 uppercase font-bold">
+                          {tmpl.homeTeam.name?.substring(0, 3)} vs {tmpl.awayTeam.name?.substring(0, 3)}
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTemplate(tmpl.id, tmpl.name)}
+                        className="p-1.5 text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="text-center mb-8">
         <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">{t('matchSetup.title')}</h1>
         <p className="text-gray-500 dark:text-gray-400 mb-6">{t('matchSetup.subtitle')}</p>
@@ -637,7 +817,15 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
         />
       </div>
 
-      <div className="max-w-7xl mx-auto w-full flex justify-end pb-12 pr-2">
+      <div className="max-w-7xl mx-auto w-full flex justify-end items-center gap-4 pb-12 pr-2">
+        <button
+          onClick={handleGenerateProgram}
+          className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-600 dark:border-indigo-400 rounded-xl font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all"
+        >
+          <Download size={20} />
+          {t('matchSetup.generateProgram')}
+        </button>
+
         <button
           onClick={handleStart}
           className="flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-1 transition-all text-xl font-bold"

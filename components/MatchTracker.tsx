@@ -3,7 +3,11 @@ import { MatchState, TeamId, MatchEvent, SHOT_TYPES, ActionType, CardType, ShotT
 import { useTranslation } from 'react-i18next';
 
 import KorfballField, { getShotDistanceType } from './KorfballField';
-import { PieChart, Clock, Target, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, Shirt, AlertOctagon, Monitor, Gavel, Undo2, Volume2, VolumeX, CheckCircle, XCircle, Share2, Mic, MicOff } from 'lucide-react';
+import { 
+  PieChart, Clock, Target, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, 
+  Shirt, AlertOctagon, Monitor, Gavel, Undo2, Volume2, VolumeX, CheckCircle, 
+  XCircle, Share2, Mic, MicOff, Trophy, PlusCircle, ExternalLink 
+} from 'lucide-react';
 
 import { useSettings } from '../contexts/SettingsContext';
 import { useGameAudio } from '../hooks/useGameAudio';
@@ -18,9 +22,11 @@ interface MatchTrackerProps {
   onUpdateMatch: (newState: MatchState) => void;
   onFinishMatch: () => void;
   onViewChange?: (view: 'STATS' | 'JURY' | 'LIVE' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY') => void;
+  socket: any;
+  onSpotterAction: (action: any) => void;
 }
 
-const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, onFinishMatch, onViewChange }) => {
+const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, onFinishMatch, onViewChange, socket, onSpotterAction }) => {
   const { t } = useTranslation();
   const { settings, updateSettings } = useSettings();
   const soundEnabled = settings.soundEnabled;
@@ -31,7 +37,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     visible: boolean;
     x: number;
     y: number;
-    step: 'SELECT_TEAM' | 'SELECT_PLAYER' | 'SELECT_ACTION' | 'SELECT_SHOT_TYPE' | 'SELECT_SUB_OUT' | 'SELECT_SUB_IN' | 'CONFIRM_SUB_EXCEPTION' | 'SELECT_CARD_PLAYER';
+    step: 'SELECT_TEAM' | 'SELECT_PLAYER' | 'SELECT_ACTION' | 'SELECT_SHOT_TYPE' | 'SELECT_SUB_OUT' | 'SELECT_SUB_IN' | 'CONFIRM_SUB_EXCEPTION' | 'SELECT_CARD_PLAYER' | 'SELECT_RESULT' | 'SELECT_TEAM_FOR_SUB' | 'SELECT_CARD_TYPE';
     selectedTeam?: TeamId;
     selectedPlayerId?: string;
     subOutId?: string;
@@ -43,6 +49,8 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
   const [activeModal, setActiveModal] = useState<'END_HALF' | 'END_MATCH' | 'BREAK_SETUP' | 'OT_SETUP'>('END_HALF');
   const [showModal, setShowModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showVotingShare, setShowVotingShare] = useState(false);
+  const [votes, setVotes] = useState<Record<string, number>>({});
   const [customDuration, setCustomDuration] = useState(10); // Minutes
   const [pendingShortcutAction, setPendingShortcutAction] = useState<'GOAL' | 'MISS' | 'FREE_THROW' | 'PENALTY' | 'CARD' | 'TURNOVER' | 'FOUL' | 'REBOUND' | null>(null);
 
@@ -65,6 +73,23 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     }
     prevGameTimeRef.current = currentGameTime;
   }, [matchState.shotClock.seconds, matchState.timer.elapsedSeconds, matchState.halfDurationSeconds, matchState.shotClock.lastStartTime, playShotClockBuzzer, playGameEndHorn]);
+
+  React.useEffect(() => {
+    if (!socket) return;
+
+    socket.on('watch-action', (payload: any) => {
+      onSpotterAction(payload);
+    });
+
+    socket.on('vote-update', (v: Record<string, number>) => {
+      setVotes(v);
+    });
+
+    return () => {
+      socket.off('watch-action');
+      socket.off('vote-update');
+    };
+  }, [socket, onSpotterAction]);
 
   // --- Keyboard Shortcuts Logic ---
 
@@ -115,14 +140,15 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     const teamId = contextMenu?.selectedTeam || matchState.possession || 'HOME';
 
     if (['GOAL', 'MISS', 'FREE_THROW', 'PENALTY', 'CARD', 'TURNOVER', 'FOUL', 'REBOUND'].includes(action)) {
-      setContextMenu({
+      setPendingShortcutAction(action as any);
+      setContextMenu(prev => ({
+        ...prev,
         visible: true,
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         step: 'SELECT_PLAYER',
         selectedTeam: teamId,
-      } as any);
-      setPendingShortcutAction(action as any);
+      } as any));
     }
     else if (action === 'TIMEOUT') {
       startTimeout();
@@ -144,88 +170,87 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
 
   const handlePlayerNumberSelection = (numberIndex: number) => {
-    // numberIndex is 0-7 (for keys 1-8)
-    if (!isMenuOpen) return;
+    try {
+      if (!isMenuOpen) return;
+      
+      const currentStep = contextMenu?.step;
 
-    const team = contextMenu.selectedTeam === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
+      if (currentStep === 'SELECT_TEAM_FOR_SUB' || currentStep === 'SELECT_TEAM') {
+        const teamId: TeamId = numberIndex === 0 ? 'HOME' : 'AWAY';
+        setContextMenu(prev => prev ? { ...prev, selectedTeam: teamId, step: currentStep === 'SELECT_TEAM' ? 'SELECT_PLAYER' : 'SELECT_SUB_OUT' } : null);
+        return;
+      }
 
-    // LOGIC DEPENDS ON STEP
-    if (currentStep === 'SELECT_PLAYER' || currentStep === 'SELECT_SUB_OUT') {
-      // Select from ON FIELD players - SORTED by Number to match UI
-      const onFieldPlayers = team.players
-        .filter(p => p.onField)
-        .sort((a, b) => parseInt(a.number) - parseInt(b.number));
-      const player = onFieldPlayers[numberIndex];
-      if (player) {
-        if (currentStep === 'SELECT_PLAYER') {
-          // Proceed to Action or Execute Pending
-          if (pendingShortcutAction) {
-            const location = { x: 50, y: 50 };
-            if (pendingShortcutAction === 'GOAL') addEvent({ teamId: team.id, playerId: player.id, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location });
-            else if (pendingShortcutAction === 'MISS') addEvent({ teamId: team.id, playerId: player.id, type: 'SHOT', result: 'MISS', shotType: 'RUNNING_IN', location });
-            else if (pendingShortcutAction === 'FREE_THROW') {
-              setContextMenu({ ...contextMenu, selectedPlayerId: player.id, step: 'SELECT_RESULT', calculatedShotType: 'FREE_THROW' });
-              return; // Wait for result
-            }
-            else if (pendingShortcutAction === 'PENALTY') {
-              setContextMenu({ ...contextMenu, selectedPlayerId: player.id, step: 'SELECT_RESULT', calculatedShotType: 'PENALTY' });
-              return; // Wait for result
-            }
-            else if (pendingShortcutAction === 'TURNOVER') addEvent({ teamId: team.id, playerId: player.id, type: 'TURNOVER', location });
-            else if (pendingShortcutAction === 'FOUL') addEvent({ teamId: team.id, playerId: player.id, type: 'FOUL', location });
-            else if (pendingShortcutAction === 'REBOUND') addEvent({ teamId: team.id, playerId: player.id, type: 'REBOUND', reboundType: 'OFFENSIVE', location });
-            else if (pendingShortcutAction === 'CARD') {
-              setContextMenu({ ...contextMenu, selectedPlayerId: player.id, step: 'SELECT_ACTION' });
+      const currentSelectedTeam = contextMenu?.selectedTeam || matchState.possession || 'HOME';
+      const team = currentSelectedTeam === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
+
+      if (currentStep === 'SELECT_PLAYER' || currentStep === 'SELECT_SUB_OUT') {
+        const onFieldPlayers = team.players
+          .filter(p => p.onField)
+          .sort((a, b) => parseInt(a.number) - parseInt(b.number));
+        
+        const player = onFieldPlayers[numberIndex];
+        
+        if (player) {
+          if (currentStep === 'SELECT_PLAYER') {
+            if (pendingShortcutAction) {
+              const location = { x: 50, y: 50 };
+              if (pendingShortcutAction === 'GOAL') addEvent({ teamId: team.id, playerId: player.id, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location });
+              else if (pendingShortcutAction === 'MISS') addEvent({ teamId: team.id, playerId: player.id, type: 'SHOT', result: 'MISS', shotType: 'RUNNING_IN', location });
+              else if (pendingShortcutAction === 'FREE_THROW') {
+                setContextMenu(prev => prev ? { ...prev, selectedPlayerId: player.id, step: 'SELECT_RESULT', calculatedShotType: 'FREE_THROW' } : null);
+                return;
+              }
+              else if (pendingShortcutAction === 'PENALTY') {
+                setContextMenu(prev => prev ? { ...prev, selectedPlayerId: player.id, step: 'SELECT_RESULT', calculatedShotType: 'PENALTY' } : null);
+                return;
+              }
+              else if (pendingShortcutAction === 'TURNOVER') addEvent({ teamId: team.id, playerId: player.id, type: 'TURNOVER', location });
+              else if (pendingShortcutAction === 'FOUL') addEvent({ teamId: team.id, playerId: player.id, type: 'FOUL', location });
+              else if (pendingShortcutAction === 'REBOUND') addEvent({ teamId: team.id, playerId: player.id, type: 'REBOUND', reboundType: 'OFFENSIVE', location });
+              else if (pendingShortcutAction === 'CARD') {
+                setContextMenu(prev => prev ? { ...prev, selectedPlayerId: player.id, step: 'SELECT_CARD_TYPE' as any } : null);
+                setPendingShortcutAction(null);
+                return;
+              }
               setPendingShortcutAction(null);
-              return;
+              setContextMenu(null);
+            } else {
+              setContextMenu(prev => prev ? { ...prev, selectedPlayerId: player.id, step: 'SELECT_ACTION' } : null);
             }
-            setPendingShortcutAction(null);
-            setContextMenu(null);
-          } else {
-            // Just select player
-            setContextMenu({ ...contextMenu, selectedPlayerId: player.id, step: 'SELECT_ACTION' });
+          } else if (currentStep === 'SELECT_SUB_OUT') {
+            setContextMenu(prev => prev ? { ...prev, subOutId: player.id, step: 'SELECT_SUB_IN' } : null);
           }
-        } else if (currentStep === 'SELECT_SUB_OUT') {
-          setContextMenu({ ...contextMenu, subOutId: player.id, step: 'SELECT_SUB_IN' });
         }
-      }
-    } else if (currentStep === 'SELECT_SUB_IN') {
-      // Select from BENCH players
-      const benchPlayers = team.players.filter(p => !p.onField);
-      const player = benchPlayers[numberIndex];
-      if (player) {
-        if (team.substitutionCount >= 8) {
-          setContextMenu({ ...contextMenu, subInId: player.id, step: 'CONFIRM_SUB_EXCEPTION' });
-        } else {
-          const evt = { ...contextMenu, subInId: player.id };
-          setContextMenu(evt);
-          setTimeout(() => handleSubstitution('REGULAR'), 0);
+      } else if (currentStep === 'SELECT_SUB_IN') {
+        const benchPlayers = team.players.filter(p => !p.onField);
+        const player = benchPlayers[numberIndex];
+        if (player) {
+          if (team.substitutionCount >= 8) {
+            setContextMenu(prev => prev ? { ...prev, subInId: player.id, step: 'CONFIRM_SUB_EXCEPTION' } : null);
+          } else {
+            handleSubstitution('REGULAR', { ...contextMenu, subInId: player.id });
+            setContextMenu(null);
+          }
         }
+      } else if (currentStep === 'SELECT_ACTION') {
+        if (numberIndex === 0) setContextMenu({ ...contextMenu, step: 'SELECT_SHOT_TYPE' });
+        else if (numberIndex === 1) addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'TURNOVER', location: { x: contextMenu.x, y: contextMenu.y } });
+        else if (numberIndex === 2) addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'FOUL', location: { x: contextMenu.x, y: contextMenu.y } });
+        else if (numberIndex === 3) addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'REBOUND', reboundType: 'OFFENSIVE', location: { x: contextMenu.x, y: contextMenu.y } });
+      } else if (currentStep === 'SELECT_SHOT_TYPE') {
+        const location = { x: contextMenu.x, y: contextMenu.y };
+        if (numberIndex === 0) addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'RUNNING_IN', result: 'GOAL', location });
+        else if (numberIndex === 1) {
+          const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+          addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'PENALTY', result: 'GOAL', location: autoLoc });
+        } else if (numberIndex === 2) {
+          const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+          addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'FREE_THROW', result: 'GOAL', location: autoLoc });
+        } else if (numberIndex === 3) addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: contextMenu.calculatedShotType, result: 'MISS', location });
       }
-    } else if (currentStep === 'SELECT_ACTION') {
-      // Handle 1-4 for Action Selection
-      if (numberIndex === 0) { // 1 -> Goal
-        setContextMenu({ ...contextMenu, step: 'SELECT_SHOT_TYPE' });
-      } else if (numberIndex === 1) { // 2 -> Turnover
-        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'TURNOVER', location: { x: contextMenu.x, y: contextMenu.y } });
-      } else if (numberIndex === 2) { // 3 -> Foul
-        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'FOUL', location: { x: contextMenu.x, y: contextMenu.y } });
-      } else if (numberIndex === 3) { // 4 -> Rebound
-        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'REBOUND', reboundType: 'OFFENSIVE', location: { x: contextMenu.x, y: contextMenu.y } });
-      }
-    } else if (currentStep === 'SELECT_SHOT_TYPE') {
-      const location = { x: contextMenu.x, y: contextMenu.y };
-      if (numberIndex === 0) { // 1 -> Running In
-        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'RUNNING_IN', result: 'GOAL', location });
-      } else if (numberIndex === 1) { // 2 -> Penalty
-        const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
-        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'PENALTY', result: 'GOAL', location: autoLoc });
-      } else if (numberIndex === 2) { // 3 -> Free Throw
-        const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
-        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'FREE_THROW', result: 'GOAL', location: autoLoc });
-      } else if (numberIndex === 3) { // 4 -> Miss
-        addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: contextMenu.calculatedShotType, result: 'MISS', location });
-      }
+    } catch (err: any) {
+      console.error('CRITICAL ERROR in handlePlayerNumberSelection:', err.message, err.stack);
     }
   };
 
@@ -256,8 +281,16 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
     {
       key: 'Enter', action: () => {
-        if (isMenuOpen && currentStep === 'SELECT_SHOT_TYPE') {
-          addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: contextMenu.calculatedShotType, result: 'GOAL', location: { x: contextMenu.x, y: contextMenu.y } });
+        if (isMenuOpen) {
+          if (currentStep === 'SELECT_SHOT_TYPE' || currentStep === 'SELECT_RESULT') {
+             const teamId = contextMenu.selectedTeam;
+             const playerId = contextMenu.selectedPlayerId;
+             const shotType = contextMenu.calculatedShotType || 'DISTANCE';
+             const location = currentStep === 'SELECT_RESULT' ? (teamId === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 }) : { x: contextMenu.x, y: contextMenu.y };
+             addEvent({ teamId, playerId, type: 'SHOT', shotType, result: 'GOAL', location });
+             setContextMenu(null);
+             setPendingShortcutAction(null);
+          }
         }
       }
     },
@@ -343,56 +376,60 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
   };
 
   const handleFieldClick = (x: number, y: number) => {
-    const teamId: TeamId = x < 50 ? 'HOME' : 'AWAY';
-    const autoShotType = getShotDistanceType(x, y);
-
     setContextMenu({
       visible: true,
       x,
       y,
-      step: 'SELECT_PLAYER',
-      selectedTeam: teamId,
-      calculatedShotType: autoShotType
+      step: 'SELECT_TEAM',
+      calculatedShotType: getShotDistanceType(x, y)
     });
   };
 
-  const handleSubstitution = (reason: 'REGULAR' | 'INJURY' | 'RED_CARD') => {
-    if (!contextMenu?.selectedTeam || !contextMenu.subOutId || !contextMenu.subInId) return;
+  const handleSubstitution = (reason: 'REGULAR' | 'INJURY' | 'RED_CARD', contextOverride?: any) => {
+    try {
+      const context = contextOverride || contextMenu;
+      const selectedTeam = context?.selectedTeam;
+      const subOutId = context?.subOutId;
+      const subInId = context?.subInId;
 
-    const team = contextMenu.selectedTeam === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
+      if (!selectedTeam || !subOutId || !subInId) return;
 
-    const updatedPlayers = team.players.map(p => {
-      if (p.id === contextMenu.subOutId) return { ...p, onField: false };
-      if (p.id === contextMenu.subInId) return { ...p, onField: true };
-      return p;
-    });
+      const team = selectedTeam === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
 
-    const updatedTeam = {
-      ...team,
-      players: updatedPlayers,
-      substitutionCount: reason === 'REGULAR' ? team.substitutionCount + 1 : team.substitutionCount
-    };
+      const updatedPlayers = team.players.map(p => {
+        if (p.id === subOutId) return { ...p, onField: false };
+        if (p.id === subInId) return { ...p, onField: true };
+        return p;
+      });
 
-    const newEvent: MatchEvent = {
-      id: crypto.randomUUID(),
-      timestamp: Math.floor(matchState.timer.elapsedSeconds),
-      realTime: Date.now(),
-      half: matchState.currentHalf,
-      teamId: contextMenu.selectedTeam,
-      type: 'SUBSTITUTION',
-      subOutId: contextMenu.subOutId,
-      subInId: contextMenu.subInId,
-      subReason: reason,
-      previousPossession: matchState.possession
-    };
+      const updatedTeam = {
+        ...team,
+        players: updatedPlayers,
+        substitutionCount: reason === 'REGULAR' ? team.substitutionCount + 1 : team.substitutionCount
+      };
 
-    onUpdateMatch({
-      ...matchState,
-      homeTeam: contextMenu.selectedTeam === 'HOME' ? updatedTeam : matchState.homeTeam,
-      awayTeam: contextMenu.selectedTeam === 'AWAY' ? updatedTeam : matchState.awayTeam,
-      events: [...matchState.events, newEvent]
-    });
-    setContextMenu(null);
+      const subEntry: MatchEvent = {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'sub-' + Math.random().toString(36).substring(2, 9),
+        timestamp: Math.floor(matchState.timer.elapsedSeconds),
+        realTime: Date.now(),
+        half: matchState.currentHalf,
+        teamId: selectedTeam,
+        type: 'SUBSTITUTION',
+        subOutId,
+        subInId,
+        subReason: reason,
+        previousPossession: matchState.possession
+      };
+
+      onUpdateMatch({
+        ...matchState,
+        homeTeam: selectedTeam === 'HOME' ? updatedTeam : matchState.homeTeam,
+        awayTeam: selectedTeam === 'AWAY' ? updatedTeam : matchState.awayTeam,
+        events: [...matchState.events, subEntry]
+      });
+    } catch (err: any) {
+      console.error('CRITICAL ERROR in handleSubstitution:', err.message, err.stack);
+    }
   };
 
   const addEvent = (eventData: Partial<MatchEvent>) => {
@@ -530,8 +567,8 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
               <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('matchTracker.endHalf')}</h3>
               <p className="text-gray-500 mb-6">{t('matchTracker.halfEndDesc')}</p>
               <div className="space-y-3">
-                <button onClick={() => startBreak(10)} className="w-full p-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg flex items-center justify-between">
-                  <span>{t('matchTracker.break')}</span>
+                <button data-testid="start-break-btn-main" onClick={() => startBreak(10)} className="w-full p-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg flex items-center justify-between">
+                  <span>{t('matchTracker.startBreak')}</span>
                   <Clock size={20} />
                 </button>
                 <button onClick={() => { setCustomDuration(10); setActiveModal('BREAK_SETUP'); }} className="w-full p-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-lg text-left">
@@ -553,7 +590,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                 <div className="text-3xl font-mono font-bold w-20 text-center">{customDuration}m</div>
                 <button onClick={() => setCustomDuration(customDuration + 1)} className="p-3 bg-gray-100 rounded-lg font-bold">+</button>
               </div>
-              <button onClick={() => startBreak(customDuration)} className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg">
+              <button data-testid="start-break-btn-custom" onClick={() => startBreak(customDuration)} className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg">
                 {t('matchTracker.startBreak')}
               </button>
             </>
@@ -573,7 +610,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                   <span className="flex-shrink mx-4 text-gray-400 text-sm font-bold">{t('common.or')}</span>
                   <div className="flex-grow border-t border-gray-300"></div>
                 </div>
-                <button onClick={() => { setCustomDuration(5); setActiveModal('OT_SETUP'); }} className="w-full p-4 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold rounded-lg flex items-center justify-between">
+                <button data-testid="overtime-btn" onClick={() => { setCustomDuration(5); setActiveModal('OT_SETUP'); }} className="w-full p-4 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold rounded-lg flex items-center justify-between">
                   <span>{t('matchTracker.overtime')}</span>
                   <Timer size={20} />
                 </button>
@@ -582,7 +619,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
           )}
 
           {activeModal === 'OT_SETUP' && (
-            <>
+            <div data-testid="select-overtime-duration-modal">
               <h3 className="text-xl font-bold text-gray-900 mb-4">{t('matchTracker.overtimeDuration')}</h3>
               <div className="flex items-center gap-4 mb-6">
                 <button onClick={() => setCustomDuration(Math.max(1, customDuration - 1))} className="p-3 bg-gray-100 rounded-lg font-bold">-</button>
@@ -592,7 +629,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
               <button onClick={() => startNextPeriod(customDuration)} className="w-full py-3 bg-orange-600 text-white font-bold rounded-lg">
                 {t('matchTracker.startOvertime')}
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>
@@ -610,21 +647,21 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     const benchPlayers = activeTeam?.players.filter(p => !p.onField) || [];
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setContextMenu(null)}>
+      <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm" data-testid="context-menu-overlay" onClick={() => setContextMenu(null)}>
         <div className="bg-white rounded-xl shadow-2xl p-6 w-[90%] max-w-md animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold text-gray-800">
-              {contextMenu.step === 'SELECT_PLAYER' && "Select Player"}
-              {contextMenu.step === 'SELECT_ACTION' && "Action"}
-              {contextMenu.step === 'SELECT_SHOT_TYPE' && "Shot Details"}
-              {contextMenu.step === 'SELECT_SUB_OUT' && `Substitution (Out)`}
-              {contextMenu.step === 'SELECT_SUB_IN' && "Substitution (In)"}
-              {contextMenu.step === 'CONFIRM_SUB_EXCEPTION' && "Substitution Limit Reached"}
+              {contextMenu.step === 'SELECT_PLAYER' && t('matchTracker.selectPlayer')}
+              {contextMenu.step === 'SELECT_ACTION' && t('matchTracker.action')}
+              {contextMenu.step === 'SELECT_SHOT_TYPE' && t('matchTracker.shotDetails')}
+              {contextMenu.step === 'SELECT_SUB_OUT' && t('matchTracker.subOut')}
+              {contextMenu.step === 'SELECT_SUB_IN' && t('matchTracker.subIn')}
+              {contextMenu.step === 'CONFIRM_SUB_EXCEPTION' && t('matchTracker.subLimitReached')}
             </h3>
             <div className="flex items-center gap-2">
               {contextMenu.step === 'SELECT_PLAYER' && pendingShortcutAction && (
                 <span className="px-2 py-1 bg-indigo-600 text-white text-xs font-bold rounded animate-pulse">
-                  Select Player for {pendingShortcutAction}
+                  {t('matchTracker.selectPlayerFor', { action: pendingShortcutAction })}
                 </span>
               )}
               <button onClick={() => setContextMenu(null)} className="text-gray-400 hover:text-gray-600">✕</button>
@@ -632,13 +669,42 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
           </div>
 
           <div className="space-y-4">
+            {contextMenu.step === 'SELECT_TEAM' && (
+              <div className="space-y-4" data-testid="select-team-modal">
+                <h3 className="text-lg font-bold text-center mb-4">{t('matchTracker.selectTeam')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    data-testid="select-home-team-btn"
+                    onClick={() => setContextMenu({ ...contextMenu, selectedTeam: 'HOME', step: 'SELECT_PLAYER' })}
+                    className="p-4 rounded-xl border-2 flex flex-col items-center gap-3 hover:bg-gray-50 transition-all"
+                    style={{ borderColor: matchState.homeTeam.color }}
+                  >
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: matchState.homeTeam.color }}>
+                      <Shirt size={24} color="white" />
+                    </div>
+                    <span className="font-bold text-gray-900">{matchState.homeTeam.name}</span>
+                  </button>
+                  <button
+                    data-testid="select-away-team-btn"
+                    onClick={() => setContextMenu({ ...contextMenu, selectedTeam: 'AWAY', step: 'SELECT_PLAYER' })}
+                    className="p-4 rounded-xl border-2 flex flex-col items-center gap-3 hover:bg-gray-50 transition-all"
+                    style={{ borderColor: matchState.awayTeam.color }}
+                  >
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: matchState.awayTeam.color }}>
+                      <Shirt size={24} color="white" />
+                    </div>
+                    <span className="font-bold text-gray-900">{matchState.awayTeam.name}</span>
+                  </button>
+                </div>
+              </div>
+            )}
             {contextMenu.step === 'SELECT_RESULT' && (
-              <div className="space-y-4">
+              <div className="space-y-4" data-testid="select-result-modal">
                 <div className="text-center font-bold text-lg mb-4">
                   Result for {contextMenu.calculatedShotType === 'FREE_THROW' ? 'Free Pass' : 'Penalty'}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <button onClick={() => {
+                  <button data-testid="result-goal-btn" onClick={() => {
                     const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
                     addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', result: 'GOAL', shotType: contextMenu.calculatedShotType, location: autoLoc });
                     setPendingShortcutAction(null);
@@ -646,7 +712,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                     <CheckCircle size={48} />
                     <span className="font-black text-2xl">GOAL</span>
                   </button>
-                  <button onClick={() => {
+                  <button data-testid="result-miss-btn" onClick={() => {
                     const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
                     addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', result: 'MISS', shotType: contextMenu.calculatedShotType, location: autoLoc });
                     setPendingShortcutAction(null);
@@ -657,18 +723,18 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                 </div>
               </div>
             )}
-            //Player selection modal
             {contextMenu.step === 'SELECT_PLAYER' && (
-              <>
+              <div data-testid="select-player-modal">
                 <div className="grid grid-cols-4 gap-3 mb-4">
                   {onFieldPlayers.length === 0 && (
                     <div className="col-span-4 text-center py-4 text-gray-500 italic">
-                      No players on field. Please substitute players in.
+                      {t('matchTracker.noPlayersOnField')}
                     </div>
                   )}
                   {onFieldPlayers.map(p => (
                     <button
                       key={p.id}
+                      data-testid={`player-btn-${p.id}`}
                       onClick={() => {
                         if (pendingShortcutAction) {
                           // Execute Pending Action Immediately
@@ -676,16 +742,20 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                           if (pendingShortcutAction === 'GOAL') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location });
                           else if (pendingShortcutAction === 'MISS') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'SHOT', result: 'MISS', shotType: 'RUNNING_IN', location });
                           else if (pendingShortcutAction === 'FREE_THROW') {
-                            setContextMenu({ ...contextMenu, selectedPlayerId: p.id, step: 'SELECT_RESULT', calculatedShotType: 'FREE_THROW' });
+                            setContextMenu(prev => prev ? { ...prev, selectedPlayerId: p.id, step: 'SELECT_RESULT', calculatedShotType: 'FREE_THROW' } : null);
                             return; // Wait
                           }
                           else if (pendingShortcutAction === 'PENALTY') {
-                            setContextMenu({ ...contextMenu, selectedPlayerId: p.id, step: 'SELECT_RESULT', calculatedShotType: 'PENALTY' });
+                            setContextMenu(prev => prev ? { ...prev, selectedPlayerId: p.id, step: 'SELECT_RESULT', calculatedShotType: 'PENALTY' } : null);
                             return; // Wait
                           }
                           else if (pendingShortcutAction === 'TURNOVER') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'TURNOVER', location });
                           else if (pendingShortcutAction === 'FOUL') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'FOUL', location });
                           else if (pendingShortcutAction === 'REBOUND') addEvent({ teamId: contextMenu.selectedTeam, playerId: p.id, type: 'REBOUND', reboundType: 'OFFENSIVE', location });
+                          else if (pendingShortcutAction === 'CARD') {
+                            setContextMenu(prev => prev ? { ...prev, selectedPlayerId: p.id, step: 'SELECT_CARD_TYPE' } : null);
+                            return; // Wait for card type
+                          }
 
                           setPendingShortcutAction(null);
                           setContextMenu(null);
@@ -705,105 +775,156 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                 </div>
                 <div className="border-t pt-4">
                   <button
+                    data-testid="substitution-menu-btn"
                     onClick={() => setContextMenu({ ...contextMenu, step: 'SELECT_SUB_OUT' })}
                     className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 font-bold border border-gray-200"
                   >
-                    <Repeat size={18} /> Substitution ({activeTeam.substitutionCount}/8)
+                    <Repeat size={18} /> {t('matchTracker.substitution')} ({activeTeam.substitutionCount}/8)
                   </button>
+                  <button data-testid="open-jury-btn" onClick={() => openExternalView('JURY')} className="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors group">
+                <div className="flex items-center gap-3">
+                  <Monitor className="text-indigo-500" size={18} />
+                  <div className="text-left">
+                    <div className="text-sm font-bold text-gray-900">{t('matchTracker.setupJuryTable')}</div>
+                    <div className="text-[10px] text-gray-500 font-medium">{t('matchTracker.juryTableDesc')}</div>
+                  </div>
                 </div>
-              </>
+                <ExternalLink size={14} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
+              </button>
+                </div>
+              </div>
             )}
-            // Substitution in/out workflow
             {contextMenu.step === 'SELECT_SUB_OUT' && (
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-4 gap-3" data-testid="select-sub-out-modal">
                 {onFieldPlayers.length === 0 && (
-                  <div className="col-span-4 text-center py-4 text-gray-500 italic">No players to substitute out.</div>
+                  <div className="col-span-4 text-center py-4 text-gray-500 italic">{t('matchTracker.noPlayersToSubOut')}</div>
                 )}
                 {onFieldPlayers.map(p => (
-                  <button key={p.id} onClick={() => setContextMenu({ ...contextMenu, subOutId: p.id, step: 'SELECT_SUB_IN' })} className="aspect-square rounded-full bg-red-50 hover:bg-red-100 border-red-200 border flex items-center justify-center font-bold">{p.number}</button>
+                  <button key={p.id} data-testid={`sub-out-player-btn-${p.id}`} onClick={() => setContextMenu({ ...contextMenu, subOutId: p.id, step: 'SELECT_SUB_IN' })} className="aspect-square rounded-full bg-red-50 hover:bg-red-100 border-red-200 border flex items-center justify-center font-bold">{p.number}</button>
                 ))}
               </div>
             )}
             {contextMenu.step === 'SELECT_SUB_IN' && (
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-4 gap-3" data-testid="select-sub-in-modal">
                 {benchPlayers.map(p => (
-                  <button key={p.id} onClick={() => {
+                  <button key={p.id} data-testid={`sub-in-player-btn-${p.id}`} onClick={() => {
                     if (activeTeam.substitutionCount >= 8) {
                       setContextMenu({ ...contextMenu, subInId: p.id, step: 'CONFIRM_SUB_EXCEPTION' });
                     } else {
-                      const evt = { ...contextMenu, subInId: p.id };
-                      setContextMenu(evt);
-                      setTimeout(() => handleSubstitution('REGULAR'), 0);
+                      const updatedMenu = { ...contextMenu, subInId: p.id };
+                      setContextMenu(updatedMenu as any);
+                      // Execute immediately with the new IDs to avoid stale state in handleSubstitution
+                      handleSubstitution('REGULAR', updatedMenu);
                     }
                   }} className="aspect-square rounded-full bg-green-50 hover:bg-green-100 border-green-200 border flex items-center justify-center font-bold">{p.number}</button>
                 ))}
               </div>
             )}
-            //Substitution exception handling
             {contextMenu.step === 'CONFIRM_SUB_EXCEPTION' && (
-              <div className="flex gap-4 justify-center">
-                <button onClick={() => handleSubstitution('INJURY')} className="px-4 py-2 bg-orange-100 font-bold rounded">Injury</button>
-                <button onClick={() => handleSubstitution('RED_CARD')} className="px-4 py-2 bg-red-100 font-bold rounded text-red-700">Red Card</button>
+              <div className="flex gap-4 justify-center" data-testid="confirm-sub-exception-modal">
+                <button data-testid="sub-exception-injury-btn" onClick={() => handleSubstitution('INJURY')} className="px-4 py-2 bg-orange-100 font-bold rounded">{t('matchTracker.injuryMedical')}</button>
+                <button data-testid="sub-exception-card-btn" onClick={() => handleSubstitution('RED_CARD')} className="px-4 py-2 bg-red-100 font-bold rounded text-red-700">{t('matchTracker.redCard')}</button>
               </div>
             )}
-            //Action selection
             {contextMenu.step === 'SELECT_ACTION' && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3" data-testid="select-action-modal">
                 <button
+                  data-testid="goal-miss-action-btn"
                   onClick={() => setContextMenu({ ...contextMenu, step: 'SELECT_SHOT_TYPE' })}
                   className="p-4 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 flex flex-col items-center gap-2"
                 >
-                  <Target size={24} /> Shot / Goal <kbd className="text-[10px] bg-white/50 px-1 rounded">1</kbd>
+                  <Target size={24} /> {t('matchTracker.goal')} / {t('matchTracker.miss')} <kbd className="text-xs bg-white/50 px-1 rounded">1</kbd>
                 </button>
                 <button
+                  data-testid="turnover-action-btn"
                   onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'TURNOVER', location: { x: contextMenu.x, y: contextMenu.y } })}
                   className="p-4 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 flex flex-col items-center gap-2"
                 >
-                  <ArrowRightLeft size={24} /> Turnover / Attack <kbd className="text-[10px] bg-black/10 px-1 rounded">2</kbd>
+                  <ArrowRightLeft size={24} /> {t('matchTracker.turnover')} <kbd className="text-[10px] bg-black/10 px-1 rounded">2</kbd>
                 </button>
                 <button
+                  data-testid="foul-action-btn"
                   onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'FOUL', location: { x: contextMenu.x, y: contextMenu.y } })}
                   className="p-4 bg-orange-50 text-orange-700 border border-orange-200 rounded-lg hover:bg-orange-100 flex flex-col items-center gap-2"
                 >
-                  <AlertTriangle size={24} /> Foul <kbd className="text-[10px] bg-white/50 px-1 rounded">3</kbd>
+                  <AlertTriangle size={24} /> {t('matchTracker.foul')} <kbd className="text-[10px] bg-white/50 px-1 rounded">3</kbd>
                 </button>
                 <button
+                  data-testid="rebound-action-btn"
                   onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'REBOUND', reboundType: 'OFFENSIVE', location: { x: contextMenu.x, y: contextMenu.y } })}
                   className="p-4 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 flex flex-col items-center gap-2"
                 >
-                  <Shield size={24} /> Rebound <kbd className="text-[10px] bg-white/50 px-1 rounded">4</kbd>
+                  <Shield size={24} /> {t('matchTracker.rebound')} <kbd className="text-[10px] bg-white/50 px-1 rounded">4</kbd>
+                </button>
+                <button
+                  data-testid="card-action-btn"
+                  onClick={() => setContextMenu({ ...contextMenu, step: 'SELECT_CARD_TYPE' as any })}
+                  className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 flex flex-col items-center gap-2"
+                >
+                  <Gavel size={24} /> {t('matchTracker.card')} <kbd className="text-[10px] bg-white/50 px-1 rounded">C</kbd>
+                </button>
+                <button
+                  data-testid="action-substitution-btn"
+                  onClick={() => setContextMenu({ ...contextMenu, step: 'SELECT_SUB_OUT' })}
+                  className="p-4 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 flex flex-col items-center gap-2"
+                >
+                  <Repeat size={24} /> {t('matchTracker.substitution')}
                 </button>
               </div>
             )}
-            //Shot type selection
+            {(contextMenu.step as any) === 'SELECT_CARD_TYPE' && (
+              <div className="grid grid-cols-2 gap-4" data-testid="select-card-type-modal">
+                <button
+                  data-testid="yellow-card-btn"
+                  onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'CARD', cardType: 'YELLOW', location: { x: contextMenu.x, y: contextMenu.y } })}
+                  className="p-6 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-lg flex flex-col items-center gap-2 border-2 border-yellow-300"
+                >
+                  <div className="w-8 h-12 bg-yellow-400 rounded-sm shadow-sm" />
+                  <span className="font-bold">{t('matchTracker.yellowCard')}</span>
+                </button>
+                <button
+                  data-testid="red-card-btn"
+                  onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'CARD', cardType: 'RED', location: { x: contextMenu.x, y: contextMenu.y } })}
+                  className="p-6 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex flex-col items-center gap-2 border-2 border-red-300"
+                >
+                  <div className="w-8 h-12 bg-red-600 rounded-sm shadow-sm" />
+                  <span className="font-bold">{t('matchTracker.redCard')}</span>
+                </button>
+              </div>
+            )}
             {contextMenu.step === 'SELECT_SHOT_TYPE' && (
-              <div className="space-y-4">
+              <div className="space-y-4" data-testid="select-shot-type-modal">
                 <button
                   onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: contextMenu.calculatedShotType, result: 'GOAL', location: { x: contextMenu.x, y: contextMenu.y } })}
                   className="w-full px-3 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow font-bold text-lg mb-4 flex items-center justify-center gap-2"
                 >
-                  Goal ({contextMenu.calculatedShotType}) <kbd className="text-xs bg-white/20 px-1 rounded text-white">Enter</kbd>
+                  {t('matchTracker.goal')} ({contextMenu.calculatedShotType}) <kbd className="text-xs bg-white/20 px-1 rounded text-white">Enter</kbd>
                 </button>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => {
+                  <button 
+                    data-testid="shot-type-btn-RUNNING_IN"
+                    onClick={() => {
                     const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
                     addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'RUNNING_IN', result: 'GOAL', location: { x: contextMenu.x, y: contextMenu.y } })
-                  }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">Running In <kbd className="text-[10px] bg-black/10 px-1 rounded">1</kbd></button>
-                  <button onClick={() => {
-                    const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
-                    addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'PENALTY', result: 'GOAL', location: autoLoc });
+                  }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">{t('matchTracker.runningIn')} <kbd className="text-[10px] bg-black/10 px-1 rounded">1</kbd></button>
+                  <button 
+                    data-testid="shot-type-btn-PENALTY"
+                    onClick={() => {
+                    setContextMenu(prev => prev ? { ...prev, step: 'SELECT_RESULT', calculatedShotType: 'PENALTY' } : null);
                   }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">{t('matchTracker.penalty')} <kbd className="text-[10px] bg-black/10 px-1 rounded">2</kbd></button>
-                  <button onClick={() => {
-                    const autoLoc = contextMenu.selectedTeam === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
-                    addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: 'FREE_THROW', result: 'GOAL', location: autoLoc });
+                  <button 
+                    data-testid="shot-type-btn-FREE_THROW"
+                    onClick={() => {
+                    setContextMenu(prev => prev ? { ...prev, step: 'SELECT_RESULT', calculatedShotType: 'FREE_THROW' } : null);
                   }} className="px-3 py-2 bg-green-100 text-green-800 rounded hover:bg-green-200 font-bold flex flex-col items-center">{t('matchTracker.freePass')} <kbd className="text-[10px] bg-black/10 px-1 rounded">3</kbd></button>
-                  <button onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: contextMenu.calculatedShotType, result: 'MISS', location: { x: contextMenu.x, y: contextMenu.y } })} className="px-3 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200 font-bold flex flex-col items-center">{t('matchTracker.miss')} <kbd className="text-[10px] bg-black/10 px-1 rounded">4</kbd></button>
+                  <button 
+                    data-testid="shot-type-btn-MISS"
+                    onClick={() => addEvent({ teamId: contextMenu.selectedTeam, playerId: contextMenu.selectedPlayerId, type: 'SHOT', shotType: contextMenu.calculatedShotType, result: 'MISS', location: { x: contextMenu.x, y: contextMenu.y } })} className="px-3 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200 font-bold flex flex-col items-center">{t('matchTracker.miss')} <kbd className="text-[10px] bg-black/10 px-1 rounded">4</kbd></button>
                 </div>
               </div>
             )}
-            //Substitution team selector
             {(contextMenu.step as any) === 'SELECT_TEAM_FOR_SUB' && (
-              <div className="space-y-4">
+              <div className="space-y-4" data-testid="select-team-for-sub-modal">
                 <h3 className="text-lg font-bold text-center mb-4">{t('matchTracker.selectTeamSub')}</h3>
                 <button
                   onClick={() => setContextMenu({ ...contextMenu, selectedTeam: 'HOME', step: 'SELECT_SUB_OUT' })}
@@ -811,7 +932,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                   style={{ borderColor: matchState.homeTeam.color }}
                 >
                   <div className="flex items-center gap-3">
-                    <Shirt size={24} fill={matchState.homeTeam.color} stroke={matchState.homeTeam.color} />
+                    <Shirt size={24} fill={matchState.homeTeam.color} />
                     <span className="font-bold text-lg">{matchState.homeTeam.name}</span>
                   </div>
                   <div className="bg-gray-100 px-3 py-1 rounded text-sm text-gray-500 font-bold">
@@ -824,7 +945,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                   style={{ borderColor: matchState.awayTeam.color }}
                 >
                   <div className="flex items-center gap-3">
-                    <Shirt size={24} fill={matchState.awayTeam.color} stroke={matchState.awayTeam.color} />
+                    <Shirt size={24} fill={matchState.awayTeam.color} />
                     <span className="font-bold text-lg">{matchState.awayTeam.name}</span>
                   </div>
                   <div className="bg-gray-100 px-3 py-1 rounded text-sm text-gray-500 font-bold">
@@ -850,21 +971,21 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
               <div className="text-5xl font-black font-mono text-white leading-none">{getScore(matchState, 'HOME')}</div>
             </div>
             <div className="flex flex-col items-center">
-              <div className="bg-black/50 px-6 py-2 rounded-t-lg border-b border-gray-700 w-48 text-center relative">
+              <div className="bg-black/50 px-6 py-2 rounded-t-lg border-b border-gray-700 w-48 text-center relative cursor-pointer">
                 <div className={`text-4xl font-mono font-bold tracking-widest ${matchState.timer.isRunning ? 'text-green-400' : 'text-red-400'}`}>
                   {formatTime(Math.max(0, matchState.halfDurationSeconds - matchState.timer.elapsedSeconds))}
                 </div>
                 <div className="text-[10px] text-gray-500 font-bold tracking-widest">
-                  {matchState.currentHalf <= 2 ? `HALF ${matchState.currentHalf}` : `OT ${matchState.currentHalf - 2}`}
+                  HALF {matchState.currentHalf}
                 </div>
               </div>
-              <div className="mt-2 flex flex-col items-center">
+              <div data-testid="shot-clock-toggle" className="mt-2 flex flex-col items-center">
                 <div className={`text-3xl font-mono font-bold ${matchState.shotClock.seconds <= 5 ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`}>
                   {Math.ceil(matchState.shotClock.seconds)}
                 </div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-widest">SHOT CLOCK</div>
               </div>
-              <button onClick={togglePossession} className="mt-2 w-32 bg-gray-800 hover:bg-gray-700 text-gray-300 py-1 px-2 rounded-lg text-xs flex items-center justify-center gap-1">
+              <button data-testid="switch-possession-btn" onClick={togglePossession} className="mt-2 w-32 bg-gray-800 hover:bg-gray-700 text-gray-300 py-1 px-2 rounded-lg text-xs flex items-center justify-center gap-1">
                 <ArrowRightLeft size={12} /> Switch Poss <kbd className="hidden lg:inline ml-1 text-[9px] opacity-70 bg-black/30 px-1 rounded">A/H</kbd>
               </button>
             </div>
@@ -876,6 +997,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
           </div>
           <div className="flex items-center gap-2">
             <button
+              data-testid="mute-btn"
               onClick={() => updateSettings({ soundEnabled: !soundEnabled })}
               className={`p-2 rounded text-xs font-bold ${!soundEnabled ? 'bg-red-900/50 text-red-400 hover:bg-red-900' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'}`}
               title={!soundEnabled ? t('matchTracker.unmute') : t('matchTracker.mute')}
@@ -884,6 +1006,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             </button>
             <div className="w-px h-8 bg-gray-700 mx-1"></div>
             <button
+              data-testid="undo-btn"
               onClick={handleUndo}
               className="p-2 bg-gray-700 hover:bg-red-600 rounded text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
               title={t('common.undo')}
@@ -893,6 +1016,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             </button>
             <div className="w-px h-8 bg-gray-700 mx-1"></div>
             <button
+              data-testid="voice-btn"
               onClick={toggleListening}
               className={`p-2 rounded text-xs font-bold transition-all ${isListening ? 'bg-red-600 animate-pulse text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'}`}
               title={isListening ? t('matchTracker.stopVoice') : t('matchTracker.startVoice')}
@@ -901,9 +1025,18 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             </button>
             {isListening && <span className="text-[10px] text-red-400 font-mono animate-pulse uppercase tracking-wider">{t('matchTracker.listening')}</span>}
             <div className="w-px h-8 bg-gray-700 mx-1"></div>
-            <button onClick={startTimeout} className="p-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white shadow flex items-center gap-1" title={t('matchTracker.timeout')}><Clock size={20} /><span className="hidden lg:inline font-mono text-[10px]">T</span></button>
+            <button data-testid="timeout-btn" onClick={startTimeout} className="p-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white shadow flex items-center gap-1" title={t('matchTracker.timeout')}><Clock size={20} /><span className="hidden lg:inline font-mono text-[10px]">T</span></button>
             <div className="w-px h-8 bg-gray-700 mx-2"></div>
             <button
+              data-testid="vote-btn"
+              onClick={() => setShowVotingShare(true)}
+              className="flex flex-col items-center gap-1 p-2 hover:bg-white/10 rounded transition-colors text-white"
+            >
+              <Trophy size={20} />
+              <span className="text-[10px] font-bold uppercase tracking-tighter">Vote</span>
+            </button>
+            <button
+              data-testid="share-match-btn"
               onClick={() => setShowShareModal(true)}
               className="p-2 bg-gray-700 hover:bg-indigo-600 rounded text-xs font-bold"
               title={t('matchTracker.shareResult')}
@@ -912,7 +1045,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             </button>
             <div className="w-px h-8 bg-gray-700 mx-2"></div>
             {/* Navigation buttons removed as per user request */}
-            <button onClick={handlePhaseEnd} className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg ml-2 font-bold text-xs"><PieChart size={16} /> End Period</button>
+            <button data-testid="end-period-btn" onClick={handlePhaseEnd} className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg ml-2 font-bold text-xs"><PieChart size={16} /> End Period</button>
           </div>
         </div>
       </div>
@@ -967,6 +1100,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                       {t.players.filter(p => p.onField).map(p => (
                         <button
                           key={p.id}
+                          data-testid={`player-btn-${p.id}`}
                           onClick={() => setContextMenu({ visible: true, x: 0, y: 0, step: 'SELECT_ACTION', selectedTeam: t.id as TeamId, selectedPlayerId: p.id })}
                           className="bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 text-xs py-2 rounded-lg flex flex-col items-center transition-colors"
                         >
@@ -983,7 +1117,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
         </div>
       </div>
       {matchState.timeout.isActive && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md" data-testid="timeout-modal">
           <div className="text-center text-white">
             <h2 className="text-6xl font-black font-mono mb-4">{Math.ceil(matchState.timeout.remainingSeconds)}</h2>
             <div className="text-2xl font-bold uppercase tracking-widest mb-8">Time Out</div>
@@ -996,7 +1130,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
         </div>
       )}
       {matchState.break?.isActive && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-indigo-900/90 backdrop-blur-md">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-indigo-900/90 backdrop-blur-md" data-testid="break-modal">
           <div className="text-center text-white">
             <h2 className="text-8xl font-black font-mono mb-4">{formatTime(Math.ceil(matchState.break.durationSeconds))}</h2>
             <div className="text-2xl font-bold uppercase tracking-widest mb-8">{t('matchTracker.halftimeBreak')}</div>
@@ -1037,8 +1171,120 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
         </button>
       </div>
 
+      {matchState.timer.elapsedSeconds >= matchState.halfDurationSeconds && !matchState.timer.isRunning && matchState.currentHalf < 2 && !matchState.break?.isActive && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4" data-testid="half-end-modal">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Clock className="text-indigo-500" /> {t('matchTracker.halfEnded')}
+              </h3>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-center">{t('matchTracker.halfEndedDesc')}</p>
+            <div className="space-y-4">
+              <button
+                data-testid="start-break-btn"
+                onClick={() => startBreak(10)}
+                className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-lg"
+              >
+                {t('matchTracker.startBreak')}
+              </button>
+              <button
+                data-testid="start-next-period-btn"
+                onClick={() => startNextPeriod(25)}
+                className="w-full py-3 bg-green-600 text-white rounded-xl font-bold text-lg hover:bg-green-700 transition-colors shadow-lg"
+              >
+                {t('matchTracker.skipTo2ndHalf')}
+              </button>
+              <button
+                data-testid="finish-match-btn"
+                onClick={onFinishMatch}
+                className="w-full py-3 bg-gray-200 text-gray-800 rounded-xl font-bold text-lg hover:bg-gray-300 transition-colors"
+              >
+                {t('matchTracker.finishMatch')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {matchState.timer.elapsedSeconds >= matchState.halfDurationSeconds && !matchState.timer.isRunning && matchState.currentHalf >= 2 && !matchState.break?.isActive && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4" data-testid="match-end-modal">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Clock className="text-red-500" /> {t('matchTracker.matchEnded')}
+              </h3>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-center">{t('matchTracker.matchEndedDesc')}</p>
+            <div className="space-y-4">
+              <button
+                data-testid="overtime-btn"
+                onClick={() => { setCustomDuration(5); setActiveModal('OT_SETUP'); setShowModal(true); }}
+                className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-lg"
+              >
+                {t('matchTracker.overtime')}
+              </button>
+              <button
+                onClick={onFinishMatch}
+                className="w-full py-3 bg-red-600 text-white rounded-xl font-bold text-lg hover:bg-red-700 transition-colors shadow-lg"
+              >
+                {t('matchTracker.finishMatch')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {renderPhaseModals()}
       {renderContextMenu()}
+
+      {/* Voting Share Modal */}
+      {showVotingShare && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" onClick={() => setShowVotingShare(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Trophy className="text-yellow-500" /> Goal of the Match
+              </h3>
+               <button data-testid="close-modal-btn" onClick={() => setShowVotingShare(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            
+            <h3 className="text-xl font-bold text-gray-900 mb-1">{t('matchTracker.goalOfTheMatch')}</h3>
+            <p className="text-sm text-gray-500 mb-6">{t('matchTracker.voteShareDesc')}</p>
+            
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
+               <div className="text-xs font-mono text-indigo-600 break-all mb-3 text-center">
+                 {window.location.origin}/?view=VOTING
+               </div>
+               <button 
+                data-testid="copy-link-btn"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/?view=VOTING`);
+                  alert(t('matchTracker.copySuccess'));
+                }}
+                className="w-full py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm"
+               >
+                 {t('matchTracker.copyLink')}
+               </button>
+            </div>
+
+            <div className="space-y-3">
+              <button 
+                data-testid="reset-votes-btn"
+                onClick={() => socket?.emit('vote-reset')}
+                className="w-full py-3 bg-red-100 text-red-700 rounded-xl font-bold text-sm hover:bg-red-200 transition-colors"
+              >
+                {t('matchTracker.resetVotes')}
+              </button>
+              <p className="text-[10px] text-gray-400 text-center uppercase tracking-widest leading-tight">
+                {t('matchTracker.voteStorageDesc')}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showShareModal && (
         <SocialShareModal

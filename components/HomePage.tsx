@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import {
   PlayCircle, History, BarChart2, BrainCircuit,
-  Monitor, Video, Tv, LayoutTemplate, Clock,
+  Monitor, Video, Tv, LayoutTemplate, Clock, Code, X,
   Wifi, Users, Activity, Play, Globe, Trophy, Watch
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ interface HomePageProps {
 
 const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], matchState }) => {
   const [serverIp, setServerIp] = React.useState<string>('localhost');
+  const [isTickerModalOpen, setIsTickerModalOpen] = React.useState(false);
   
   React.useEffect(() => {
     if (window.location.hostname !== 'localhost') {
@@ -84,6 +85,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                 <button
                   onClick={() => !hasActiveMatch && onNavigate('SETUP')}
                   disabled={hasActiveMatch}
+                  data-testid="start-match-btn"
                   className={`flex-1 p-6 rounded-xl border flex flex-col items-center justify-center gap-3 transition-all
                     ${hasActiveMatch
                       ? 'bg-slate-800/50 border-slate-800 text-slate-500 cursor-not-allowed grayscale'
@@ -168,6 +170,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.directorDesc')}
                   icon={<Monitor />}
                   color="indigo"
+                  testId="nav-director"
                   onClick={() => onNavigate('DIRECTOR')}
                 />
                 <NavCard
@@ -175,6 +178,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.livestreamStatsDesc')}
                   icon={<Globe />}
                   color="blue"
+                  testId="nav-live-stats"
                   onClick={() => onNavigate('LIVESTREAM_STATS')}
                 />
                 <NavCard
@@ -182,7 +186,15 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.streamOverlayDesc')}
                   icon={<Video />}
                   color="purple"
+                  testId="nav-stream-overlay"
                   onClick={() => onNavigate('STREAM_OVERLAY')}
+                />
+                <NavCard
+                  title="Live-Ticker Widget"
+                  desc="Embed live scores on your club's website"
+                  icon={<Code />}
+                  color="emerald"
+                  onClick={() => setIsTickerModalOpen(true)}
                 />
               </div>
             </div>
@@ -196,6 +208,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.matchHistoryDesc')}
                   icon={<History />}
                   color="slate"
+                  testId="nav-match-history"
                   onClick={() => onNavigate('MATCH_HISTORY')}
                 />
                 <NavCard
@@ -203,6 +216,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.overallStatsDesc')}
                   icon={<BarChart2 />}
                   color="emerald"
+                  testId="nav-overall-stats"
                   onClick={() => onNavigate('OVERALL_STATS')}
                 />
                 <NavCard
@@ -210,6 +224,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.strategyPlannerDesc')}
                   icon={<BrainCircuit />}
                   color="amber"
+                  testId="nav-strategy"
                   onClick={() => onNavigate('STRATEGY')}
                 />
                 <NavCard
@@ -217,6 +232,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.clubManagerDesc')}
                   icon={<Users />}
                   color="cyan"
+                  testId="nav-club-manager"
                   onClick={() => onNavigate('CLUB_MANAGER')}
                 />
                 <NavCard
@@ -224,6 +240,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.seasonManagerDesc')}
                   icon={<Trophy />}
                   color="yellow"
+                  testId="nav-season-manager"
                   onClick={() => onNavigate('SEASON_MANAGER')}
                 />
               </div>
@@ -238,6 +255,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.shotClockDesc')}
                   icon={<Clock />}
                   color="red"
+                  testId="nav-shot-clock"
                   onClick={() => onNavigate('SHOT_CLOCK')}
                 />
                 <NavCard
@@ -245,6 +263,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.liveScreenDesc')}
                   icon={<Tv />}
                   color="orange"
+                  testId="nav-live"
                   onClick={() => onNavigate('LIVE')}
                 />
                 <NavCard
@@ -252,6 +271,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.juryInterfaceDesc')}
                   icon={<LayoutTemplate />}
                   color="cyan"
+                  testId="nav-jury"
                   onClick={() => onNavigate('JURY')}
                 />
                 <NavCard
@@ -259,6 +279,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   desc={t('views.spotterInterfaceDesc')}
                   icon={<Users />}
                   color="blue"
+                  testId="nav-spotter"
                   onClick={() => onNavigate('SPOTTER')}
                 />
               </div>
@@ -267,14 +288,93 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
           </div>
         </div>
 
+        {/* Ticker Embed Modal */}
+        {isTickerModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 text-slate-200">
+              <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/20 rounded-lg">
+                    <Code className="text-emerald-400" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Embed Live-Ticker</h3>
+                    <p className="text-xs text-slate-400">Copy this code to your club website</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsTickerModalOpen(false)}
+                  className="p-2 hover:bg-slate-800 rounded-full text-slate-500 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Iframe Code</label>
+                  <div className="relative group">
+                    <pre className="bg-black p-4 rounded-xl text-emerald-500 font-mono text-xs overflow-x-auto border border-slate-800">
+                      {`<iframe 
+  src="${window.location.origin}/?view=TICKER" 
+  width="100%" 
+  height="150" 
+  frameborder="0" 
+  scrolling="no">
+</iframe>`}
+                    </pre>
+                    <button 
+                      onClick={() => {
+                        const code = `<iframe src="${window.location.origin}/?view=TICKER" width="100%" height="150" frameborder="0" scrolling="no"></iframe>`;
+                        navigator.clipboard.writeText(code);
+                      }}
+                      className="absolute top-2 right-2 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase rounded shadow-lg transition-all"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex gap-4 items-start">
+                  <div className="p-2 bg-blue-500/20 rounded-lg mt-1">
+                    <Globe className="text-blue-400" size={16} />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-blue-100">Public Access Note</h4>
+                    <p className="text-xs text-blue-300 leading-relaxed">
+                      This ticker shows live data from your active match. By embedding it, you make this match data visible to anyone visiting your website. No login is required to view the ticker.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button 
+                    onClick={() => onNavigate('TICKER')}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-bold transition-colors"
+                  >
+                    Preview Ticker
+                  </button>
+                  <button 
+                    onClick={() => setIsTickerModalOpen(false)}
+                    className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold transition-all shadow-lg shadow-emerald-600/20"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
+
     </div>
   );
 };
 
 // --- Sub-components & Helpers ---
 
-const NavCard = ({ title, desc, icon, color, onClick }: any) => {
+const NavCard = ({ title, desc, icon, color, onClick, testId }: any) => {
   const colorMap: any = {
     indigo: 'hover:border-indigo-500/50 hover:bg-indigo-500/10 text-indigo-400',
     blue: 'hover:border-blue-500/50 hover:bg-blue-500/10 text-blue-400',
@@ -293,6 +393,7 @@ const NavCard = ({ title, desc, icon, color, onClick }: any) => {
   return (
     <button
       onClick={onClick}
+      data-testid={testId}
       className={`w-full p-4 rounded-xl border border-slate-800 ${bgStep} text-left transition-all duration-200 group ${colorMap[color] || ''} hover:shadow-lg`}
     >
       <div className="flex items-start gap-4">

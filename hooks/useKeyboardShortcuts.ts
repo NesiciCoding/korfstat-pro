@@ -16,15 +16,14 @@ export const useKeyboardShortcuts = (shortcuts: ShortcutConfig[], enabled: boole
     // specific - use a ref to hold the latest shortcuts so we don't need to unbind/rebind the listener
     // on every render (since shortcuts array is likely recreated every render in parent).
     const shortcutsRef = useRef(shortcuts);
+    shortcutsRef.current = shortcuts;
+    const enabledRef = useRef(enabled);
+    enabledRef.current = enabled;
 
     useEffect(() => {
-        shortcutsRef.current = shortcuts;
-    }); // Runs on every render to keep ref fresh
-
-    useEffect(() => {
-        if (!enabled) return;
-
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (!enabledRef.current) return;
+            
             // Ignore if user is typing in an input or textarea
             const target = e.target as HTMLElement;
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable) {
@@ -49,6 +48,8 @@ export const useKeyboardShortcuts = (shortcuts: ShortcutConfig[], enabled: boole
         };
 
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [enabled]); // Only re-bind if 'enabled' status changes
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
 };

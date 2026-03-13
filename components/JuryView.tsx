@@ -126,8 +126,11 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
                         {/* Game Clock */}
                         <div className="bg-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700">
                             <div className="text-slate-400 font-bold uppercase tracking-widest mb-2">Game Clock</div>
-                            <div className={`text-7xl font-black font-mono mb-6 ${matchState.timer.isRunning ? 'text-green-500' : 'text-red-500'}`}>
+                            <div className={`text-7xl font-black font-mono ${matchState.timer.isRunning ? 'text-green-500' : 'text-red-500'}`}>
                                 {formatTime(Math.max(0, matchState.halfDurationSeconds - matchState.timer.elapsedSeconds))}
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-bold tracking-widest mb-6">
+                                {matchState.break?.isActive ? 'BREAK' : `HALF ${matchState.currentHalf}`}
                             </div>
                             <button
                                 onClick={toggleTimer}

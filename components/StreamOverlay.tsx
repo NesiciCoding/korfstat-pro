@@ -2,14 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { MatchState, TeamId, MatchEvent } from '../types';
 import { Clock, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, Shirt } from 'lucide-react';
 import SponsorRotatingBanner from './SponsorRotatingBanner';
+import VotingResultsOverlay from './VotingResultsOverlay';
 import { getScore, formatTime } from '../utils/matchUtils';
 import { THEME_PRESETS, FONT_OPTIONS } from '../config/broadcastThemes';
 
 interface StreamOverlayProps {
     matchState: MatchState;
+    socket?: any;
 }
 
-const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
+const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState, socket }) => {
+    const [votes, setVotes] = useState<Record<string, number>>({});
     const [activePopup, setActivePopup] = useState<{
         id: string;
         type: 'GOAL' | 'CARD' | 'TIMEOUT';
@@ -99,6 +102,19 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
             return () => clearTimeout(timer);
         }
     }, [activePopup]);
+
+    // Socket listeners for live voting
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on('vote-update', (v: Record<string, number>) => {
+            setVotes(v);
+        });
+
+        return () => {
+            socket.off('vote-update');
+        };
+    }, [socket]);
 
     // URL param to toggle background
     const params = new URLSearchParams(window.location.search);
@@ -430,6 +446,13 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState }) => {
                 <SponsorRotatingBanner
                     className="absolute bottom-6 left-10 w-48 h-24 bg-black/40 backdrop-blur-md rounded-xl p-3 border border-indigo-500/30 z-20"
                     imageClassName="object-contain"
+                />
+
+                {/* Live Voting Overlay */}
+                <VotingResultsOverlay 
+                    matchState={matchState} 
+                    votes={votes} 
+                    isVisible={override?.visible && override.type === 'VOTING'} 
                 />
 
             </div>

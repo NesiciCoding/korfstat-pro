@@ -3,7 +3,7 @@ import { MatchState, OverlayMessage, TeamId } from '../types';
 import StreamOverlay from './StreamOverlay'; // For Preview
 import CommentaryFeed from './CommentaryFeed';
 import SocialGraphicGenerator from './SocialGraphicGenerator';
-import { Monitor, Type, MessageSquare, Zap, Play, Square, LayoutTemplate, ALargeSmall, Maximize, History, Palette, Settings, Video } from 'lucide-react';
+import { Monitor, Type, MessageSquare, Zap, Play, Square, LayoutTemplate, ALargeSmall, Maximize, History, Palette, Settings, Video, Trophy } from 'lucide-react';
 import { THEME_PRESETS, FONT_OPTIONS } from '../config/broadcastThemes';
 
 interface DirectorDashboardProps {
@@ -80,6 +80,19 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
         setTimeout(() => {
             pushOverride(null);
         }, 6000);
+    };
+
+    const toggleVotingOverlay = () => {
+        if (matchState.overlayOverride?.type === 'VOTING') {
+            pushOverride(null);
+        } else {
+            pushOverride({
+                id: 'voting_results',
+                type: 'VOTING',
+                text: 'Goal of the Match',
+                visible: true
+            });
+        }
     };
 
     // Construct a "Fake" match state for the PREVIEW window
@@ -195,6 +208,15 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                                 </button>
                                 <button onClick={() => triggerQuickPopup('TIMEOUT', 'AWAY')} className="bg-purple-900/50 hover:bg-purple-600 border border-purple-700 hover:border-purple-500 text-purple-100 py-3 rounded font-bold transition-all text-sm flex items-center justify-center gap-2">
                                     TIMEOUT AWAY
+                                </button>
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-slate-700">
+                                <button
+                                    onClick={toggleVotingOverlay}
+                                    className={`w-full py-4 rounded-xl font-black uppercase tracking-tighter flex items-center justify-center gap-3 transition-all ${matchState.overlayOverride?.type === 'VOTING' ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/40' : 'bg-slate-700 hover:bg-slate-600 text-slate-200'}`}
+                                >
+                                    <Trophy size={20} fill="currentColor" />
+                                    {matchState.overlayOverride?.type === 'VOTING' ? 'HIDE VOTING RESULTS' : 'SHOW LIVE VOTING RESULTS'}
                                 </button>
                             </div>
                         </div>

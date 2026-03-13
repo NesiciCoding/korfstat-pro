@@ -75,7 +75,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
             <div className="max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <button onClick={onBack} className="p-2 hover:bg-white dark:hover:bg-gray-800 rounded-full transition-colors">
+                        <button onClick={onBack} aria-label={t('common.back')} data-testid="back-button" className="p-2 hover:bg-white dark:hover:bg-gray-800 rounded-full transition-colors">
                             <ArrowLeft className="text-gray-600 dark:text-gray-300" />
                         </button>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
@@ -113,6 +113,8 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
                             <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={(e) => handleDelete(club.id, e)}
+                                    aria-label={t('common.delete')}
+                                    data-testid={`delete-club-${club.id}`}
                                     className="p-2 text-gray-400 hover:text-red-600 bg-white/50 rounded-full hover:bg-white"
                                 >
                                     <Trash2 size={16} />

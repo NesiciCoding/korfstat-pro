@@ -1,6 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import MatchSetup from '../MatchSetup';
+import { TemplateService } from '../../services/templateService';
+
+// Mock TemplateService
+vi.mock('../../services/templateService', () => ({
+    TemplateService: {
+        getAllTemplates: vi.fn().mockResolvedValue([]),
+        saveTemplate: vi.fn().mockResolvedValue(true),
+        deleteTemplate: vi.fn().mockResolvedValue(true)
+    }
+}));
 
 describe('MatchSetup', () => {
     const mockOnStartMatch = vi.fn();

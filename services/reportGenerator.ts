@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { MatchState, TeamId } from '../types';
+import { MatchState, TeamId, Team } from '../types';
 
 export const generateJSON = (matchState: MatchState) => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(matchState, null, 2));
@@ -383,4 +383,98 @@ export const generatePDF = (matchState: MatchState) => {
     }
 
     doc.save(`korfstat_report_${new Date().toISOString().split('T')[0]}.pdf`);
+};
+
+export const generateMatchDayProgram = (homeTeam: Team, awayTeam: Team, profile?: any, seasonName?: string) => {
+    const doc = new jsPDF();
+    const dateStr = new Date().toLocaleDateString();
+
+    // --- Page 1: Cover ---
+    doc.setFillColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    doc.setFontSize(26);
+    doc.setTextColor(255);
+    doc.text("MATCH DAY PROGRAM", 105, 25, { align: 'center' });
+    
+    doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
+    doc.setFontSize(14);
+    doc.text(seasonName || "Friendly Match", 105, 55, { align: 'center' });
+    doc.text(dateStr, 105, 62, { align: 'center' });
+
+    // Team Names & Logos
+    const drawTeamBox = (team: Team, x: number, y: number) => {
+        doc.setFillColor(245, 247, 250);
+        doc.roundedRect(x, y, 80, 40, 3, 3, 'F');
+        doc.setFontSize(16);
+        doc.setTextColor(0);
+        doc.text(team.name, x + 40, y + 25, { align: 'center' });
+        
+        // Marker for team color
+        const color = team.color && team.color.startsWith('#') ? team.color : '#3f51b5';
+        try {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            doc.setFillColor(r, g, b);
+            doc.rect(x + 5, y + 5, 5, 5, 'F');
+        } catch (e) {
+            doc.setFillColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
+            doc.rect(x + 5, y + 5, 5, 5, 'F');
+        }
+    };
+
+    drawTeamBox(homeTeam, 20, 80);
+    doc.setFontSize(20);
+    doc.text("VS", 105, 105, { align: 'center' });
+    drawTeamBox(awayTeam, 110, 80);
+
+    // Profile Details
+    if (profile) {
+        doc.setFontSize(10);
+        doc.setTextColor(COLORS.lightText[0], COLORS.lightText[1], COLORS.lightText[2]);
+        doc.text(`${profile.name}: ${profile.periods}x${profile.periodDurationSeconds/60}m | Shot Clock: ${profile.hasShotClock ? profile.shotClockDurationSeconds + 's' : 'Off'}`, 105, 135, { align: 'center' });
+    }
+
+    // --- Page 2 & 3: Rosters ---
+    const renderRoster = (team: Team, id: any) => {
+        doc.addPage();
+        const teamColor = id === 'HOME' ? COLORS.primary : COLORS.secondary;
+        doc.setFillColor(teamColor[0], teamColor[1], teamColor[2]);
+        doc.rect(0, 0, 210, 20, 'F');
+        doc.setTextColor(255);
+        doc.setFontSize(16);
+        doc.text(`${team.name} - ROSTER`, 14, 14);
+
+        const players = team.players || [];
+        const starters = players.filter(p => p.isStarter);
+        const reserves = players.filter(p => !p.isStarter);
+
+        const rosterBody = [
+            ...starters.map(p => [p.number.toString(), p.name, 'STARTER', p.gender]),
+            ...reserves.map(p => [p.number.toString(), p.name, 'RESERVE', p.gender])
+        ];
+
+        autoTable(doc, {
+            startY: 30,
+            head: [['#', 'Player Name', 'Status', 'G']],
+            body: rosterBody,
+            theme: 'striped',
+            headStyles: { fillColor: teamColor },
+        });
+    };
+
+    renderRoster(homeTeam, 'HOME');
+    renderRoster(awayTeam, 'AWAY');
+
+    // Footer on all
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`KorfStat Pro - Match Day Intelligence`, 105, 285, { align: 'center' });
+    }
+
+    doc.save(`match_day_program_${homeTeam.name}_vs_${awayTeam.name}.pdf`);
 };

@@ -138,7 +138,17 @@ export interface OverlayMessage {
   id: string;
   text: string;
   subText?: string;
-  type: 'SCROLL' | 'POPUP' | 'FULLSCREEN';
+  type: 'SCROLL' | 'POPUP' | 'FULLSCREEN' | 'VOTING';
   color?: string;
   visible: boolean;
+}
+
+export interface MatchTemplate {
+  id: string;
+  name: string;
+  homeTeam: Partial<Team>;
+  awayTeam: Partial<Team>;
+  profileId: string;
+  seasonId?: string;
+  broadcastTheme?: MatchState['broadcastTheme'];
 }

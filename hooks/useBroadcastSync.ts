@@ -236,6 +236,6 @@ export const useBroadcastSync = (
         } catch(e) {}
     }, []);
 
-    return { broadcastUpdate, broadcastUpdateDebounced, activeSessions: combinedSessions, registerView, sendHapticSignal };
+    return { broadcastUpdate, broadcastUpdateDebounced, activeSessions: combinedSessions, registerView, sendHapticSignal, socket: socketRef.current };
 }; // End of file
 

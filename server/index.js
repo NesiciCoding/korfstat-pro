@@ -6,7 +6,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { saveMatchState, getLatestMatchState } from './db.js';
+import { saveMatchState, getLatestMatchState, saveMatchTemplate, getAllTemplates, deleteTemplate } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -399,12 +399,35 @@ app.post('/api/companion/push', companionAuth, (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.get('/api/match', (req, res) => {
-    res.json(getLatestMatchState() || {});
+    res.json(currentState || { message: "No active match" });
+});
+
+// --- Match Templates API ---
+app.get('/api/templates', (req, res) => {
+    res.json(getAllTemplates());
+});
+
+app.post('/api/templates', (req, res) => {
+    const template = req.body;
+    if (!template || !template.id || !template.name) {
+        return res.status(400).json({ error: 'Invalid template data' });
+    }
+    saveMatchTemplate(template);
+    res.json({ ok: true });
+});
+
+app.delete('/api/templates/:id', (req, res) => {
+    deleteTemplate(req.params.id);
+    res.json({ ok: true });
 });
 
 
 
 const connectedClients = new Map(); // socketId -> { id, view, ip, userAgent, connectedAt }
+
+// --- Spectator Voting State ---
+let currentVotes = {}; // playerId -> count
+let votedIps = new Set(); // Keep it simple: prevent double voting by IP
 
 // Load last known state from DB
 let currentState = getLatestMatchState();
@@ -421,6 +444,13 @@ const throttledSave = (state) => {
     saveTimeout = setTimeout(() => {
         saveMatchState(state);
     }, 500); // Save at most every 500ms
+};
+
+// Reset votes on new match or manual reset
+const resetVotes = () => {
+    currentVotes = {};
+    votedIps.clear();
+    io.emit('vote-update', currentVotes);
 };
 
 io.on('connection', (socket) => {
@@ -448,6 +478,9 @@ io.on('connection', (socket) => {
         const tickerData = getTickerData(currentState);
         socket.emit('ticker-update', tickerData);
     }
+    
+    // Send current votes
+    socket.emit('vote-update', currentVotes);
 
     socket.on('register-view', (viewName) => {
         const client = connectedClients.get(socket.id);
@@ -542,6 +575,30 @@ io.on('connection', (socket) => {
             console.log('Client not found in connectedClients map during disconnect');
         }
     });
+
+    // --- Voting Handlers ---
+    socket.on('vote-cast', (playerId) => {
+        const ip = socket.handshake.address;
+        if (votedIps.has(ip)) {
+            socket.emit('vote-error', 'You have already voted.');
+            return;
+        }
+
+        currentVotes[playerId] = (currentVotes[playerId] || 0) + 1;
+        votedIps.add(ip);
+        
+        console.log(`[Vote] Cast for ${playerId} from ${ip}`);
+        io.emit('vote-update', currentVotes);
+    });
+
+    socket.on('vote-reset', () => {
+        // Simple auth check: only Tracker/Director can reset
+        const client = connectedClients.get(socket.id);
+        if (client?.view === 'TRACKER' || client?.view === 'DIRECTOR') {
+            console.log('[Vote] Resetting votes');
+            resetVotes();
+        }
+    });
 });
 
 // Helper to extract simplified ticker data
@@ -627,6 +684,10 @@ app.get('/api/match', (req, res) => {
 app.get('/api/ticker', (req, res) => {
     if (!currentState) return res.status(404).json({ message: "No active match" });
     res.json(getTickerData(currentState));
+});
+
+app.get('/api/votes', (req, res) => {
+    res.json(currentVotes);
 });
 
 // Health Check Endpoint
