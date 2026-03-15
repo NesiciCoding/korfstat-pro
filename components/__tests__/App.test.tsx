@@ -2,21 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from '../../App';
 
-// Mock components with ABSOLUTE paths
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/MatchSetup', () => ({ default: ({ onStartMatch }: any) => <div data-testid="match-setup"><button onClick={() => onStartMatch({ id: 'H', players: [] }, { id: 'A', players: [] })}>Start</button></div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/MatchTracker', () => ({ default: ({ onFinishMatch }: any) => <div data-testid="match-tracker"><button onClick={onFinishMatch}>Finish</button></div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/JuryView', () => ({ default: ({ onBack }: any) => <div data-testid="jury-view"><button onClick={onBack}>Back</button></div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/SettingsModal', () => ({ default: ({ isOpen, onClose }: any) => isOpen ? <div data-testid="settings-modal"><button onClick={onClose}>Close</button></div> : null }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/ClubManager', () => ({ default: () => <div data-testid="club-manager">Club Manager</div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/SeasonManager', () => ({ default: () => <div data-testid="season-manager">Season Manager</div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/StatsView', () => ({ default: ({ onBack }: any) => <div data-testid="stats-view">Stats View<button onClick={onBack}>Back</button></div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/LiveStatsView', () => ({ default: () => <div data-testid="live-stats-view">Live Stats View</div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/LivestreamView', () => ({ default: () => <div data-testid="livestream-view">Livestream View</div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/StreamOverlay', () => ({ default: () => <div data-testid="stream-overlay">Overlay</div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/DirectorDashboard', () => ({ default: () => <div data-testid="director-dashboard">Director Dashboard</div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/ShotClockView', () => ({ default: () => <div data-testid="shot-clock-view">Shot Clock</div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/SpotterView', () => ({ default: () => <div data-testid="spotter-view">Spotter View</div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/MatchHistory', () => ({ 
+// Mock components with RELATIVE paths
+vi.mock('../MatchSetup', () => ({ default: ({ onStartMatch }: any) => <div data-testid="match-setup"><button onClick={() => onStartMatch({ id: 'H', players: [] }, { id: 'A', players: [] })}>Start</button></div> }));
+vi.mock('../MatchTracker', () => ({ default: ({ onFinishMatch }: any) => <div data-testid="match-tracker"><button onClick={onFinishMatch}>Finish</button></div> }));
+vi.mock('../JuryView', () => ({ default: ({ onBack }: any) => <div data-testid="jury-view"><button onClick={onBack}>Back</button></div> }));
+vi.mock('../SettingsModal', () => ({ default: ({ isOpen, onClose }: any) => isOpen ? <div data-testid="settings-modal"><button onClick={onClose}>Close</button></div> : null }));
+vi.mock('../ClubManager', () => ({ default: () => <div data-testid="club-manager">Club Manager</div> }));
+vi.mock('../SeasonManager', () => ({ default: () => <div data-testid="season-manager">Season Manager</div> }));
+vi.mock('../StatsView', () => ({ default: ({ onBack }: any) => <div data-testid="stats-view">Stats View<button onClick={onBack}>Back</button></div> }));
+vi.mock('../LiveStatsView', () => ({ default: () => <div data-testid="live-stats-view">Live Stats View</div> }));
+vi.mock('../LivestreamView', () => ({ default: () => <div data-testid="livestream-view">Livestream View</div> }));
+vi.mock('../StreamOverlay', () => ({ default: () => <div data-testid="stream-overlay">Overlay</div> }));
+vi.mock('../DirectorDashboard', () => ({ default: () => <div data-testid="director-dashboard">Director Dashboard</div> }));
+vi.mock('../ShotClockView', () => ({ default: () => <div data-testid="shot-clock-view">Shot Clock</div> }));
+vi.mock('../SpotterView', () => ({ default: () => <div data-testid="spotter-view">Spotter View</div> }));
+vi.mock('../MatchHistory', () => ({ 
     default: ({ matches, onDeleteMatch, onAnalyzeMatch, onBack }: any) => (
         <div data-testid="match-history">
             {matches.map((m: any) => (
@@ -29,21 +29,25 @@ vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/MatchHistory', () => 
         </div>
     )
 }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/MatchAnalysis', () => ({ default: ({ onBack }: any) => <div data-testid="match-analysis"><button onClick={onBack}>Back</button></div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/ShortcutsModal', () => ({ default: ({ isOpen, onClose }: any) => isOpen ? <div data-testid="shortcuts-modal">shortcuts.title<button onClick={onClose}>Close</button></div> : null }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/OverallStats', () => ({ default: () => <div data-testid="overall-stats">Overall Stats</div> }));
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/components/StrategyPlanner', () => ({ default: () => <div data-testid="strategy-planner">Strategy Planner</div> }));
+vi.mock('../MatchAnalysis', () => ({ default: ({ onBack }: any) => <div data-testid="match-analysis"><button onClick={onBack}>Back</button></div> }));
+vi.mock('../ShortcutsModal', () => ({ default: ({ isOpen, onClose }: any) => isOpen ? <div data-testid="shortcuts-modal">shortcuts.title<button onClick={onClose}>Close</button></div> : null }));
+vi.mock('../OverallStats', () => ({ default: () => <div data-testid="overall-stats">Overall Stats</div> }));
+vi.mock('../StrategyPlanner', () => ({ default: () => <div data-testid="strategy-planner">Strategy Planner</div> }));
 
 // Mock i18next
-vi.mock('i18next', () => ({
-  default: {
-    use: () => ({ init: vi.fn(), use: vi.fn() }),
+vi.mock('i18next', () => {
+  const i18n: any = {
+    use: vi.fn().mockImplementation(() => i18n),
     init: vi.fn(),
     changeLanguage: vi.fn().mockImplementation(() => Promise.resolve()),
     language: 'en',
     t: (key: string) => key,
-  },
-}));
+  };
+  return {
+    default: i18n,
+    ...i18n
+  };
+});
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -54,7 +58,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 // Mock LOCAL i18n to prevent real init
-vi.mock('/Users/wmeetsma/Documents/korfstat-pro/i18n', () => ({
+vi.mock('../../i18n', () => ({
   default: {
     changeLanguage: vi.fn().mockImplementation(() => Promise.resolve()),
     language: 'en',
