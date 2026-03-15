@@ -7,6 +7,12 @@ import { io, Socket } from 'socket.io-client';
 // Mock socket.io-client
 vi.mock('socket.io-client');
 
+// Mock fetch
+global.fetch = vi.fn().mockImplementation(() => Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({ success: true })
+}));
+
 // Mock Settings Context
 vi.mock('../../contexts/SettingsContext', () => ({
     useSettings: () => ({

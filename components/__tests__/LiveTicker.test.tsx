@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import LiveTicker from '../LiveTicker';
 
 // Mock socket.io-client
@@ -30,12 +30,16 @@ describe('LiveTicker', () => {
     });
 
     it('renders connecting state initially', () => {
-        render(<LiveTicker />);
+        act(() => {
+            render(<LiveTicker />);
+        });
         expect(screen.getByText(/Connecting to Match.../i)).toBeInTheDocument();
     });
 
     it('renders match data after successful fetch', async () => {
-        render(<LiveTicker />);
+        act(() => {
+            render(<LiveTicker />);
+        });
         
         await waitFor(() => {
             expect(screen.getByText('Home Team')).toBeInTheDocument();
@@ -47,7 +51,9 @@ describe('LiveTicker', () => {
     });
 
     it('displays the last event description', async () => {
-        render(<LiveTicker />);
+        act(() => {
+            render(<LiveTicker />);
+        });
         
         await waitFor(() => {
             expect(screen.getByText(/Home Team score!/i)).toBeInTheDocument();
@@ -61,7 +67,9 @@ describe('LiveTicker', () => {
             if (event === 'ticker-update') updateCallback = cb;
         });
 
-        render(<LiveTicker />);
+        act(() => {
+            render(<LiveTicker />);
+        });
 
         await waitFor(() => expect(screen.getByText('Home Team')).toBeInTheDocument());
 
@@ -74,7 +82,9 @@ describe('LiveTicker', () => {
             lastEvent: { type: 'GOAL', description: 'Another goal!', timestamp: Date.now() }
         };
 
-        updateCallback(updatedData);
+        act(() => {
+            updateCallback(updatedData);
+        });
 
         await waitFor(() => {
             expect(screen.getByText('11')).toBeInTheDocument();
@@ -92,8 +102,6 @@ describe('LiveTicker', () => {
             if (event === 'disconnect') disconnectCallback = cb;
         });
 
-        render(<LiveTicker />);
-        
         // Wait for connect event first to set status to LIVE (simulated)
         let connectCallback: any;
         mockSocket.on.mockImplementation((event, cb) => {
@@ -101,7 +109,13 @@ describe('LiveTicker', () => {
             if (event === 'disconnect') disconnectCallback = cb;
         });
 
-        disconnectCallback();
+        act(() => {
+            render(<LiveTicker />);
+        });
+        
+        act(() => {
+            disconnectCallback();
+        });
 
         await waitFor(() => {
             expect(screen.getByText(/No Active Match Found/i)).toBeInTheDocument();

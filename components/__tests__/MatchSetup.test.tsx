@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import MatchSetup from '../MatchSetup';
 import { TemplateService } from '../../services/templateService';
 import { ClubService } from '../../services/clubService';
@@ -38,33 +38,43 @@ describe('MatchSetup', () => {
     });
 
     it('renders match configuration title', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         expect(screen.getByText('matchSetup.title')).toBeInTheDocument();
     });
 
     it('renders both team configuration sections', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         expect(screen.getByText('matchSetup.homeTeam')).toBeInTheDocument();
         expect(screen.getByText('matchSetup.awayTeam')).toBeInTheDocument();
     });
 
     it('allows setting team names', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         const homeNameInput = screen.getByLabelText(/^matchSetup\.homeTeam matchSetup\.teamName$/i);
         const awayNameInput = screen.getByLabelText(/^matchSetup\.awayTeam matchSetup\.teamName$/i);
 
-        fireEvent.change(homeNameInput, { target: { value: 'Testing Blazers' } });
-        fireEvent.change(awayNameInput, { target: { value: 'Testing Stars' } });
-
+        act(() => {
+            fireEvent.change(homeNameInput, { target: { value: 'Testing Blazers' } });
+            fireEvent.change(awayNameInput, { target: { value: 'Testing Stars' } });
+        });
+ 
         expect(homeNameInput).toHaveValue('Testing Blazers');
         expect(awayNameInput).toHaveValue('Testing Stars');
     });
 
     it('shows 10 default players for each team', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         // Each team should have default players
         const playerInputs = screen.getAllByPlaceholderText('matchSetup.placeholderName');
@@ -72,7 +82,9 @@ describe('MatchSetup', () => {
     });
 
     it('displays starters count (8/8)', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         // Both teams should show 8/8 starters
         const starterCounts = screen.getAllByText('8/8');
@@ -80,20 +92,26 @@ describe('MatchSetup', () => {
     });
 
     it('allows adding new players', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         const addHomePlayerBtn = screen.getByLabelText(/matchSetup\.addPlayer matchSetup\.homeTeam/i);
         const initialPlayerCount = screen.getAllByPlaceholderText('matchSetup.placeholderName').length;
 
         // Add a player to home team
-        fireEvent.click(addHomePlayerBtn);
-
+        act(() => {
+            fireEvent.click(addHomePlayerBtn);
+        });
+ 
         const newPlayerCount = screen.getAllByPlaceholderText('matchSetup.placeholderName').length;
         expect(newPlayerCount).toBe(initialPlayerCount + 1);
     });
 
     it('allows removing players', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         const initialPlayerCount = screen.getAllByPlaceholderText('matchSetup.placeholderName').length;
 
@@ -101,19 +119,25 @@ describe('MatchSetup', () => {
         const removeButtons = screen.getAllByRole('button', { name: /matchSetup\.removePlayer/i });
 
         if (removeButtons.length > 0) {
-            fireEvent.click(removeButtons[0]);
-
+            act(() => {
+                fireEvent.click(removeButtons[0]);
+            });
+ 
             const newPlayerCount = screen.getAllByPlaceholderText('matchSetup.placeholderName').length;
             expect(newPlayerCount).toBe(initialPlayerCount - 1);
         }
     });
 
     it('starts match when start button is clicked', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         const startButton = screen.getByRole('button', { name: /matchSetup\.startMatch/i });
-        fireEvent.click(startButton);
-
+        act(() => {
+            fireEvent.click(startButton);
+        });
+ 
         expect(mockOnStartMatch).toHaveBeenCalled();
 
         // Verify the callback receives correct parameters
@@ -126,7 +150,9 @@ describe('MatchSetup', () => {
     });
 
     it('submits a selected match configuration profile', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         fireEvent.change(screen.getByLabelText('matchSetup.homeTeam matchSetup.teamName'), { target: { value: 'Test Home' } });
         fireEvent.change(screen.getByLabelText('matchSetup.awayTeam matchSetup.teamName'), { target: { value: 'Test Away' } });
@@ -134,10 +160,14 @@ describe('MatchSetup', () => {
         // Select the Short Scrimmage profile
         const profileButtons = screen.getAllByRole('button').filter(btn => btn.textContent?.includes('Short Scrimmage'));
         if (profileButtons.length > 0) {
-           fireEvent.click(profileButtons[0]);
+           act(() => {
+               fireEvent.click(profileButtons[0]);
+           });
         }
-
-        fireEvent.click(screen.getByText('matchSetup.startMatch'));
+ 
+        act(() => {
+            fireEvent.click(screen.getByText('matchSetup.startMatch'));
+        });
 
         expect(mockOnStartMatch).toHaveBeenCalledWith(
             expect.objectContaining({ name: 'Test Home' }),
@@ -148,17 +178,23 @@ describe('MatchSetup', () => {
     });
 
     it('allows changing team colors', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         const colorInputs = screen.getAllByTitle(/matchSetup\.primaryColorTitle/i);
         expect(colorInputs.length).toBe(2);
 
-        fireEvent.change(colorInputs[0], { target: { value: '#00ff00' } });
+        act(() => {
+            fireEvent.change(colorInputs[0], { target: { value: '#00ff00' } });
+        });
         expect(colorInputs[0]).toHaveValue('#00ff00');
     });
 
     it('displays gender mix for starters', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         // Should show male/female breakdown
         const genderBadges = screen.getAllByText(/\d+ M/);
@@ -166,30 +202,42 @@ describe('MatchSetup', () => {
     });
 
     it('allows updating player number', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         const numberInputs = screen.getAllByPlaceholderText('#');
         const firstNumberInput = numberInputs[0];
 
-        fireEvent.change(firstNumberInput, { target: { value: '99' } });
+        act(() => {
+            fireEvent.change(firstNumberInput, { target: { value: '99' } });
+        });
         expect(firstNumberInput).toHaveValue(99);
     });
 
     it('allows updating player name', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
 
         const nameInputs = screen.getAllByPlaceholderText('matchSetup.placeholderName');
         const firstNameInput = nameInputs[0];
 
-        fireEvent.change(firstNameInput, { target: { value: 'John Doe' } });
+        act(() => {
+            fireEvent.change(firstNameInput, { target: { value: 'John Doe' } });
+        });
         expect(firstNameInput).toHaveValue('John Doe');
     });
 
     it('prepares teams with onField status for starters', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        act(() => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        });
 
         const startButton = screen.getByRole('button', { name: /matchSetup\.startMatch/i });
-        fireEvent.click(startButton);
+        act(() => {
+            fireEvent.click(startButton);
+        });
 
         const homeTeam = mockOnStartMatch.mock.calls[0][0];
         const starters = homeTeam.players.filter((p: any) => p.onField);
@@ -200,10 +248,14 @@ describe('MatchSetup', () => {
 
     describe('Team Snapshot Management', () => {
         it('saves a team snapshot', () => {
+            act(() => {
             render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
             
             const saveBtns = screen.getAllByTitle(/matchSetup\.saveAsClub/i);
-            fireEvent.click(saveBtns[0]); // Home team
+            act(() => {
+                fireEvent.click(saveBtns[0]); // Home team
+            });
             
             expect(mockAlert).toHaveBeenCalledWith(expect.stringContaining('matchSetup.teamSaved'));
             const saved = JSON.parse(localStorage.getItem('korfstat_saved_teams') || '[]');
@@ -220,15 +272,21 @@ describe('MatchSetup', () => {
             };
             localStorage.setItem('korfstat_saved_teams', JSON.stringify([savedTeam]));
             
+            act(() => {
             render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+        });
             
             // Open load menu
             const loadBtns = screen.getAllByTitle(/matchSetup\.loadSaved/i);
-            fireEvent.click(loadBtns[0]);
+            act(() => {
+                fireEvent.click(loadBtns[0]);
+            });
             
             // Click the saved team
             const teamBtn = screen.getByText('Saved Home Team');
-            fireEvent.click(teamBtn);
+            act(() => {
+                fireEvent.click(teamBtn);
+            });
             
             expect(screen.getByDisplayValue('Saved Home Team')).toBeInTheDocument();
             expect(screen.getByDisplayValue('Saved Player')).toBeInTheDocument();
@@ -247,15 +305,21 @@ describe('MatchSetup', () => {
             };
             vi.mocked(ClubService.getAllClubs).mockReturnValue([mockClub] as any);
             
-            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+            act(() => {
+                render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+            });
             
             // Open club menu
             const clubBtns = screen.getAllByTitle(/matchSetup\.loadClub/i);
-            fireEvent.click(clubBtns[0]);
+            act(() => {
+                fireEvent.click(clubBtns[0]);
+            });
             
             // Click the club
             const clubBtn = screen.getByText('Pro Club');
-            fireEvent.click(clubBtn);
+            act(() => {
+                fireEvent.click(clubBtn);
+            });
             
             expect(screen.getByDisplayValue('Pro Club')).toBeInTheDocument();
             expect(screen.getByDisplayValue('Club Player')).toBeInTheDocument();
@@ -264,13 +328,19 @@ describe('MatchSetup', () => {
 
     describe('Template Management', () => {
         it('saves a match template', async () => {
-            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+            act(() => {
+                render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+            });
             
             const templateNameInput = screen.getByPlaceholderText('matchSetup.templateName');
-            fireEvent.change(templateNameInput, { target: { value: 'Finals Template' } });
+            act(() => {
+                fireEvent.change(templateNameInput, { target: { value: 'Finals Template' } });
+            });
             
             const saveBtn = screen.getByText('common.save');
-            fireEvent.click(saveBtn);
+            act(() => {
+                fireEvent.click(saveBtn);
+            });
             
             expect(TemplateService.saveTemplate).toHaveBeenCalledWith(expect.objectContaining({
                 name: 'Finals Template'
@@ -291,11 +361,15 @@ describe('MatchSetup', () => {
             
             // Open template menu
             const loadBtn = screen.getByRole('button', { name: /matchSetup\.loadTemplate/i });
-            fireEvent.click(loadBtn);
+            act(() => {
+                fireEvent.click(loadBtn);
+            });
             
             // Wait for templates to load and click
             const templateBtn = await screen.findByText('Load Me');
-            fireEvent.click(templateBtn);
+            act(() => {
+                fireEvent.click(templateBtn);
+            });
             
             expect(screen.getByDisplayValue('Template Home')).toBeInTheDocument();
             expect(screen.getByDisplayValue('Template Away')).toBeInTheDocument();
