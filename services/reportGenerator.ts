@@ -478,3 +478,86 @@ export const generateMatchDayProgram = (homeTeam: Team, awayTeam: Team, profile?
 
     doc.save(`match_day_program_${homeTeam.name}_vs_${awayTeam.name}.pdf`);
 };
+
+export const generateScoutingPDF = (scoutData: any, reportText: string) => {
+    const doc = new jsPDF();
+    const dateStr = new Date().toLocaleDateString();
+
+    // Cover Page
+    doc.setFillColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
+    doc.rect(0, 0, 210, 60, 'F');
+    
+    doc.setFontSize(28);
+    doc.setTextColor(255);
+    doc.text("SMART SCOUT REPORT", 105, 30, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text(scoutData.teamName.toUpperCase(), 105, 45, { align: 'center' });
+    
+    doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
+    doc.setFontSize(12);
+    doc.text(`Intelligence Source: Gemini 2.0 Flash`, 14, 75);
+    doc.text(`Analysis Date: ${dateStr}`, 14, 82);
+    doc.text(`Matches Analyzed: ${scoutData.matchCount}`, 14, 89);
+
+    // Snapshot Stats Table
+    doc.setFontSize(14);
+    doc.text("Performance Snapshot", 14, 105);
+    
+    autoTable(doc, {
+        startY: 110,
+        head: [['Metric', 'Value']],
+        body: [
+            ['Average Goals', scoutData.avgGoals.toFixed(1)],
+            ['Overall Efficiency', `${scoutData.shootingEfficiency.total}%`],
+            ['Avg Rebounds', scoutData.rebounds.avgPerGame.toFixed(1)],
+            ['Avg Fouls', scoutData.fouls.avgPerGame.toFixed(1)],
+            ['1H / 2H Momentum', `${scoutData.momentum.firstHalfGoals} / ${scoutData.momentum.secondHalfGoals}`]
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: COLORS.primary }
+    });
+
+    // Top Players
+    // @ts-ignore
+    let finalY = doc.lastAutoTable.finalY + 15;
+    doc.text("Personnel Watchlist", 14, finalY);
+    
+    autoTable(doc, {
+        startY: finalY + 5,
+        head: [['Player', 'Goals', 'Shots', 'VAL Rating']],
+        body: scoutData.topPlayers.map((p: any) => [p.name, p.goals, p.shots, p.val]),
+        theme: 'grid',
+        headStyles: { fillColor: [60, 60, 60] }
+    });
+
+    // AI Analysis (Page 2)
+    doc.addPage();
+    doc.setFontSize(18);
+    doc.setTextColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
+    doc.text("AI Tactical Analysis", 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
+    
+    // Simple markdown-to-pdf text rendering (cleaning up basic tags)
+    const cleanText = reportText
+        .replace(/###/g, '')
+        .replace(/##/g, '')
+        .replace(/#/g, '')
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '•');
+
+    const splitText = doc.splitTextToSize(cleanText, 180);
+    doc.text(splitText, 14, 30);
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`KorfStat Pro AI Scouting - Confidential - Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
+    }
+
+    doc.save(`scouting_report_${scoutData.teamName.toLowerCase().replace(/\s+/g, '_')}.pdf`);
+};

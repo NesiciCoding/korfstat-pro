@@ -10,6 +10,9 @@ import { generateExcel } from '../services/excelGenerator';
 import { generateMatchInsights } from '../services/analysisService';
 import SocialGraphicGenerator from './SocialGraphicGenerator';
 import { calculateMatchPlusMinus, calculatePlayerMatchStats } from '../utils/statsCalculator';
+import { calculateLineupStats, formatTime as formatDuration, getTotalGoals } from '../utils/lineupUtils';
+import ShotTimeline from './ShotTimeline';
+import { Users, Clock } from 'lucide-react';
 
 interface StatsViewProps {
   matchState: MatchState;
@@ -30,6 +33,9 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
   const [filterShotType, setFilterShotType] = useState<ShotType | 'ALL'>('ALL');
   const [heatmapMode, setHeatmapMode] = useState(true);
   const [showZoneStats, setShowZoneStats] = useState(false);
+  const [showLineupStats, setShowLineupStats] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
+  const [timeRange, setTimeRange] = useState({ start: 0, end: matchState.timer.elapsedSeconds });
 
   // Guard clause for missing data
   if (!matchState) return <div className="p-6 text-center">{t('stats.loading')}</div>;
@@ -40,9 +46,10 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
     return events.filter(e => {
       if (filterPlayerId !== 'ALL' && e.playerId !== filterPlayerId) return false;
       if (filterShotType !== 'ALL' && e.shotType !== filterShotType) return false;
+      if (e.timestamp < timeRange.start || e.timestamp > timeRange.end) return false;
       return true;
     });
-  }, [events, filterPlayerId, filterShotType]);
+  }, [events, filterPlayerId, filterShotType, timeRange]);
 
   const insights = useMemo(() => generateMatchInsights(matchState), [matchState]);
 
@@ -265,11 +272,36 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
                 >
                   {t('stats.zoneWait')}
                 </button>
+                <button
+                  onClick={() => setShowLineupStats(!showLineupStats)}
+                  className={`px-3 py-1.5 rounded-md transition-colors flex items-center gap-2 ${showLineupStats ? 'bg-orange-100 text-orange-700 font-bold dark:bg-orange-900 dark:text-orange-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300'}`}
+                >
+                  <Users size={14} />
+                  {t('stats.lineups')}
+                </button>
+                <button
+                  onClick={() => setShowTimeline(!showTimeline)}
+                  className={`px-3 py-1.5 rounded-md transition-colors flex items-center gap-2 ${showTimeline ? 'bg-blue-100 text-blue-700 font-bold dark:bg-blue-900 dark:text-blue-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300'}`}
+                >
+                  <Clock size={14} />
+                  {t('stats.timeline')}
+                </button>
               </div>
             </div>
 
-            <div className="flex-1 flex items-center">
-              <KorfballField mode="view" events={filteredEvents} heatmapMode={heatmapMode} showZoneEfficiency={showZoneStats} />
+            <div className="flex-1 flex flex-col items-center">
+              <KorfballField mode="view" events={filteredEvents} heatmapMode={heatmapMode} showZoneEfficiency={showZoneStats} totalGoals={getTotalGoals(matchState)} />
+              
+              {showTimeline && (
+                <div className="w-full">
+                  <ShotTimeline 
+                    matchState={matchState}
+                    startTime={timeRange.start}
+                    endTime={timeRange.end}
+                    onRangeChange={(start, end) => setTimeRange({ start, end })}
+                  />
+                </div>
+              )}
             </div>
             <div className="mt-4 flex justify-center gap-4 text-sm dark:text-gray-300">
               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500 opacity-50"></div> {t('stats.goal')}</div>
@@ -372,8 +404,60 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
               </table>
             </div>
           </div>
-
         </div>
+
+        {/* Lineup Stats Section */}
+        {showLineupStats && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-orange-200 dark:border-orange-900/30 overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="px-6 py-4 bg-orange-500 flex justify-between items-center text-white">
+              <h3 className="font-bold flex items-center gap-2">
+                <Users size={20} />
+                {t('stats.lineupAnalysis')}
+              </h3>
+              <p className="text-xs opacity-80">{t('stats.lineupDesc')}</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left dark:text-gray-300">
+                <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700">
+                  <tr>
+                    <th className="px-6 py-3">{t('stats.team')}</th>
+                    <th className="px-6 py-3">{t('stats.lineup')}</th>
+                    <th className="px-6 py-3 text-center">{t('stats.duration')}</th>
+                    <th className="px-6 py-3 text-center">{t('stats.goalsFor')}</th>
+                    <th className="px-6 py-3 text-center">{t('stats.goalsAgainst')}</th>
+                    <th className="px-6 py-3 text-center">+/-</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y dark:divide-gray-700">
+                  {calculateLineupStats(matchState).map((lineup, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold text-white ${lineup.teamId === 'HOME' ? 'bg-blue-600' : 'bg-red-600'}`}>
+                          {lineup.teamId === 'HOME' ? matchState.homeTeam.name : matchState.awayTeam.name}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {lineup.playerNames.map((name, pIdx) => (
+                            <span key={pIdx} className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-xs text-gray-700 dark:text-gray-300 border dark:border-gray-600">
+                              {name}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center font-mono">{formatDuration(lineup.timePlayedSeconds)}</td>
+                      <td className="px-6 py-4 text-center font-bold text-green-600 dark:text-green-400">{lineup.goalsFor}</td>
+                      <td className="px-6 py-4 text-center font-bold text-red-600 dark:text-red-400">{lineup.goalsAgainst}</td>
+                      <td className={`px-6 py-4 text-center font-black ${lineup.plusMinus > 0 ? 'text-green-600 dark:text-green-400' : lineup.plusMinus < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`}>
+                        {lineup.plusMinus > 0 ? '+' : ''}{lineup.plusMinus}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Player Profile Modal */}
         {selectedPlayer && (

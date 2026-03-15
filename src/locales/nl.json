@@ -46,7 +46,11 @@
     "sponsors": "Sponsorbeheer",
     "rotationInterval": "Rotatie Interval (sec)",
     "addSponsor": "Sponsor Logo Toevoegen",
-    "noSponsors": "Geen sponsors toegevoegd"
+    "noSponsors": "Geen sponsors toegevoegd",
+    "shortcuts": "Keyboard Sneltoetsen",
+    "enableChorded": "Chorded Sneltoetsen Inschakelen (Shift + 1-8)",
+    "enableSequence": "Sneltoets Buffering Inschakelen (G, 1, Enter)",
+    "shortcutWarning": "Chorded sneltoetsen voeren acties onmiddellijk uit. Fouten moeten worden gecorrigeerd met Ongedaan Maken (Z)."
   },
   "common": {
     "cancel": "Annuleren",
@@ -276,6 +280,10 @@
     "team": "Team",
     "played": "G",
     "won": "W",
+    "duration": "Duur",
+    "goalsFor": "DV",
+    "goalsAgainst": "DT",
+    "timeline": "Tijdlijn",
     "draw": "G",
     "lost": "V",
     "gf": "DV",

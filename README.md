@@ -83,7 +83,7 @@ KorfStat Pro has grown into a comprehensive suite of tools for all aspects of ma
 - **Social Media Graphics**: Rapid export tool to create beautifully formatted score graphics for social media.
 - **Hardware & App Integrations**: Native Tauri desktop builds, full Bitfocus Companion API support (Stream Deck), and a companion Wear OS referee watch app.
 
-> 📚 **Want to learn more?** For in-depth explanations of every feature, how to use them, and our future roadmap, please check out the **[KorfStat Pro Wiki](./wiki/)**! Specifically, our [Feature Lock and Roadmap](./wiki/Feature-Lock-and-Roadmap.md) outlines the full extent of the application's capabilities.
+> 📚 **Want to learn more?** For in-depth explanations of every feature, how to use them, and our future roadmap, please check out the **[KorfStat Pro Wiki](korfstat-pro.wiki/Home.md)**! Specifically, our [Feature Lock and Roadmap](korfstat-pro.wiki/Feature-Lock-and-Roadmap.md) outlines the full extent of the application's capabilities.
 
 ---
 

@@ -9,6 +9,7 @@ interface ShortcutConfig {
     ctrlKey?: boolean;
     shiftKey?: boolean;
     altKey?: boolean;
+    metaKey?: boolean;
     preventDefault?: boolean;
 }
 
@@ -36,7 +37,8 @@ export const useKeyboardShortcuts = (shortcuts: ShortcutConfig[], enabled: boole
                     s.key.toLowerCase() === e.key.toLowerCase() &&
                     !!s.ctrlKey === e.ctrlKey &&
                     !!s.shiftKey === e.shiftKey &&
-                    !!s.altKey === e.altKey
+                    !!s.altKey === e.altKey &&
+                    !!s.metaKey === e.metaKey
             );
 
             if (match) {

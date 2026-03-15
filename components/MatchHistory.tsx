@@ -1,6 +1,6 @@
 import React from 'react';
 import { MatchState } from '../types';
-import { ArrowLeft, Calendar, ChevronRight, Trash2, FileJson, FileText, Video } from 'lucide-react';
+import { ArrowLeft, Calendar, ChevronRight, Trash2, FileJson, FileText, Video, Brain } from 'lucide-react';
 import { generatePDF, generateJSON } from '../services/reportGenerator';
 import { getScore } from '../utils/matchUtils';
 
@@ -8,11 +8,12 @@ interface MatchHistoryProps {
   matches: MatchState[];
   onSelectMatch: (match: MatchState) => void;
   onAnalyzeMatch: (match: MatchState) => void;
+  onScoutTeam: (teamName: string) => void;
   onDeleteMatch: (id: string) => void;
   onBack: () => void;
 }
 
-const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onAnalyzeMatch, onDeleteMatch, onBack }) => {
+const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onAnalyzeMatch, onScoutTeam, onDeleteMatch, onBack }) => {
 
 
   return (
@@ -45,13 +46,31 @@ const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onA
                     {new Date(match.date || Date.now()).toLocaleDateString()} &bull; {new Date(match.date || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                   <div className="flex items-center gap-6">
-                    <div className="text-right flex-1">
-                      <div className="font-bold text-lg dark:text-gray-200">{match.homeTeam.name}</div>
+                    <div className="text-right flex-1 group/team">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onScoutTeam(match.homeTeam.name); }}
+                          className="opacity-0 group-hover/team:opacity-100 p-1 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-500 rounded transition-all"
+                          title="Scout Team"
+                        >
+                          <Brain size={14} />
+                        </button>
+                        <div className="font-bold text-lg dark:text-gray-200">{match.homeTeam.name}</div>
+                      </div>
                       <div className="text-3xl font-black text-gray-900 dark:text-white">{getScore(match, 'HOME')}</div>
                     </div>
                     <div className="text-gray-300 dark:text-gray-600 text-xl font-light">-</div>
-                    <div className="text-left flex-1">
-                      <div className="font-bold text-lg dark:text-gray-200">{match.awayTeam.name}</div>
+                    <div className="text-left flex-1 group/teamA">
+                      <div className="flex items-center justify-start gap-2">
+                        <div className="font-bold text-lg dark:text-gray-200">{match.awayTeam.name}</div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onScoutTeam(match.awayTeam.name); }}
+                          className="opacity-0 group-hover/teamA:opacity-100 p-1 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-500 rounded transition-all"
+                          title="Scout Team"
+                        >
+                          <Brain size={14} />
+                        </button>
+                      </div>
                       <div className="text-3xl font-black text-gray-900 dark:text-white">{getScore(match, 'AWAY')}</div>
                     </div>
                   </div>

@@ -6,7 +6,7 @@ import KorfballField, { getShotDistanceType } from './KorfballField';
 import { 
   PieChart, Clock, Target, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, 
   Shirt, AlertOctagon, Monitor, Gavel, Undo2, Volume2, VolumeX, CheckCircle, 
-  XCircle, Share2, Mic, MicOff, Trophy, PlusCircle, ExternalLink 
+  XCircle, Share2, Mic, MicOff, Trophy, PlusCircle, ExternalLink, Brain, Keyboard
 } from 'lucide-react';
 
 import { useSettings } from '../contexts/SettingsContext';
@@ -14,6 +14,7 @@ import { useGameAudio } from '../hooks/useGameAudio';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 import { getScore, formatTime } from '../utils/matchUtils';
+import { getPlayerRole, getTotalGoals } from '../utils/lineupUtils';
 import SocialShareModal from './SocialShareModal';
 import { useVoiceCommands, VoiceCommandAction } from '../hooks/useVoiceCommands';
 
@@ -53,6 +54,8 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
   const [votes, setVotes] = useState<Record<string, number>>({});
   const [customDuration, setCustomDuration] = useState(10); // Minutes
   const [pendingShortcutAction, setPendingShortcutAction] = useState<'GOAL' | 'MISS' | 'FREE_THROW' | 'PENALTY' | 'CARD' | 'TURNOVER' | 'FOUL' | 'REBOUND' | null>(null);
+  const [shortcutBuffer, setShortcutBuffer] = useState<string[]>([]);
+  const bufferTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Track previous clock values to detect transition to 0
   const prevShotClockRef = React.useRef(matchState.shotClock.seconds);
@@ -97,6 +100,120 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
   const isMenuOpen = contextMenu?.visible;
   const currentStep = contextMenu?.step;
 
+  const handleUndo = () => {
+    if (matchState.events.length === 0) return;
+    const lastEvent = matchState.events[matchState.events.length - 1];
+    const remainingEvents = matchState.events.slice(0, -1);
+
+    let updates: Partial<MatchState> = { events: remainingEvents };
+
+    // Revert Possession if stored
+    if (lastEvent.previousPossession) {
+      updates.possession = lastEvent.previousPossession;
+    }
+
+    // Revert Substitution
+    if (lastEvent.type === 'SUBSTITUTION' && lastEvent.subInId && lastEvent.subOutId) {
+      const team = lastEvent.teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
+      const updatedPlayers = team.players.map(p => {
+        if (p.id === lastEvent.subInId) return { ...p, onField: false };
+        if (p.id === lastEvent.subOutId) return { ...p, onField: true };
+        return p;
+      });
+      const updatedTeam = {
+        ...team,
+        players: updatedPlayers,
+        substitutionCount: Math.max(0, team.substitutionCount - (lastEvent.subReason === 'REGULAR' ? 1 : 0))
+      };
+      if (lastEvent.teamId === 'HOME') updates.homeTeam = updatedTeam;
+      else updates.awayTeam = updatedTeam;
+    }
+
+    onUpdateMatch({ ...matchState, ...updates });
+  };
+
+  const addEvent = (eventData: Partial<MatchEvent>) => {
+    const newEvent: MatchEvent = {
+      id: crypto.randomUUID(),
+      timestamp: Math.floor(matchState.timer.elapsedSeconds),
+      realTime: Date.now(),
+      half: matchState.currentHalf,
+      teamId: eventData.teamId!,
+      playerId: eventData.playerId!,
+      type: eventData.type!,
+      previousPossession: matchState.possession,
+      currentZone: eventData.playerId ? getPlayerRole(
+        (eventData.teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam).players.find(p => p.id === eventData.playerId)!,
+        getTotalGoals(matchState)
+      ) : undefined,
+      lineupIds: (eventData.teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam).players.filter(p => p.onField).map(p => p.id),
+      ...eventData,
+    };
+
+    let newPossession = matchState.possession;
+    if (eventData.result === 'GOAL' || eventData.type === 'TURNOVER') {
+      newPossession = eventData.teamId === 'HOME' ? 'AWAY' : 'HOME';
+    } else if (eventData.type === 'REBOUND' && eventData.reboundType === 'DEFENSIVE') {
+      newPossession = eventData.teamId;
+    }
+
+    onUpdateMatch({
+      ...matchState,
+      events: [...matchState.events, newEvent],
+      possession: newPossession,
+      shotClock: { ...matchState.shotClock, seconds: 25 }
+    });
+    setContextMenu(null);
+  };
+
+  const handleSubstitution = (reason: 'REGULAR' | 'INJURY' | 'RED_CARD', contextOverride?: any) => {
+    try {
+      const context = contextOverride || contextMenu;
+      const selectedTeam = context?.selectedTeam;
+      const subOutId = context?.subOutId;
+      const subInId = context?.subInId;
+
+      if (!selectedTeam || !subOutId || !subInId) return;
+
+      const team = selectedTeam === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
+
+      const updatedPlayers = team.players.map(p => {
+        if (p.id === subOutId) return { ...p, onField: false };
+        if (p.id === subInId) return { ...p, onField: true };
+        return p;
+      });
+
+      const updatedTeam = {
+        ...team,
+        players: updatedPlayers,
+        substitutionCount: reason === 'REGULAR' ? team.substitutionCount + 1 : team.substitutionCount
+      };
+
+      const subEntry: MatchEvent = {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'sub-' + Math.random().toString(36).substring(2, 9),
+        timestamp: Math.floor(matchState.timer.elapsedSeconds),
+        realTime: Date.now(),
+        half: matchState.currentHalf,
+        teamId: selectedTeam,
+        type: 'SUBSTITUTION',
+        subOutId,
+        subInId,
+        subReason: reason,
+        previousPossession: matchState.possession,
+        lineupIds: updatedPlayers.filter(p => p.onField).map(p => p.id)
+      };
+
+      onUpdateMatch({
+        ...matchState,
+        homeTeam: selectedTeam === 'HOME' ? updatedTeam : matchState.homeTeam,
+        awayTeam: selectedTeam === 'AWAY' ? updatedTeam : matchState.awayTeam,
+        events: [...matchState.events, subEntry]
+      });
+    } catch (err: any) {
+      console.error('CRITICAL ERROR in handleSubstitution:', err.message, err.stack);
+    }
+  };
+
   const handleShortcutAction = (action: 'GOAL' | 'MISS' | 'FREE_THROW' | 'PENALTY' | 'TIMEOUT' | 'SUB' | 'CARD' | 'TURNOVER' | 'FOUL' | 'REBOUND') => {
     // 1. If we are in "SELECT_ACTION" mode (player selected), allow action shortcuts to EXECUTE immediately
     if (isMenuOpen && currentStep === 'SELECT_ACTION' && contextMenu.selectedPlayerId) {
@@ -136,8 +253,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     }
 
     // 3. Default Flow: Start a new action (opens Select Player)
-
-    const teamId = contextMenu?.selectedTeam || matchState.possession || 'HOME';
+    const currentTeamId = contextMenu?.selectedTeam || matchState.possession || 'HOME';
 
     if (['GOAL', 'MISS', 'FREE_THROW', 'PENALTY', 'CARD', 'TURNOVER', 'FOUL', 'REBOUND'].includes(action)) {
       setPendingShortcutAction(action as any);
@@ -147,14 +263,13 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         step: 'SELECT_PLAYER',
-        selectedTeam: teamId,
+        selectedTeam: currentTeamId,
       } as any));
     }
     else if (action === 'TIMEOUT') {
       startTimeout();
     }
     else if (action === 'SUB') {
-      // Only start substitution if not already deep in a menu
       if (!isMenuOpen || currentStep === 'SELECT_PLAYER') {
         setContextMenu({
           visible: true,
@@ -164,6 +279,85 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
         } as any);
         setPendingShortcutAction(null);
       }
+    }
+  };
+
+  // --- Buffering & Chorded Shortcuts Logic ---
+  const handleBufferedKey = (key: string) => {
+    if (!settings.enableSequenceBuffering) return;
+
+    if (bufferTimeoutRef.current) clearTimeout(bufferTimeoutRef.current);
+    
+    setShortcutBuffer(prev => {
+      const newBuffer = [...prev, key.toUpperCase()];
+      
+      // Attempt to resolve pattern
+      // Pattern: [ACTION_KEY] [PLAYER_INDEX_KEY] [ENTER]
+      if (newBuffer.length >= 2) {
+        const actionKey = newBuffer[0];
+        const playerIndex = parseInt(newBuffer[1]) - 1;
+        const isEnter = newBuffer[newBuffer.length - 1] === 'ENTER';
+
+        if (isEnter && !isNaN(playerIndex)) {
+            const teamId = contextMenu?.selectedTeam || matchState.possession || 'HOME';
+            const team = teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
+            const players = team.players.filter(p => p.onField).sort((a, b) => a.number - b.number);
+            const player = players[playerIndex];
+
+            if (player) {
+                const actionMap: Record<string, any> = {
+                    'G': 'GOAL', 'M': 'MISS', 'K': 'FREE_THROW', 'P': 'PENALTY',
+                    'O': 'TURNOVER', 'F': 'FOUL', 'R': 'REBOUND'
+                };
+                const action = actionMap[actionKey];
+                if (action) {
+                    processBufferedAction(action, teamId, player.id);
+                    return []; // Clear buffer
+                }
+            }
+        }
+      }
+
+      bufferTimeoutRef.current = setTimeout(() => setShortcutBuffer([]), 2000);
+      return newBuffer;
+    });
+  };
+
+  const processBufferedAction = (action: string, teamId: TeamId, playerId: string) => {
+    const location = { x: 50, y: 50 };
+    if (action === 'GOAL') addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location });
+    else if (action === 'MISS') addEvent({ teamId, playerId, type: 'SHOT', result: 'MISS', shotType: 'RUNNING_IN', location });
+    else if (action === 'FREE_THROW') {
+        const autoLoc = teamId === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+        addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'FREE_THROW', location: autoLoc });
+    }
+    else if (action === 'PENALTY') {
+        const autoLoc = teamId === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 };
+        addEvent({ teamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'PENALTY', location: autoLoc });
+    }
+    else if (action === 'TURNOVER') addEvent({ teamId, playerId, type: 'TURNOVER', location });
+    else if (action === 'FOUL') addEvent({ teamId, playerId, type: 'FOUL', location });
+    else if (action === 'REBOUND') addEvent({ teamId, playerId, type: 'REBOUND', reboundType: 'OFFENSIVE', location });
+    
+    setContextMenu(null);
+    setShortcutBuffer([]);
+  };
+
+  const handleChordedGoal = (playerIndex: number) => {
+    if (!settings.enableChordedShortcuts) return;
+    const teamId = matchState.possession || 'HOME';
+    const team = teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
+    const players = team.players.filter(p => p.onField).sort((a, b) => a.number - b.number);
+    const player = players[playerIndex];
+    if (player) {
+        addEvent({
+            teamId,
+            playerId: player.id,
+            type: 'SHOT',
+            result: 'GOAL',
+            shotType: 'RUNNING_IN',
+            location: { x: 50, y: 50 }
+        });
     }
   };
 
@@ -187,7 +381,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
       if (currentStep === 'SELECT_PLAYER' || currentStep === 'SELECT_SUB_OUT') {
         const onFieldPlayers = team.players
           .filter(p => p.onField)
-          .sort((a, b) => parseInt(a.number) - parseInt(b.number));
+          .sort((a, b) => a.number - b.number);
         
         const player = onFieldPlayers[numberIndex];
         
@@ -258,34 +452,45 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     { key: 'h', action: () => setContextMenu({ visible: true, x: window.innerWidth / 2, y: window.innerHeight / 2, step: 'SELECT_PLAYER', selectedTeam: 'HOME' } as any) },
     { key: 'a', action: () => setContextMenu({ visible: true, x: window.innerWidth / 2, y: window.innerHeight / 2, step: 'SELECT_PLAYER', selectedTeam: 'AWAY' } as any) },
 
-    { key: 'g', action: () => handleShortcutAction('GOAL') }, //G for goal
-    { key: 'm', action: () => handleShortcutAction('MISS') }, //M for miss
-    { key: 'k', action: () => handleShortcutAction('FREE_THROW') }, // K for Free Throw
-    { key: 'p', action: () => handleShortcutAction('PENALTY') }, //P for penalty
-    { key: 't', action: () => handleShortcutAction('TIMEOUT') }, //T for time-out
-    { key: 's', action: () => handleShortcutAction('SUB') }, //S for substitution
-    { key: 'c', action: () => handleShortcutAction('CARD') }, //C for card
-    { key: 'o', action: () => handleShortcutAction('TURNOVER') }, //O for turnover
-    { key: 'f', action: () => handleShortcutAction('FOUL') }, //F for foul
-    { key: 'r', action: () => handleShortcutAction('REBOUND') }, //R for Rebound
+    { key: 'g', action: () => { handleShortcutAction('GOAL'); handleBufferedKey('G'); } },
+    { key: 'm', action: () => { handleShortcutAction('MISS'); handleBufferedKey('M'); } },
+    { key: 'k', action: () => { handleShortcutAction('FREE_THROW'); handleBufferedKey('K'); } },
+    { key: 'p', action: () => { handleShortcutAction('PENALTY'); handleBufferedKey('P'); } },
+    { key: 'o', action: () => { handleShortcutAction('TURNOVER'); handleBufferedKey('O'); } },
+    { key: 'f', action: () => { handleShortcutAction('FOUL'); handleBufferedKey('F'); } },
+    { key: 'r', action: () => { handleShortcutAction('REBOUND'); handleBufferedKey('R'); } },
+    { key: 't', action: () => handleShortcutAction('TIMEOUT') },
+    { key: 's', action: () => handleShortcutAction('SUB') },
+    { key: 'c', action: () => handleShortcutAction('CARD') },
 
     // Player Numbers
-    { key: '1', action: () => handlePlayerNumberSelection(0) }, //1 for first player in list
-    { key: '2', action: () => handlePlayerNumberSelection(1) }, //2 for second player in list
-    { key: '3', action: () => handlePlayerNumberSelection(2) }, //3 for third player in list
-    { key: '4', action: () => handlePlayerNumberSelection(3) }, //4 for fourth player in list
-    { key: '5', action: () => handlePlayerNumberSelection(4) }, //5 for fifth player in list
-    { key: '6', action: () => handlePlayerNumberSelection(5) }, //6 for sixth player in list
-    { key: '7', action: () => handlePlayerNumberSelection(6) }, //7 for seventh player in list
-    { key: '8', action: () => handlePlayerNumberSelection(7) }, //8 for eighth player in list
+    { key: '1', action: () => { handlePlayerNumberSelection(0); handleBufferedKey('1'); } },
+    { key: '2', action: () => { handlePlayerNumberSelection(1); handleBufferedKey('2'); } },
+    { key: '3', action: () => { handlePlayerNumberSelection(2); handleBufferedKey('3'); } },
+    { key: '4', action: () => { handlePlayerNumberSelection(3); handleBufferedKey('4'); } },
+    { key: '5', action: () => { handlePlayerNumberSelection(4); handleBufferedKey('5'); } },
+    { key: '6', action: () => { handlePlayerNumberSelection(5); handleBufferedKey('6'); } },
+    { key: '7', action: () => { handlePlayerNumberSelection(6); handleBufferedKey('7'); } },
+    { key: '8', action: () => { handlePlayerNumberSelection(7); handleBufferedKey('8'); } },
+
+    // Chorded Shortcuts (Shift + Number)
+    { key: '1', shiftKey: true, action: () => handleChordedGoal(0) },
+    { key: '2', shiftKey: true, action: () => handleChordedGoal(1) },
+    { key: '3', shiftKey: true, action: () => handleChordedGoal(2) },
+    { key: '4', shiftKey: true, action: () => handleChordedGoal(3) },
+    { key: '5', shiftKey: true, action: () => handleChordedGoal(4) },
+    { key: '6', shiftKey: true, action: () => handleChordedGoal(5) },
+    { key: '7', shiftKey: true, action: () => handleChordedGoal(6) },
+    { key: '8', shiftKey: true, action: () => handleChordedGoal(7) },
 
     {
       key: 'Enter', action: () => {
+        handleBufferedKey('Enter');
         if (isMenuOpen) {
           if (currentStep === 'SELECT_SHOT_TYPE' || currentStep === 'SELECT_RESULT') {
              const teamId = contextMenu.selectedTeam;
              const playerId = contextMenu.selectedPlayerId;
-             const shotType = contextMenu.calculatedShotType || 'DISTANCE';
+             const shotType = contextMenu.calculatedShotType || 'NEAR';
              const location = currentStep === 'SELECT_RESULT' ? (teamId === 'HOME' ? { x: 22.9, y: 50 } : { x: 77.1, y: 50 }) : { x: contextMenu.x, y: contextMenu.y };
              addEvent({ teamId, playerId, type: 'SHOT', shotType, result: 'GOAL', location });
              setContextMenu(null);
@@ -295,7 +500,9 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
       }
     },
 
-    { key: 'Escape', action: () => { setContextMenu(null); setShowModal(false); setPendingShortcutAction(null); } }
+    { key: 'Escape', action: () => { setContextMenu(null); setShowModal(false); setPendingShortcutAction(null); setShortcutBuffer([]); } },
+    { key: 'z', ctrlKey: true, action: handleUndo },
+    { key: 'z', metaKey: true, action: handleUndo }
   ]);
 
 
@@ -381,116 +588,8 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
       x,
       y,
       step: 'SELECT_TEAM',
-      calculatedShotType: getShotDistanceType(x, y)
+      calculatedShotType: getShotDistanceType(x, y) || 'NEAR'
     });
-  };
-
-  const handleSubstitution = (reason: 'REGULAR' | 'INJURY' | 'RED_CARD', contextOverride?: any) => {
-    try {
-      const context = contextOverride || contextMenu;
-      const selectedTeam = context?.selectedTeam;
-      const subOutId = context?.subOutId;
-      const subInId = context?.subInId;
-
-      if (!selectedTeam || !subOutId || !subInId) return;
-
-      const team = selectedTeam === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
-
-      const updatedPlayers = team.players.map(p => {
-        if (p.id === subOutId) return { ...p, onField: false };
-        if (p.id === subInId) return { ...p, onField: true };
-        return p;
-      });
-
-      const updatedTeam = {
-        ...team,
-        players: updatedPlayers,
-        substitutionCount: reason === 'REGULAR' ? team.substitutionCount + 1 : team.substitutionCount
-      };
-
-      const subEntry: MatchEvent = {
-        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'sub-' + Math.random().toString(36).substring(2, 9),
-        timestamp: Math.floor(matchState.timer.elapsedSeconds),
-        realTime: Date.now(),
-        half: matchState.currentHalf,
-        teamId: selectedTeam,
-        type: 'SUBSTITUTION',
-        subOutId,
-        subInId,
-        subReason: reason,
-        previousPossession: matchState.possession
-      };
-
-      onUpdateMatch({
-        ...matchState,
-        homeTeam: selectedTeam === 'HOME' ? updatedTeam : matchState.homeTeam,
-        awayTeam: selectedTeam === 'AWAY' ? updatedTeam : matchState.awayTeam,
-        events: [...matchState.events, subEntry]
-      });
-    } catch (err: any) {
-      console.error('CRITICAL ERROR in handleSubstitution:', err.message, err.stack);
-    }
-  };
-
-  const addEvent = (eventData: Partial<MatchEvent>) => {
-    const newEvent: MatchEvent = {
-      id: crypto.randomUUID(),
-      timestamp: Math.floor(matchState.timer.elapsedSeconds),
-      realTime: Date.now(),
-      half: matchState.currentHalf,
-      teamId: eventData.teamId!,
-      playerId: eventData.playerId!,
-      type: eventData.type!,
-      previousPossession: matchState.possession,
-      ...eventData,
-    };
-
-    let newPossession = matchState.possession;
-    if (eventData.result === 'GOAL' || eventData.type === 'TURNOVER') {
-      newPossession = eventData.teamId === 'HOME' ? 'AWAY' : 'HOME';
-    } else if (eventData.type === 'REBOUND' && eventData.reboundType === 'DEFENSIVE') {
-      newPossession = eventData.teamId;
-    }
-
-    onUpdateMatch({
-      ...matchState,
-      events: [...matchState.events, newEvent],
-      possession: newPossession,
-      shotClock: { ...matchState.shotClock, seconds: 25 }
-    });
-    setContextMenu(null);
-  };
-
-  const handleUndo = () => {
-    if (matchState.events.length === 0) return;
-    const lastEvent = matchState.events[matchState.events.length - 1];
-    const remainingEvents = matchState.events.slice(0, -1);
-
-    let updates: Partial<MatchState> = { events: remainingEvents };
-
-    // Revert Possession if stored
-    if (lastEvent.previousPossession) {
-      updates.possession = lastEvent.previousPossession;
-    }
-
-    // Revert Substitution
-    if (lastEvent.type === 'SUBSTITUTION' && lastEvent.subInId && lastEvent.subOutId) {
-      const team = lastEvent.teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
-      const updatedPlayers = team.players.map(p => {
-        if (p.id === lastEvent.subInId) return { ...p, onField: false };
-        if (p.id === lastEvent.subOutId) return { ...p, onField: true };
-        return p;
-      });
-      const updatedTeam = {
-        ...team,
-        players: updatedPlayers,
-        substitutionCount: Math.max(0, team.substitutionCount - (lastEvent.subReason === 'REGULAR' ? 1 : 0))
-      };
-      if (lastEvent.teamId === 'HOME') updates.homeTeam = updatedTeam;
-      else updates.awayTeam = updatedTeam;
-    }
-
-    onUpdateMatch({ ...matchState, ...updates });
   };
 
   // --- Voice Command Handler ---
@@ -518,7 +617,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     // Determine Player
     let playerId = team.players[0]?.id; // Default fallback
     if ('playerNumber' in action && action.playerNumber !== undefined) {
-      const found = team.players.find(p => parseInt(p.number) === action.playerNumber);
+      const found = team.players.find(p => p.number.toString() === action.playerNumber?.toString());
       if (found) playerId = found.id;
     }
 
@@ -640,10 +739,16 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     if (!contextMenu?.visible) return null;
 
     const activeTeam = contextMenu.selectedTeam === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
-    // Sort players by number to ensure keyboard shortcuts correspond to visual order logically (1, 2, 3...)
-    // TO-DO Might want to change this to be based on the attack / defense
+    const totalGoals = getTotalGoals(matchState);
+    
+    // Group players by role for better tactical input
     const onFieldPlayers = (activeTeam?.players.filter(p => p.onField) || [])
-      .sort((a, b) => parseInt(a.number) - parseInt(b.number));
+      .sort((a, b) => {
+        const roleA = getPlayerRole(a, totalGoals);
+        const roleB = getPlayerRole(b, totalGoals);
+        if (roleA !== roleB) return roleA === 'ATTACK' ? -1 : 1;
+        return a.number - b.number;
+      });
     const benchPlayers = activeTeam?.players.filter(p => !p.onField) || [];
 
     return (
@@ -767,6 +872,11 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                     >
                       <span className="text-lg">{p.number}</span>
                       <span className="text-[10px] text-gray-500">{p.gender}</span>
+                      <div className="absolute -top-1 -right-1">
+                        <span className={`px-1 rounded text-[8px] font-bold text-white ${getPlayerRole(p, totalGoals) === 'ATTACK' ? 'bg-orange-500' : 'bg-blue-500'}`}>
+                          {getPlayerRole(p, totalGoals) === 'ATTACK' ? 'ATT' : 'DEF'}
+                        </span>
+                      </div>
                       <div className="absolute top-1 left-1 flex items-center justify-center bg-black/20 rounded-md px-1.5 py-0.5">
                         <kbd className="text-[10px] font-black text-gray-600 font-mono">{onFieldPlayers.indexOf(p) + 1}</kbd>
                       </div>
@@ -1080,7 +1190,15 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
         </div>
         <div className="flex-1 flex flex-col">
           <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 mb-4 relative transition-colors">
-            <KorfballField mode="input" onFieldClick={handleFieldClick} homeColor={matchState.homeTeam.color} awayColor={matchState.awayTeam.color} />
+            <div className="flex-1 min-h-0 relative">
+              <KorfballField
+                mode="input"
+                onFieldClick={handleFieldClick}
+                homeColor={matchState.homeTeam.color}
+                awayColor={matchState.awayTeam.color}
+                totalGoals={getTotalGoals(matchState)}
+              />
+            </div>
             <div className="flex justify-between px-2 mt-2 text-xs font-bold text-gray-400">
               <span style={{ color: matchState.homeTeam.color }}>HOME ZONE</span>
               <span style={{ color: matchState.awayTeam.color }}>AWAY ZONE</span>

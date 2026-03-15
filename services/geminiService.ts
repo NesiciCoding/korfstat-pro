@@ -183,3 +183,51 @@ export const generateLiveCommentary = async (matchData: MatchState): Promise<str
     return "Technical timeout on the commentary box...";
   }
 };
+
+export const generateScoutingReport = async (data: any): Promise<string> => {
+    try {
+        const ai = getClient();
+
+        const prompt = `
+            You are a high-level Korfball scout. Analyze the following aggregated data for [${data.teamName}] from their last ${data.matchCount} matches.
+            
+            Team Data Summary:
+            - Average Goals per Game: ${data.avgGoals.toFixed(1)}
+            - Shooting Efficiency (Overall): ${data.shootingEfficiency.total}%
+            - Shooting Breakdown:
+                * Near Post: ${data.shootingEfficiency.near}%
+                * Medium Distance: ${data.shootingEfficiency.medium}%
+                * Long Distance (Far): ${data.shootingEfficiency.far}%
+                * Penalty: ${data.shootingEfficiency.penalty}%
+                * Free Throw: ${data.shootingEfficiency.freeThrow}%
+                * Running-in: ${data.shootingEfficiency.runningIn}%
+            - Post Control: Average ${data.rebounds.avgPerGame.toFixed(1)} rebounds per match.
+            - Discipline: Average ${data.fouls.avgPerGame.toFixed(1)} fouls per match.
+            - Momentum Profile: 
+                * First Half Goals: ${data.momentum.firstHalfGoals}
+                * Second Half Goals: ${data.momentum.secondHalfGoals}
+            
+            Key Personnel Analyzed:
+            ${data.topPlayers.map((p: any) => `- ${p.name}: ${p.goals} goals, ${p.shots} shots, efficiency: ${p.shots ? Math.round(p.goals/p.shots*100) : 0}%. Performance Rating (VAL): ${p.val}`).join('\n')}
+
+            Please provide a professional Scouting Report in Markdown format with the following sections:
+            1. EXECUTIVE SUMMARY: One paragraph describing their tactical identity (e.g., "A high-intensity team that forces play near the post").
+            2. PERSONNEL ALERT: Highlight 2-3 specific players and how to neutralize them.
+            3. SHOT MAP INSIGHTS: Analyze their preferred scoring zones and suggest how to position defense.
+            4. DEFENSIVE GAPS: Identify their vulnerabilities based on foul count and momentum.
+            5. TACTICAL VERDICT: Final advice to the coaching staff on how to secure a win.
+
+            Tone: Professional, expert, and actionable.
+        `;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: prompt,
+        });
+
+        return response.text || "Could not generate scouting insights.";
+    } catch (error) {
+        console.error("Error generating scouting report:", error);
+        return "The scouting drone encountered technical interference. Check your API key or data availability.";
+    }
+};

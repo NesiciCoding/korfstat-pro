@@ -1,6 +1,7 @@
 import React from 'react';
 import { MatchState } from '../types';
 import { getScore, formatTime } from '../utils/matchUtils';
+import { getTotalGoals } from '../utils/lineupUtils';
 import SponsorRotatingBanner from './SponsorRotatingBanner';
 
 interface LiveStatsViewProps {
@@ -17,7 +18,14 @@ const LiveStatsView: React.FC<LiveStatsViewProps> = ({ matchState }) => {
                 {/* Home */}
                 <div className="text-center">
                     <div className="text-4xl font-bold uppercase mb-4" style={{ color: matchState.homeTeam.color }}>{matchState.homeTeam.name}</div>
-                    <div className="text-[12rem] font-black leading-none bg-zinc-900 rounded-3xl py-8 shadow-inner">{getScore(matchState, 'HOME')}</div>
+                    <div className="relative inline-block">
+                        <div className="text-[12rem] font-black leading-none bg-zinc-900 rounded-3xl py-8 shadow-inner px-12">{getScore(matchState, 'HOME')}</div>
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-zinc-800 px-4 py-1 rounded-full border border-zinc-700 shadow-lg">
+                            <span className="text-xl font-bold text-gray-400 uppercase tracking-widest">
+                                {(Math.floor(getTotalGoals(matchState) / 2) % 2 === 0) ? 'Attack' : 'Defense'}
+                            </span>
+                        </div>
+                    </div>
                     {matchState.possession === 'HOME' && <div className="mt-4 text-3xl font-bold text-yellow-500 animate-pulse tracking-widest uppercase">POSSESSION</div>}
                 </div>
 
@@ -43,7 +51,14 @@ const LiveStatsView: React.FC<LiveStatsViewProps> = ({ matchState }) => {
                 {/* Away */}
                 <div className="text-center">
                     <div className="text-4xl font-bold uppercase mb-4" style={{ color: matchState.awayTeam.color }}>{matchState.awayTeam.name}</div>
-                    <div className="text-[12rem] font-black leading-none bg-zinc-900 rounded-3xl py-8 shadow-inner">{getScore(matchState, 'AWAY')}</div>
+                    <div className="relative inline-block">
+                        <div className="text-[12rem] font-black leading-none bg-zinc-900 rounded-3xl py-8 shadow-inner px-12">{getScore(matchState, 'AWAY')}</div>
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-zinc-800 px-4 py-1 rounded-full border border-zinc-700 shadow-lg">
+                            <span className="text-xl font-bold text-gray-400 uppercase tracking-widest">
+                                {(Math.floor(getTotalGoals(matchState) / 2) % 2 === 0) ? 'Defense' : 'Attack'}
+                            </span>
+                        </div>
+                    </div>
                     {matchState.possession === 'AWAY' && <div className="mt-4 text-3xl font-bold text-yellow-500 animate-pulse tracking-widest uppercase">POSSESSION</div>}
                 </div>
             </div>

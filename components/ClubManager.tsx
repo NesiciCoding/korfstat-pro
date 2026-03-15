@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Club } from '../types/club';
 import { ClubService } from '../services/clubService';
-import { Plus, Trash2, Edit2, Users, ArrowLeft, Download, BarChart2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Users, ArrowLeft, Download, BarChart2, Brain } from 'lucide-react';
 import ClubEditor from './ClubEditor';
 import { MatchState } from '../types';
 import { calculateCareerStats } from '../utils/statsCalculator';
@@ -10,13 +10,13 @@ import { calculateCareerStats } from '../utils/statsCalculator';
 interface ClubManagerProps {
     onBack: () => void;
     savedMatches?: MatchState[];
+    onScoutTeam?: (teamName: string) => void;
 }
-//Club manager. This component is used to manage the clubs that are connected to the application.
-const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) => {
+
+const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [], onScoutTeam }) => {
     const { t } = useTranslation();
     const [clubs, setClubs] = useState<Club[]>([]);
     const [selectedClub, setSelectedClub] = useState<Club | null>(null);
-    const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
         loadClubs();
@@ -69,7 +69,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
             />
         );
     }
-    // Return everything that needs to be rendered.
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
             <div className="max-w-4xl mx-auto">
@@ -92,7 +92,6 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Create Card */}
                     <div
                         onClick={handleCreate}
                         className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all flex flex-col items-center justify-center min-h-[200px] cursor-pointer group"
@@ -103,14 +102,22 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [] }) 
                         <span className="font-semibold text-gray-900 dark:text-white">{t('clubManager.createNew')}</span>
                     </div>
 
-                    {/* Club List */}
                     {clubs.map(club => (
                         <div
                             key={club.id}
                             onClick={() => setSelectedClub(club)}
                             className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-indigo-500 transition-all cursor-pointer relative group"
                         >
-                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                {onScoutTeam && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onScoutTeam(club.name); }}
+                                        className="p-2 text-gray-400 hover:text-indigo-600 bg-white/50 rounded-full hover:bg-white"
+                                        title="AI Scout"
+                                    >
+                                        <Brain size={16} />
+                                    </button>
+                                )}
                                 <button
                                     onClick={(e) => handleDelete(club.id, e)}
                                     aria-label={t('common.delete')}

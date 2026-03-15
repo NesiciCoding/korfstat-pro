@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import StatsView from '../StatsView';
 import { MatchState } from '../../types';
 
@@ -17,6 +17,10 @@ vi.mock('recharts', () => ({
 
 vi.mock('../KorfballField', () => ({
   default: () => <div data-testid="korfball-field">Field</div>
+}));
+
+vi.mock('../PlayerProfileModal', () => ({
+  default: () => <div data-testid="player-profile-modal">Mock Modal</div>
 }));
 
 describe('StatsView', () => {
@@ -95,5 +99,41 @@ describe('StatsView', () => {
 
     // Should not crash
     expect(container).toBeInTheDocument();
+  });
+
+  describe('Filtering and View Options', () => {
+    it('allows filtering by team', () => {
+        const matchState = createMockMatchState();
+        render(<StatsView matchState={matchState} onBack={mockOnBack} />);
+        
+        // Find team filter buttons
+        const homeFilter = screen.getByText('Home Blazers');
+        fireEvent.click(homeFilter);
+        
+        // Check if filtering logic is triggered (internal state change, verify no crash)
+        expect(screen.getByText('Home Blazers')).toBeInTheDocument();
+    });
+
+    it('allows filtering by individual player', () => {
+        const matchState = createMockMatchState();
+        render(<StatsView matchState={matchState} onBack={mockOnBack} />);
+        
+        // Find player filter
+        const playerFilter = screen.getByText('John Doe');
+        fireEvent.click(playerFilter);
+        
+        expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+  });
+
+  describe('Export Interactions', () => {
+    it('renders export buttons', () => {
+        const matchState = createMockMatchState();
+        render(<StatsView matchState={matchState} onBack={mockOnBack} />);
+        
+        // Export buttons usually have specific text or icons
+        const exportHeader = screen.getByText(/stats\.export/i);
+        expect(exportHeader).toBeInTheDocument();
+    });
   });
 });

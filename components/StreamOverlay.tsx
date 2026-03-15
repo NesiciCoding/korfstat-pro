@@ -4,6 +4,7 @@ import { Clock, Shield, AlertTriangle, ArrowRightLeft, Timer, Repeat, Shirt } fr
 import SponsorRotatingBanner from './SponsorRotatingBanner';
 import VotingResultsOverlay from './VotingResultsOverlay';
 import { getScore, formatTime } from '../utils/matchUtils';
+import { getTotalGoals } from '../utils/lineupUtils';
 import { THEME_PRESETS, FONT_OPTIONS } from '../config/broadcastThemes';
 
 interface StreamOverlayProps {
@@ -255,6 +256,11 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState, socket }) => 
                                 <span className={`relative z-10 font-black text-6xl font-mono leading-none ${theme === 'neon' ? 'text-cyan-400' : 'drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]'}`}>
                                     {getScore(matchState, 'HOME')}
                                 </span>
+                                <div className="absolute top-1 right-2">
+                                    <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest">
+                                        {(Math.floor(getTotalGoals(matchState) / 2) % 2 === 0) ? 'Attack' : 'Defense'}
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Center Clock */}
@@ -334,6 +340,11 @@ const StreamOverlay: React.FC<StreamOverlayProps> = ({ matchState, socket }) => 
                                 <span className={`relative z-10 font-black text-6xl font-mono leading-none ${theme === 'neon' ? 'text-cyan-400' : 'drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]'}`}>
                                     {getScore(matchState, 'AWAY')}
                                 </span>
+                                <div className="absolute top-1 left-2">
+                                    <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest">
+                                        {(Math.floor(getTotalGoals(matchState) / 2) % 2 === 0) ? 'Defense' : 'Attack'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>

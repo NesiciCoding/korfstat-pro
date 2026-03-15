@@ -46,7 +46,11 @@
     "sponsors": "Sponsor Management",
     "rotationInterval": "Rotation Interval (sec)",
     "addSponsor": "Add Sponsor Logo",
-    "noSponsors": "No sponsors added"
+    "noSponsors": "No sponsors added",
+    "shortcuts": "Keyboard Shortcuts",
+    "enableChorded": "Enable Chorded Shortcuts (Shift + 1-8)",
+    "enableSequence": "Enable Sequence Buffering (G, 1, Enter)",
+    "shortcutWarning": "Chorded shortcuts execute actions immediately. Errors must be corrected with Undo (Z)."
   },
   "common": {
     "cancel": "Cancel",
@@ -361,6 +365,28 @@
     "totalRebounds": "Total Rebounds",
     "leaderboard": "Player Leaderboard",
     "noPlayerData": "No player data available",
-    "syncVideoAlert": "Please sync the video first!"
+    "syncVideoAlert": "Please sync the video first!",
+    "lineups": "Lineups",
+    "lineupAnalysis": "Lineup Analysis (+/- per 4-Pack)",
+    "lineupDesc": "Tracks performance of specific 4-player combinations using the 2-goal zone switch rule.",
+    "team": "Team",
+    "lineup": "Lineup",
+    "duration": "Duration",
+    "goalsFor": "GF",
+    "goalsAgainst": "GA",
+    "timeline": "Timeline"
+  },
+  "spotter": {
+    "voiceControl": "Voice Control",
+    "listeningMode": "Listening Mode",
+    "stopVoice": "Stop Voice",
+    "startVoice": "Start Voice",
+    "lastTranscript": "Last Command",
+    "transcriptPlaceholder": "Waiting for command...",
+    "helpText": "Voice Examples:",
+    "helpExample1": "\"Home 5 Goal\"",
+    "helpExample2": "\"Away 12 Miss\"",
+    "helpExample3": "\"Home 3 Turnover\"",
+    "commandRegistered": "Command Registered!"
   }
 }

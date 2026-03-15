@@ -34,6 +34,8 @@ export interface Settings {
     };
     sponsorLogos: string[];
     sponsorRotationInterval: number; // Seconds
+    enableChordedShortcuts: boolean;
+    enableSequenceBuffering: boolean;
 }
 
 interface SettingsContextType {
@@ -60,7 +62,9 @@ const defaultSettings: Settings = {
         style: 'modern'
     },
     sponsorLogos: [],
-    sponsorRotationInterval: 10
+    sponsorRotationInterval: 10,
+    enableChordedShortcuts: true,
+    enableSequenceBuffering: true
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

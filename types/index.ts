@@ -35,6 +35,8 @@ export type ActionType = 'SHOT' | 'REBOUND' | 'FOUL' | 'TURNOVER' | 'SHOT_CLOCK'
 export type ShotResult = 'GOAL' | 'MISS';
 export type CardType = 'YELLOW' | 'RED';
 
+export type Role = 'ATTACK' | 'DEFENSE';
+
 export interface MatchEvent {
   id: string;
   timestamp: number;
@@ -59,6 +61,10 @@ export interface MatchEvent {
 
   // Card specific
   cardType?: CardType;
+
+  // Lineup Tracking & Role
+  currentZone?: Role;
+  lineupIds?: string[]; // IDs of the 4 players on the field for this team at this time
 
   // Undo tracking
   previousPossession?: TeamId | null;

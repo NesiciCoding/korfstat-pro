@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatTime, getScore } from '../matchUtils';
+import { formatTime, getScore, getMomentumData } from '../matchUtils';
 import { MatchState } from '../../types';
 
 describe('matchUtils', () => {
@@ -9,6 +9,22 @@ describe('matchUtils', () => {
             expect(formatTime(65)).toBe('01:05');
             expect(formatTime(3600)).toBe('60:00');
         });
+    });
+
+    it('calculates momentum data correctly', () => {
+        const mockMatch = {
+            timer: { elapsedSeconds: 120 },
+            events: [
+                { type: 'SHOT', timestamp: 10, teamId: 'HOME' },
+                { type: 'SHOT', timestamp: 70, teamId: 'HOME' },
+                { type: 'SHOT', timestamp: 75, teamId: 'AWAY' }
+            ]
+        } as unknown as MatchState;
+
+        const data = getMomentumData(mockMatch);
+        expect(data[0].homeShots).toBe(1); // Minute 0
+        expect(data[1].homeShots).toBe(1); // Minute 1
+        expect(data[1].awayShots).toBe(1); // Minute 1
     });
 
     describe('getScore', () => {

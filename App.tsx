@@ -23,7 +23,8 @@ import SpotterView from './components/SpotterView';
 import SettingsModal from './components/SettingsModal';
 import SeasonManager from './components/SeasonManager';
 import ClubManager from './components/ClubManager';
-import MatchAnalysis from './components/MatchAnalysis'; // Not lazy for now, or lazy is fine
+import MatchAnalysis from './components/MatchAnalysis';
+import ScoutingReportView from './components/ScoutingReportView';
 import ErrorBoundary from './components/ErrorBoundary';
 import ShortcutsModal from './components/ShortcutsModal';
 const LiveTicker = lazy(() => import('./components/LiveTicker'));
@@ -39,15 +40,17 @@ import { calculateDerivedMatchState } from './utils/matchLogic';
 
 function AppContent() {
   // Initialize view from URL parameter
-  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS' | 'TICKER'>(() => {
+  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS' | 'TICKER' | 'VOTING' | 'SCOUTING_REPORT'>(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
-    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'TICKER', 'VOTING'];
+    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'TICKER', 'VOTING', 'SCOUTING_REPORT'];
     if (viewParam && validViews.includes(viewParam)) {
       return viewParam as any;
     }
     return 'HOME';
   });
+
+  const [scoutingTeam, setScoutingTeam] = useState<string>('');
 
   const { settings } = useSettings();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -481,6 +484,7 @@ function AppContent() {
             matches={savedMatches}
             onSelectMatch={(match) => { setMatchState(match); setView('STATS'); }}
             onAnalyzeMatch={(match) => { setMatchState(match); setView('ANALYSIS'); }}
+            onScoutTeam={(team) => { setScoutingTeam(team); setView('SCOUTING_REPORT'); }}
             onDeleteMatch={handleDeleteMatch}
             onBack={() => setView('HOME')}
           />
@@ -540,6 +544,7 @@ function AppContent() {
         <ClubManager
           onBack={() => setView('HOME')}
           savedMatches={savedMatches}
+          onScoutTeam={(team) => { setScoutingTeam(team); setView('SCOUTING_REPORT'); }}
         />
       )}
 
@@ -566,6 +571,14 @@ function AppContent() {
         <Suspense fallback={<div className="loading-fallback">Loading Voting...</div>}>
           <SpectatorVoting />
         </Suspense>
+      )}
+
+      {view === 'SCOUTING_REPORT' && (
+        <ScoutingReportView 
+          teamName={scoutingTeam}
+          allMatches={savedMatches}
+          onBack={() => setView('MATCH_HISTORY')}
+        />
       )}
     </div>
   );

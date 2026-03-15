@@ -75,7 +75,6 @@ export const useVoiceCommands = ({ onCommand, homeName = 'Home', awayName = 'Awa
     useEffect(() => { callbackRef.current = onCommand; }, [onCommand]);
 
     const processCommand = (text: string) => {
-        // console.log("Processing Voice Command:", text);
         const lower = text.toLowerCase();
         let action: VoiceCommandAction = { type: 'UNKNOWN', original: text };
 
@@ -83,34 +82,45 @@ export const useVoiceCommands = ({ onCommand, homeName = 'Home', awayName = 'Awa
 
         // Detect Team
         let team: 'HOME' | 'AWAY' | undefined;
-        if (lower.includes('home') || lower.includes(homeName.toLowerCase()) || lower.includes('white') || lower.includes('blue')) {
-            team = 'HOME'; // Assuming Home defaults
-        } else if (lower.includes('away') || lower.includes(awayName.toLowerCase()) || lower.includes('red') || lower.includes('black')) {
+        const homeKeywords = ['home', 'thuis', 'white', 'wit', 'blue', 'blauw', homeName.toLowerCase()];
+        const awayKeywords = ['away', 'uit', 'red', 'rood', 'black', 'zwart', awayName.toLowerCase()];
+
+        if (homeKeywords.some(k => lower.includes(k))) {
+            team = 'HOME';
+        } else if (awayKeywords.some(k => lower.includes(k))) {
             team = 'AWAY';
         }
 
         // Detect Number (Player)
-        // Look for digits 1-99
-        const numberMatch = lower.match(/\b(\d{1,2})\b/);
+        // Improved regex to handle "number X" or "nummer X"
+        const numberMatch = lower.match(/(?:number|nummer|#|player|speler)?\s?\b(\d{1,2})\b/);
         const playerNumber = numberMatch ? parseInt(numberMatch[1]) : undefined;
 
-
         // Detect Action
-        if (lower.includes('goal') || lower.includes('score')) {
+        const goalKeywords = ['goal', 'score', 'doelpunt', 'punt', 'raak'];
+        const missKeywords = ['miss', 'shot', 'mist', 'miste', 'schot', 'fout'];
+        const turnoverKeywords = ['turnover', 'turn', 'lost', 'balverlies', 'kwijt', 'onderschepping'];
+        const foulKeywords = ['foul', 'overtreding', 'straffout', 'afgefloten'];
+        const penaltyKeywords = ['penalty', 'strafworp', 'stip'];
+        const freeThrowKeywords = ['free pass', 'free throw', 'vrije worp', 'vrije bal', 'vrij'];
+        const timeoutKeywords = ['timeout', 'time out', 'tijd'];
+        const undoKeywords = ['undo', 'cancel', 'annuleer', 'herstel', 'foutje'];
+
+        if (goalKeywords.some(k => lower.includes(k))) {
             action = { type: 'GOAL', team, playerNumber };
-        } else if (lower.includes('miss') || lower.includes('shot')) {
+        } else if (missKeywords.some(k => lower.includes(k))) {
             action = { type: 'MISS', team, playerNumber };
-        } else if (lower.includes('turnover') || lower.includes('turn') || lower.includes('lost')) {
+        } else if (turnoverKeywords.some(k => lower.includes(k))) {
             action = { type: 'TURNOVER', team, playerNumber };
-        } else if (lower.includes('foul')) {
+        } else if (foulKeywords.some(k => lower.includes(k))) {
             action = { type: 'FOUL', team, playerNumber };
-        } else if (lower.includes('penalty')) {
+        } else if (penaltyKeywords.some(k => lower.includes(k))) {
             action = { type: 'PENALTY', team, playerNumber };
-        } else if (lower.includes('free pass') || lower.includes('free throw')) { // 'free throw' is common misnomer
+        } else if (freeThrowKeywords.some(k => lower.includes(k))) {
             action = { type: 'FREE_THROW', team, playerNumber };
-        } else if (lower.includes('timeout') || lower.includes('time out')) {
+        } else if (timeoutKeywords.some(k => lower.includes(k))) {
             action = { type: 'TIMEOUT', team };
-        } else if (lower.includes('undo') || lower.includes('cancel')) {
+        } else if (undoKeywords.some(k => lower.includes(k))) {
             action = { type: 'UNDO' };
         }
 

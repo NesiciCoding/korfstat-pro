@@ -9,6 +9,7 @@ interface KorfballFieldProps {
   showZoneEfficiency?: boolean;
   homeColor?: string;
   awayColor?: string;
+  totalGoals?: number;
 }
 
 export const getShotDistanceType = (xPercentage: number, yPercentage: number): ShotType => {
@@ -43,7 +44,8 @@ const KorfballField: React.FC<KorfballFieldProps> = ({
   heatmapMode = false,
   showZoneEfficiency = false, // New Prop
   homeColor = '#3b82f6',
-  awayColor = '#ef4444'
+  awayColor = '#ef4444',
+  totalGoals = 0
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -248,10 +250,14 @@ const KorfballField: React.FC<KorfballFieldProps> = ({
         ))}
 
         {mode === 'input' && (
-          <text x="5" y="5" fontSize="3" fill="#000" opacity="0.4">HOME SIDE</text>
+          <text x="5" y="5" fontSize="3" fill="#000" opacity="0.4" fontWeight="bold">
+            {(Math.floor(totalGoals / 2) % 2 === 0) ? 'HOME ATTACK' : 'AWAY ATTACK'}
+          </text>
         )}
         {mode === 'input' && (
-          <text x="175" y="5" fontSize="3" fill="#000" opacity="0.4">AWAY SIDE</text>
+          <text x="175" y="5" fontSize="3" fill="#000" opacity="0.4" fontWeight="bold" textAnchor="end">
+            {(Math.floor(totalGoals / 2) % 2 === 0) ? 'AWAY ATTACK' : 'HOME ATTACK'}
+          </text>
         )}
       </svg>
     </div>

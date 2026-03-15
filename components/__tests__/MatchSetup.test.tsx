@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import MatchSetup from '../MatchSetup';
 import { TemplateService } from '../../services/templateService';
+import { ClubService } from '../../services/clubService';
 
 // Mock TemplateService
 vi.mock('../../services/templateService', () => ({
@@ -12,8 +13,22 @@ vi.mock('../../services/templateService', () => ({
     }
 }));
 
+// Mock confirm and alert
+const mockConfirm = vi.fn();
+const mockAlert = vi.fn();
+window.confirm = mockConfirm;
+window.alert = mockAlert;
+
+// Mock ClubService
+vi.mock('../../services/clubService', () => ({
+    ClubService: {
+        getAllClubs: vi.fn().mockReturnValue([])
+    }
+}));
+
 describe('MatchSetup', () => {
     const mockOnStartMatch = vi.fn();
+    const mockOnNavigate = vi.fn();
     const mockSavedMatches: any[] = [];
 
     beforeEach(() => {
@@ -23,20 +38,20 @@ describe('MatchSetup', () => {
     });
 
     it('renders match configuration title', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         expect(screen.getByText('matchSetup.title')).toBeInTheDocument();
     });
 
     it('renders both team configuration sections', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         expect(screen.getByText('matchSetup.homeTeam')).toBeInTheDocument();
         expect(screen.getByText('matchSetup.awayTeam')).toBeInTheDocument();
     });
 
     it('allows setting team names', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         const homeNameInput = screen.getByLabelText(/^matchSetup\.homeTeam matchSetup\.teamName$/i);
         const awayNameInput = screen.getByLabelText(/^matchSetup\.awayTeam matchSetup\.teamName$/i);
@@ -49,7 +64,7 @@ describe('MatchSetup', () => {
     });
 
     it('shows 10 default players for each team', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         // Each team should have default players
         const playerInputs = screen.getAllByPlaceholderText('matchSetup.placeholderName');
@@ -57,7 +72,7 @@ describe('MatchSetup', () => {
     });
 
     it('displays starters count (8/8)', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         // Both teams should show 8/8 starters
         const starterCounts = screen.getAllByText('8/8');
@@ -65,7 +80,7 @@ describe('MatchSetup', () => {
     });
 
     it('allows adding new players', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         const addHomePlayerBtn = screen.getByLabelText(/matchSetup\.addPlayer matchSetup\.homeTeam/i);
         const initialPlayerCount = screen.getAllByPlaceholderText('matchSetup.placeholderName').length;
@@ -78,7 +93,7 @@ describe('MatchSetup', () => {
     });
 
     it('allows removing players', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         const initialPlayerCount = screen.getAllByPlaceholderText('matchSetup.placeholderName').length;
 
@@ -94,7 +109,7 @@ describe('MatchSetup', () => {
     });
 
     it('starts match when start button is clicked', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         const startButton = screen.getByRole('button', { name: /matchSetup\.startMatch/i });
         fireEvent.click(startButton);
@@ -111,7 +126,7 @@ describe('MatchSetup', () => {
     });
 
     it('submits a selected match configuration profile', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         fireEvent.change(screen.getByLabelText('matchSetup.homeTeam matchSetup.teamName'), { target: { value: 'Test Home' } });
         fireEvent.change(screen.getByLabelText('matchSetup.awayTeam matchSetup.teamName'), { target: { value: 'Test Away' } });
@@ -133,7 +148,7 @@ describe('MatchSetup', () => {
     });
 
     it('allows changing team colors', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         const colorInputs = screen.getAllByTitle(/matchSetup\.primaryColorTitle/i);
         expect(colorInputs.length).toBe(2);
@@ -143,7 +158,7 @@ describe('MatchSetup', () => {
     });
 
     it('displays gender mix for starters', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         // Should show male/female breakdown
         const genderBadges = screen.getAllByText(/\d+ M/);
@@ -151,7 +166,7 @@ describe('MatchSetup', () => {
     });
 
     it('allows updating player number', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         const numberInputs = screen.getAllByPlaceholderText('#');
         const firstNumberInput = numberInputs[0];
@@ -161,7 +176,7 @@ describe('MatchSetup', () => {
     });
 
     it('allows updating player name', () => {
-        render(<MatchSetup onStartMatch={mockOnStartMatch} savedMatches={mockSavedMatches} />);
+        render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
 
         const nameInputs = screen.getAllByPlaceholderText('matchSetup.placeholderName');
         const firstNameInput = nameInputs[0];
@@ -181,5 +196,109 @@ describe('MatchSetup', () => {
 
         // Should have 8 starters on field
         expect(starters.length).toBe(8);
+    });
+
+    describe('Team Snapshot Management', () => {
+        it('saves a team snapshot', () => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+            
+            const saveBtns = screen.getAllByTitle(/matchSetup\.saveAsClub/i);
+            fireEvent.click(saveBtns[0]); // Home team
+            
+            expect(mockAlert).toHaveBeenCalledWith(expect.stringContaining('matchSetup.teamSaved'));
+            const saved = JSON.parse(localStorage.getItem('korfstat_saved_teams') || '[]');
+            expect(saved.length).toBe(1);
+        });
+
+        it('loads a team snapshot', () => {
+            const savedTeam = {
+                id: 'st1',
+                name: 'Saved Home Team',
+                color: '#123456',
+                secondaryColor: '#654321',
+                players: [{ id: 'p1', name: 'Saved Player', number: 1, gender: 'M', initialPosition: 'ATTACK', isStarter: true }]
+            };
+            localStorage.setItem('korfstat_saved_teams', JSON.stringify([savedTeam]));
+            
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+            
+            // Open load menu
+            const loadBtns = screen.getAllByTitle(/matchSetup\.loadSaved/i);
+            fireEvent.click(loadBtns[0]);
+            
+            // Click the saved team
+            const teamBtn = screen.getByText('Saved Home Team');
+            fireEvent.click(teamBtn);
+            
+            expect(screen.getByDisplayValue('Saved Home Team')).toBeInTheDocument();
+            expect(screen.getByDisplayValue('Saved Player')).toBeInTheDocument();
+        });
+    });
+
+    describe('Club Integration', () => {
+        it('loads colors and players from a club', () => {
+            const mockClub = {
+                id: 'c1',
+                name: 'Pro Club',
+                primaryColor: '#aabbcc',
+                secondaryColor: '#ddeeff',
+                logoUrl: 'logo.png',
+                players: [{ id: 'cp1', firstName: 'Club', lastName: 'Player', shirtNumber: 7, gender: 'M', positions: ['ATTACK'] }]
+            };
+            vi.mocked(ClubService.getAllClubs).mockReturnValue([mockClub] as any);
+            
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+            
+            // Open club menu
+            const clubBtns = screen.getAllByTitle(/matchSetup\.loadClub/i);
+            fireEvent.click(clubBtns[0]);
+            
+            // Click the club
+            const clubBtn = screen.getByText('Pro Club');
+            fireEvent.click(clubBtn);
+            
+            expect(screen.getByDisplayValue('Pro Club')).toBeInTheDocument();
+            expect(screen.getByDisplayValue('Club Player')).toBeInTheDocument();
+        });
+    });
+
+    describe('Template Management', () => {
+        it('saves a match template', async () => {
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+            
+            const templateNameInput = screen.getByPlaceholderText('matchSetup.templateName');
+            fireEvent.change(templateNameInput, { target: { value: 'Finals Template' } });
+            
+            const saveBtn = screen.getByText('common.save');
+            fireEvent.click(saveBtn);
+            
+            expect(TemplateService.saveTemplate).toHaveBeenCalledWith(expect.objectContaining({
+                name: 'Finals Template'
+            }));
+        });
+
+        it('loads a match template', async () => {
+            const mockTemplate = {
+                id: 't1',
+                name: 'Load Me',
+                homeTeam: { name: 'Template Home', color: '#111', players: [] },
+                awayTeam: { name: 'Template Away', color: '#222', players: [] },
+                profileId: 'standard_ikf'
+            };
+            vi.mocked(TemplateService.getAllTemplates).mockResolvedValue([mockTemplate] as any);
+            
+            render(<MatchSetup onStartMatch={mockOnStartMatch} onNavigate={mockOnNavigate} savedMatches={mockSavedMatches} />);
+            
+            // Open template menu
+            const loadBtn = screen.getByRole('button', { name: /matchSetup\.loadTemplate/i });
+            fireEvent.click(loadBtn);
+            
+            // Wait for templates to load and click
+            const templateBtn = await screen.findByText('Load Me');
+            fireEvent.click(templateBtn);
+            
+            expect(screen.getByDisplayValue('Template Home')).toBeInTheDocument();
+            expect(screen.getByDisplayValue('Template Away')).toBeInTheDocument();
+        });
     });
 });
