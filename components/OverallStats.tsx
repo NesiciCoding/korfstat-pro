@@ -104,7 +104,7 @@ const OverallStats: React.FC<OverallStatsProps> = ({ matches, onBack }) => {
   }, [matches, selectedTeam]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors duration-300">
       <div className="max-w-6xl mx-auto">
 
         <div className="flex items-center justify-between mb-8">
@@ -167,10 +167,10 @@ const OverallStats: React.FC<OverallStatsProps> = ({ matches, onBack }) => {
                   <th className="px-6 py-3 text-center">{t('stats.rebounds')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {stats.players.slice(0, 20).map((p, i) => (
-                  <tr key={i} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-gray-900 flex items-center gap-3">
+                  <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-gray-900 dark:text-white flex items-center gap-3">
                       <span className="w-6 text-center text-gray-400 font-normal">{i + 1}</span>
                       {p.name}
                     </td>

@@ -103,7 +103,7 @@ describe('App Navigation', () => {
             { id: 'nav-strategy', testId: 'strategy-planner' },
             { id: 'nav-director', testId: 'director-dashboard' },
             { id: 'nav-spotter', testId: 'spotter-view' },
-            { id: 'nav-live-stats', testId: 'livestream-view' }
+            { id: 'nav-livestream-stats', testId: 'livestream-view' }
         ];
 
         for (const view of views) {

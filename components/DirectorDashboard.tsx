@@ -10,9 +10,10 @@ interface DirectorDashboardProps {
     matchState: MatchState;
     setMatchState: (state: MatchState) => void;
     broadcastUpdate: (state: MatchState) => void;
+    socket?: any;
 }
 
-const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMatchState, broadcastUpdate }) => {
+const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMatchState, broadcastUpdate, socket }) => {
     // Local state for the "Preview" / Builder
     const [previewMessage, setPreviewMessage] = useState<OverlayMessage>({
         id: 'preview',
@@ -98,7 +99,8 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
     // Construct a "Fake" match state for the PREVIEW window
     const previewMatchState: MatchState = {
         ...matchState,
-        overlayOverride: previewMessage
+        // If an override is already live on-air, show that in the preview until user types something else
+        overlayOverride: matchState.overlayOverride || previewMessage
     };
 
     const currentTheme = matchState.broadcastTheme?.theme || 'modern';
@@ -384,13 +386,20 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                             <div className="absolute inset-0 flex items-center justify-center">
                                 {/* We render standard Overlay but force it into container */}
                                 <div className="transform scale-[0.6] origin-center w-screen h-screen pointer-events-none select-none border-4 border-slate-800 shadow-2xl">
-                                    <StreamOverlay matchState={previewMatchState} />
+                                    <StreamOverlay matchState={previewMatchState} socket={socket} />
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+            {/* Social Graphic Generator Modal */}
+            {showSocialGraphic && (
+                <SocialGraphicGenerator 
+                    matchState={matchState} 
+                    onClose={() => setShowSocialGraphic(false)} 
+                />
+            )}
             </div>
         </div>
     );

@@ -44,10 +44,13 @@ vi.mock('i18next', () => {
         t,
         use: () => mockI18n,
         init: () => Promise.resolve(),
+        changeLanguage: () => Promise.resolve(),
+        language: 'en',
     };
     return {
         default: mockI18n,
         t,
+        ...mockI18n,
     };
 });
 

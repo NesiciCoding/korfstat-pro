@@ -13,7 +13,8 @@ const SpectatorVoting: React.FC = () => {
   const [socket, setSocket] = useState<any>(null);
 
   useEffect(() => {
-    const newSocket = io(window.location.origin.replace('5173', '3002'));
+    const SOCKET_URL = `${window.location.protocol}//${window.location.hostname}:3002`;
+    const newSocket = io(SOCKET_URL);
     setSocket(newSocket);
 
     newSocket.emit('register-view', 'VOTING');
@@ -37,25 +38,51 @@ const SpectatorVoting: React.FC = () => {
     localStorage.setItem('korfstat_voted_id', playerId);
   };
 
-  if (!match) {
+  if (!match || !match.isConfigured) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-        <p className="text-gray-500 font-medium">Waiting for live match...</p>
+      <div className="min-h-screen bg-indigo-950 flex flex-col items-center justify-center p-6 text-center text-white">
+        <div className="bg-white/5 p-8 rounded-full mb-8 animate-pulse">
+          <Trophy className="text-yellow-400 opacity-20" size={80} />
+        </div>
+        <h2 className="text-3xl font-black mb-3">Goal of the Match</h2>
+        <p className="text-indigo-300 max-w-sm text-lg mb-8">
+          The match hasn't started yet or is being set up. Voting will open as soon as the match is live!
+        </p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="flex items-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-white transition-all shadow-xl shadow-indigo-900/50 active:scale-95"
+        >
+          <Users size={20} /> Check Connection
+        </button>
       </div>
     );
   }
 
-  const allPlayers = [
-    ...(match.homeTeam?.players || []),
-    ...(match.awayTeam?.players || [])
-  ].sort((a, b) => {
+  const homePlayers = match.homeTeam?.players || [];
+  const awayPlayers = match.awayTeam?.players || [];
+
+  const allPlayers = [...homePlayers, ...awayPlayers].sort((a, b) => {
     // Sort by goals first, then name
     const aGoals = match.events?.filter(e => e.playerId === a.id && e.result === 'GOAL').length || 0;
     const bGoals = match.events?.filter(e => e.playerId === b.id && e.result === 'GOAL').length || 0;
     if (bGoals !== aGoals) return bGoals - aGoals;
     return a.name.localeCompare(b.name);
   });
+
+  if (allPlayers.length === 0) {
+     return (
+        <div className="min-h-screen bg-indigo-950 flex flex-col items-center justify-center p-6 text-center text-white">
+          <div className="bg-white/5 p-8 rounded-full mb-8">
+            <Trophy className="text-yellow-400 opacity-20" size={80} />
+          </div>
+          <h2 className="text-3xl font-black mb-3">No Players Active</h2>
+          <p className="text-indigo-300 max-w-sm text-lg mb-8">
+            The match is starting, but no players have been assigned to the field yet.
+          </p>
+          <p className="text-xs text-indigo-500 uppercase tracking-widest font-bold">Waiting for lineups...</p>
+        </div>
+      );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 to-indigo-950 text-white p-4 pb-20">
@@ -95,7 +122,7 @@ const SpectatorVoting: React.FC = () => {
           <div className="grid grid-cols-1 gap-3">
             {allPlayers.map(player => {
               const goals = match.events?.filter(e => e.playerId === player.id && e.result === 'GOAL').length || 0;
-              const isHome = match.homeTeam.players.some(p => p.id === player.id);
+              const isHome = (match.homeTeam?.players || []).some(p => p.id === player.id);
               
               return (
                 <button
@@ -109,7 +136,9 @@ const SpectatorVoting: React.FC = () => {
                     </div>
                     <div className="text-left">
                       <div className="font-bold text-white group-hover:text-indigo-300 transition-colors">{player.name}</div>
-                      <div className="text-xs text-indigo-300">{isHome ? match.homeTeam.name : match.awayTeam.name}</div>
+                      <div className="text-xs text-indigo-300">
+                        {isHome ? (match.homeTeam?.name || 'Home') : (match.awayTeam?.name || 'Away')}
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-col items-end">

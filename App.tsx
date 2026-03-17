@@ -524,6 +524,7 @@ function AppContent() {
           matchState={derivedMatchState}
           setMatchState={handleUpdateMatch}
           broadcastUpdate={broadcastUpdate}
+          socket={socket}
         />
       )}
 

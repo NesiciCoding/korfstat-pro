@@ -55,7 +55,23 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
   const [customDuration, setCustomDuration] = useState(10); // Minutes
   const [pendingShortcutAction, setPendingShortcutAction] = useState<'GOAL' | 'MISS' | 'FREE_THROW' | 'PENALTY' | 'CARD' | 'TURNOVER' | 'FOUL' | 'REBOUND' | null>(null);
   const [shortcutBuffer, setShortcutBuffer] = useState<string[]>([]);
+  const [serverIp, setServerIp] = useState<string>(window.location.hostname);
   const bufferTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    const fetchIp = async () => {
+      try {
+        const response = await fetch(`${window.location.origin.replace(':5173', ':3002')}/api/companion/setup-info`);
+        const data = await response.json();
+        if (data.localIp) {
+          setServerIp(data.localIp);
+        }
+      } catch (e) {
+        console.error('Failed to fetch local IP for voting link', e);
+      }
+    };
+    fetchIp();
+  }, []);
 
   // Track previous clock values to detect transition to 0
   const prevShotClockRef = React.useRef(matchState.shotClock.seconds);
@@ -1374,12 +1390,12 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
                <div className="text-xs font-mono text-indigo-600 break-all mb-3 text-center">
-                 {window.location.origin}/?view=VOTING
+                 http://{serverIp}:3002/?view=VOTING
                </div>
                <button 
                 data-testid="copy-link-btn"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/?view=VOTING`);
+                  navigator.clipboard.writeText(`http://${serverIp}:3002/?view=VOTING`);
                   alert(t('matchTracker.copySuccess'));
                 }}
                 className="w-full py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm"

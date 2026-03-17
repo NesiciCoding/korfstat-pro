@@ -84,14 +84,14 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ p, toggleStarter, updatePlayer, r
           className={`p-1 rounded text-xs font-bold ${p.initialPosition === 'ATTACK' ? 'bg-white dark:bg-gray-600 shadow text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`}
           title={t('matchSetup.attack')}
         >
-          <Sword size={14} /> //attack icon
+          <Sword size={14} />
         </button>
         <button
           onClick={() => updatePlayer(p.id, 'initialPosition', 'DEFENSE')}
           className={`p-1 rounded text-xs font-bold ${p.initialPosition === 'DEFENSE' ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
           title={t('matchSetup.defense')}
         >
-          <Shield size={14} /> //defence icon
+          <Shield size={14} />
         </button>
       </div>
 
@@ -632,7 +632,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
       if (profile) setSelectedProfile(profile);
     }
     if (template.seasonId) setSelectedSeasonId(template.seasonId);
-    
+
     setShowTemplateMenu(false);
   };
 

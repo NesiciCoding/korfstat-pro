@@ -31,7 +31,7 @@ const VotingResultsOverlay: React.FC<VotingResultsOverlayProps> = ({ matchState,
   const totalVotes = Object.values(votes).reduce((sum, n) => sum + n, 0);
 
   return (
-    <div className="absolute inset-x-8 bottom-32 bg-black/80 backdrop-blur-xl rounded-3xl border border-white/20 p-8 shadow-2xl animate-in slide-in-from-bottom-20 duration-500 overflow-hidden">
+    <div className="absolute inset-x-8 bottom-32 bg-black/80 backdrop-blur-xl rounded-3xl border border-white/20 p-8 shadow-2xl animate-in slide-in-from-bottom-20 duration-500 overflow-hidden z-50">
       {/* Background Glow */}
       <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/20 blur-[100px] rounded-full"></div>
       

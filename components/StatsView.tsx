@@ -253,7 +253,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
                 <option value="FREE_THROW">{t('matchTracker.freePass')}</option>
               </select>
 
-              <div className="flex gap-2 text-sm mt-2">
+              <div className="flex flex-wrap gap-2 text-sm mt-2">
                 <button
                   onClick={() => { setHeatmapMode(false); setShowZoneStats(false); }}
                   className={`px-3 py-1.5 rounded-md transition-colors ${!heatmapMode && !showZoneStats ? 'bg-indigo-100 text-indigo-700 font-bold dark:bg-indigo-900 dark:text-indigo-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300'}`}

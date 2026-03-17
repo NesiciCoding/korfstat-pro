@@ -36,6 +36,7 @@ describe('useBroadcastSync', () => {
             }),
             emit: vi.fn(),
             disconnect: vi.fn(),
+            connected: true,
         };
 
         (io as any).mockReturnValue(mockSocket);
@@ -171,7 +172,7 @@ describe('useBroadcastSync', () => {
                 id: 'wear-os-adb',
                 view: 'WATCH',
                 ip: 'ADB Bridge',
-                userAgent: 'Wear OS Emulator (Read-Only)'
+                userAgent: 'Wear OS Emulator (read-only)'
             })
         ]);
     });

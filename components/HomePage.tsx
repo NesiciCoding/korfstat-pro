@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
-import {
-  PlayCircle, History, BarChart2, BrainCircuit,
-  Monitor, Video, Tv, LayoutTemplate, Clock, Code, X,
-  Wifi, Users, Activity, Play, Globe, Trophy, Watch
+import { 
+  PlayCircle, History, BarChart2, BrainCircuit, 
+  Monitor, Video, Tv, LayoutTemplate, Clock, Code, X, 
+  Wifi, Users, Activity, Play, Globe, Trophy, Watch,
+  Plus, Settings, Save, Edit2, ExternalLink
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { MatchState } from '../types';
+import DashboardWidget, { WidgetConfig } from './DashboardWidget';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface HomePageProps {
   onNavigate: (view: any) => void;
@@ -13,21 +16,122 @@ interface HomePageProps {
   matchState?: MatchState;
 }
 
+const DEFAULT_WIDGETS: WidgetConfig[] = [
+  { id: 'control', type: 'MATCH_CONTROL', w: 2, h: 1 },
+  { id: 'sessions', type: 'SESSIONS', w: 1, h: 1 },
+  { id: 'director', type: 'QUICK_LINK', targetView: 'DIRECTOR', w: 1, h: 1 },
+  { id: 'track', type: 'QUICK_LINK', targetView: 'TRACK', w: 1, h: 1 },
+  { id: 'jury', type: 'QUICK_LINK', targetView: 'JURY', w: 1, h: 1 },
+  { id: 'history', type: 'QUICK_LINK', targetView: 'MATCH_HISTORY', w: 1, h: 1 },
+  { id: 'overall', type: 'QUICK_LINK', targetView: 'OVERALL_STATS', w: 1, h: 1 },
+  { id: 'strategy', type: 'QUICK_LINK', targetView: 'STRATEGY', w: 1, h: 1 },
+  { id: 'clubs', type: 'QUICK_LINK', targetView: 'CLUB_MANAGER', w: 1, h: 1 },
+  { id: 'seasons', type: 'QUICK_LINK', targetView: 'SEASON_MANAGER', w: 1, h: 1 },
+  { id: 'spotter', type: 'QUICK_LINK', targetView: 'SPOTTER', w: 1, h: 1 },
+  { id: 'live-stats', type: 'QUICK_LINK', targetView: 'LIVESTREAM_STATS', w: 1, h: 1 },
+];
+
 const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], matchState }) => {
   const [serverIp, setServerIp] = React.useState<string>('localhost');
   const [isTickerModalOpen, setIsTickerModalOpen] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [widgets, setWidgets] = React.useState<WidgetConfig[]>(() => {
+    const saved = localStorage.getItem('korfstat_dashboard_widgets');
+    return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
+  });
+  const [isGalleryOpen, setIsGalleryOpen] = React.useState(false);
   
-  React.useEffect(() => {
-    if (window.location.hostname !== 'localhost') {
-        setServerIp(window.location.hostname);
+  const saveWidgets = (newWidgets: WidgetConfig[]) => {
+    setWidgets(newWidgets);
+    localStorage.setItem('korfstat_dashboard_widgets', JSON.stringify(newWidgets));
+  };
+
+  const handleAddWidget = (type: WidgetConfig['type'], targetView?: string) => {
+    const newWidget: WidgetConfig = {
+      id: crypto.randomUUID(),
+      type,
+      targetView,
+      w: type === 'MATCH_CONTROL' ? 2 : 1,
+      h: 1,
+      title: targetView ? formatViewName(targetView) : undefined
+    };
+    saveWidgets([...widgets, newWidget]);
+    setIsGalleryOpen(false);
+  };
+
+  const handleRemoveWidget = (id: string) => {
+    saveWidgets(widgets.filter(w => w.id !== id));
+  };
+
+  const handleResizeWidget = (id: string, w: number, h: number) => {
+    saveWidgets(widgets.map(widget => 
+      widget.id === id ? { ...widget, w, h } : widget
+    ));
+  };
+
+  // Drag and Drop Logic
+  const [draggedId, setDraggedId] = React.useState<string | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedId(id);
+    e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.effectAllowed = 'move';
+    
+    // Create ghost image effect
+    if (e.currentTarget instanceof HTMLElement) {
+        e.currentTarget.style.opacity = '0.4';
     }
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    if (e.currentTarget instanceof HTMLElement) {
+        e.currentTarget.style.opacity = '1';
+    }
+    setDraggedId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    const draggedId = e.dataTransfer.getData('text/plain');
+    if (draggedId === targetId) return;
+
+    const newWidgets = [...widgets];
+    const draggedIndex = newWidgets.findIndex(w => w.id === draggedId);
+    const targetIndex = newWidgets.findIndex(w => w.id === targetId);
+
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [draggedWidget] = newWidgets.splice(draggedIndex, 1);
+      newWidgets.splice(targetIndex, 0, draggedWidget);
+      saveWidgets(newWidgets);
+    }
+  };
+
+  React.useEffect(() => {
+    const fetchIp = async () => {
+      try {
+        const response = await fetch(`${window.location.origin.replace(':5173', ':3002')}/api/companion/setup-info`);
+        const data = await response.json();
+        if (data.localIp) {
+          setServerIp(data.localIp);
+        }
+      } catch (error) {
+        console.error('Failed to fetch local IP:', error);
+        if (window.location.hostname !== 'localhost') {
+          setServerIp(window.location.hostname);
+        }
+      }
+    };
+    fetchIp();
   }, []);
 
   const { t } = useTranslation();
-  const isMatchActive = matchState?.timer.isRunning || matchState?.isConfigured;
-  // Check if a match configuration is active to enable tracker resumption
-  const hasActiveMatch = matchState?.isConfigured;
-
+  const { settings } = useSettings();
+  
   const uniqueSessions = useMemo(() => {
     return activeSessions
       .filter((s, index, self) =>
@@ -35,30 +139,47 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
       );
   }, [activeSessions]);
 
+  const AVAILABLE_VIEWS = [
+    'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 
+    'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 
+    'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'VOTING', 'TICKER'
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 font-sans selection:bg-indigo-500/30 transition-colors duration-300">
 
       {/* HEADER / COMMAND CENTER */}
-      <header className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+      <header className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 transition-colors">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 p-2 rounded-lg">
+            <div className="bg-indigo-600 p-2 rounded-lg shadow-md">
               <Activity className="text-white" size={24} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white tracking-tight leading-none">KorfStat Pro</h1>
-              <p className="text-xs text-slate-400 font-medium">{t('home.commandCenter')}</p>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">KorfStat Pro</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t('home.commandCenter')}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-xs font-bold
+                ${isEditing 
+                  ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600'}`}
+            >
+              {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
+              {isEditing ? t('home.saveLayout') : t('home.editDashboard')}
+            </button>
+
             {/* Match Status Indicator */}
-            <div className={`px-3 py-1 rounded-full text-xs font-bold border ${hasActiveMatch ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'} flex items-center gap-2`}>
-              <div className={`w-2 h-2 rounded-full ${hasActiveMatch ? 'bg-green-500 animate-pulse' : 'bg-slate-500'}`}></div>
-              {hasActiveMatch ? t('home.matchActive') : t('home.noActiveMatch')}
+            <div className={`px-3 py-1 rounded-full text-xs font-bold border ${matchState?.isConfigured ? 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'} flex items-center gap-2`}>
+              <div className={`w-2 h-2 rounded-full ${matchState?.isConfigured ? 'bg-green-500 animate-pulse' : 'bg-slate-400 dark:bg-slate-500'}`}></div>
+              {matchState?.isConfigured ? t('home.matchActive') : t('home.noActiveMatch')}
             </div>
             
-            <div className="hidden md:flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full text-[10px] font-mono text-slate-400 border border-slate-700">
+            <div className="hidden md:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-[10px] font-mono text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               {serverIp}:3002
             </div>
@@ -68,243 +189,105 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
-        {/* TOP SECTION: ACTION & MONITORING */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* DYNAMIC WIDGET GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] grid-flow-row-dense">
+          {widgets.map((widget) => (
+            <DashboardWidget
+              key={widget.id}
+              config={widget}
+              isEditing={isEditing}
+              onRemove={() => handleRemoveWidget(widget.id)}
+              onResize={handleResizeWidget}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onNavigate={onNavigate}
+              matchState={matchState}
+              uniqueSessions={uniqueSessions}
+            />
+          ))}
+          
+          {isEditing && (
+            <DashboardWidget 
+              config={{ id: 'placeholder', type: 'PLACEHOLDER', w: 1, h: 1 }}
+              onAdd={() => setIsGalleryOpen(true)}
+            />
+          )}
+        </div>
 
-          {/* 1. MATCH CONTROL (Start/Resume) */}
-          <div className="lg:col-span-2 bg-slate-900 rounded-2xl p-1 border border-slate-800 shadow-2xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 
-            <div className="h-full bg-slate-950/50 rounded-xl p-6 flex flex-col justify-center relative z-10">
-              <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <PlayCircle className="text-indigo-400" /> {t('home.matchControl')}
-              </h2>
-
-              <div className="flex gap-4">
-                {/* Start New Match Button */}
-                <button
-                  onClick={() => !hasActiveMatch && onNavigate('SETUP')}
-                  disabled={hasActiveMatch}
-                  data-testid="start-match-btn"
-                  className={`flex-1 p-6 rounded-xl border flex flex-col items-center justify-center gap-3 transition-all
-                    ${hasActiveMatch
-                      ? 'bg-slate-800/50 border-slate-800 text-slate-500 cursor-not-allowed grayscale'
-                      : 'bg-indigo-600 hover:bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20 hover:scale-[1.02]'
-                    }`}
+        {/* GALLERY MODAL */}
+        {isGalleryOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in duration-200">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Plus className="text-indigo-600 dark:text-indigo-400" /> {t('home.widgetGallery')}
+                </h3>
+                <button 
+                  onClick={() => setIsGalleryOpen(false)}
+                  className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-500 transition-colors"
                 >
-                  <Play size={32} fill={hasActiveMatch ? "none" : "currentColor"} />
-                  <div className="text-center">
-                    <div className="font-bold text-lg">{t('home.startNewMatch')}</div>
-                    {hasActiveMatch && <div className="text-xs mt-1">{t('home.matchInProgress')}</div>}
-                  </div>
+                  <X size={20} />
                 </button>
-
-                {/* Resume Tracker Button (Only if active) */}
-                {hasActiveMatch ? (
-                  <button
-                    onClick={() => onNavigate('TRACK')}
-                    className="flex-1 p-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-[1.02] flex flex-col items-center justify-center gap-3 transition-all"
-                  >
-                    <Activity size={32} />
-                    <div className="text-center">
-                      <div className="font-bold text-lg">{t('home.resumeTracker')}</div>
-                      <div className="text-xs text-emerald-100 mt-1">{t('home.returnToActive')}</div>
-                    </div>
-                  </button>
-                ) : (
-                  <div className="flex-1 p-6 rounded-xl border border-slate-800 border-dashed flex flex-col items-center justify-center gap-2 text-slate-600">
-                    <div className="font-medium">{t('home.noActiveMatch')}</div>
-                  </div>
-                )}
               </div>
-            </div>
-          </div>
-
-          {/* 2. ACTIVE SESSIONS MONITOR */}
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-slate-800 bg-slate-950/30 flex justify-between items-center">
-              <h2 className="font-bold text-slate-200 flex items-center gap-2">
-                <Wifi size={18} className="text-emerald-400" /> {t('home.activeSessions')}
-              </h2>
-              <span data-testid="active-sessions-count" className="bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded-full font-mono">{uniqueSessions.length}</span>
-            </div>
-            <div className="flex-1 p-2 overflow-y-auto max-h-[200px] space-y-1">
-              {uniqueSessions.length === 0 ? (
-                <div className="text-center p-8 text-slate-600 italic text-sm">
-                  {t('home.waitingConnections')}
+              
+              <div className="p-6 overflow-y-auto max-h-[70vh]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Core Widgets */}
+                  <GalleryItem 
+                    title={t('home.matchControl')}
+                    desc="Start or resume matches"
+                    icon={<PlayCircle />}
+                    color="indigo"
+                    onClick={() => handleAddWidget('MATCH_CONTROL')}
+                  />
+                  <GalleryItem 
+                    title={t('home.activeSessions')}
+                    desc="Monitor connected devices"
+                    icon={<Wifi />}
+                    color="emerald"
+                    onClick={() => handleAddWidget('SESSIONS')}
+                  />
+                  
+                  {/* View Quick Links */}
+                  {AVAILABLE_VIEWS.map(view => {
+                    const viewKey = view.toLowerCase();
+                    return (
+                      <GalleryItem 
+                        key={view}
+                        title={t(`views.${viewKey}` as any) || formatViewName(view)}
+                        desc={t(`views.${viewKey}_desc` as any)}
+                        icon={getViewIcon(view)}
+                        color="slate"
+                        onClick={() => view === 'TICKER' ? setIsTickerModalOpen(true) : handleAddWidget('QUICK_LINK', view)}
+                      />
+                    );
+                  })}
                 </div>
-              ) : (
-                uniqueSessions.map(session => (
-                  <div key={session.id} className="p-3 rounded-lg bg-slate-800/50 flex items-center justify-between group hover:bg-slate-800 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${getViewColor(session.view)}`}>
-                        {getViewIcon(session.view)}
-                      </div>
-                      <div>
-                        <div className="font-bold text-sm text-slate-200 leading-tight">
-                          {formatViewName(session.view)}
-                        </div>
-                        <div className="text-[10px] text-slate-500 font-mono mt-0.5 truncate max-w-[120px]" title={session.userAgent}>
-                          {session.ip || 'Local'} • {getSimpleDeviceName(session.userAgent)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                  </div>
-                ))
-              )}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* 3. CATEGORIZED VIEW GRID */}
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-            {/* COL 1: LIVESTREAM */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">{t('home.livestream')}</h3>
-              <div className="space-y-3">
-                <NavCard
-                  title={t('views.director')}
-                  desc={t('views.directorDesc')}
-                  icon={<Monitor />}
-                  color="indigo"
-                  testId="nav-director"
-                  onClick={() => onNavigate('DIRECTOR')}
-                />
-                <NavCard
-                  title={t('views.livestreamStats')}
-                  desc={t('views.livestreamStatsDesc')}
-                  icon={<Globe />}
-                  color="blue"
-                  testId="nav-live-stats"
-                  onClick={() => onNavigate('LIVESTREAM_STATS')}
-                />
-                <NavCard
-                  title={t('views.streamOverlay')}
-                  desc={t('views.streamOverlayDesc')}
-                  icon={<Video />}
-                  color="purple"
-                  testId="nav-stream-overlay"
-                  onClick={() => onNavigate('STREAM_OVERLAY')}
-                />
-                <NavCard
-                  title="Live-Ticker Widget"
-                  desc="Embed live scores on your club's website"
-                  icon={<Code />}
-                  color="emerald"
-                  onClick={() => setIsTickerModalOpen(true)}
-                />
-              </div>
-            </div>
-
-            {/* COL 2: STATISTICS */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">{t('home.statistics')}</h3>
-              <div className="space-y-3">
-                <NavCard
-                  title={t('views.matchHistory')}
-                  desc={t('views.matchHistoryDesc')}
-                  icon={<History />}
-                  color="slate"
-                  testId="nav-match-history"
-                  onClick={() => onNavigate('MATCH_HISTORY')}
-                />
-                <NavCard
-                  title={t('views.overallStats')}
-                  desc={t('views.overallStatsDesc')}
-                  icon={<BarChart2 />}
-                  color="emerald"
-                  testId="nav-overall-stats"
-                  onClick={() => onNavigate('OVERALL_STATS')}
-                />
-                <NavCard
-                  title={t('views.strategyPlanner')}
-                  desc={t('views.strategyPlannerDesc')}
-                  icon={<BrainCircuit />}
-                  color="amber"
-                  testId="nav-strategy"
-                  onClick={() => onNavigate('STRATEGY')}
-                />
-                <NavCard
-                  title={t('views.clubManager')}
-                  desc={t('views.clubManagerDesc')}
-                  icon={<Users />}
-                  color="cyan"
-                  testId="nav-club-manager"
-                  onClick={() => onNavigate('CLUB_MANAGER')}
-                />
-                <NavCard
-                  title={t('views.seasonManager')}
-                  desc={t('views.seasonManagerDesc')}
-                  icon={<Trophy />}
-                  color="yellow"
-                  testId="nav-season-manager"
-                  onClick={() => onNavigate('SEASON_MANAGER')}
-                />
-              </div>
-            </div>
-
-            {/* COL 3: IN-HALL */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">{t('home.inHall')}</h3>
-              <div className="space-y-3">
-                <NavCard
-                  title={t('views.shotClock')}
-                  desc={t('views.shotClockDesc')}
-                  icon={<Clock />}
-                  color="red"
-                  testId="nav-shot-clock"
-                  onClick={() => onNavigate('SHOT_CLOCK')}
-                />
-                <NavCard
-                  title={t('views.liveScreen')}
-                  desc={t('views.liveScreenDesc')}
-                  icon={<Tv />}
-                  color="orange"
-                  testId="nav-live"
-                  onClick={() => onNavigate('LIVE')}
-                />
-                <NavCard
-                  title={t('views.juryInterface')}
-                  desc={t('views.juryInterfaceDesc')}
-                  icon={<LayoutTemplate />}
-                  color="cyan"
-                  testId="nav-jury"
-                  onClick={() => onNavigate('JURY')}
-                />
-                <NavCard
-                  title={t('views.spotterInterface')}
-                  desc={t('views.spotterInterfaceDesc')}
-                  icon={<Users />}
-                  color="blue"
-                  testId="nav-spotter"
-                  onClick={() => onNavigate('SPOTTER')}
-                />
-              </div>
-            </div>
-
-          </div>
-        </div>
+        )}
 
         {/* Ticker Embed Modal */}
         {isTickerModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 text-slate-200">
-              <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 text-slate-900 dark:text-slate-200 transition-colors">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-500/20 rounded-lg">
-                    <Code className="text-emerald-400" size={20} />
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg">
+                    <Code className="text-emerald-600 dark:text-emerald-400" size={20} />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Embed Live-Ticker</h3>
-                    <p className="text-xs text-slate-400">Copy this code to your club website</p>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Embed Live-Ticker</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Copy this code to your club website</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setIsTickerModalOpen(false)}
-                  className="p-2 hover:bg-slate-800 rounded-full text-slate-500 transition-colors"
+                  className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-500 transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -312,9 +295,9 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
               
               <div className="p-6 space-y-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Iframe Code</label>
+                  <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Iframe Code</label>
                   <div className="relative group">
-                    <pre className="bg-black p-4 rounded-xl text-emerald-500 font-mono text-xs overflow-x-auto border border-slate-800">
+                    <pre className="bg-slate-900 dark:bg-black p-4 rounded-xl text-emerald-400 dark:text-emerald-500 font-mono text-xs overflow-x-auto border border-slate-800 dark:border-slate-800">
                       {`<iframe 
   src="${window.location.origin}/?view=TICKER" 
   width="100%" 
@@ -335,13 +318,13 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                   </div>
                 </div>
 
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex gap-4 items-start">
-                  <div className="p-2 bg-blue-500/20 rounded-lg mt-1">
-                    <Globe className="text-blue-400" size={16} />
+                <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl p-4 flex gap-4 items-start">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-lg mt-1">
+                    <Globe className="text-blue-600 dark:text-blue-400" size={16} />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-blue-100">Public Access Note</h4>
-                    <p className="text-xs text-blue-300 leading-relaxed">
+                    <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">Public Access Note</h4>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
                       This ticker shows live data from your active match. By embedding it, you make this match data visible to anyone visiting your website. No login is required to view the ticker.
                     </p>
                   </div>
@@ -350,7 +333,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                 <div className="flex justify-end gap-3 pt-2">
                   <button 
                     onClick={() => onNavigate('TICKER')}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-bold transition-colors"
+                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-bold transition-colors"
                   >
                     Preview Ticker
                   </button>
@@ -371,38 +354,27 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
     </div>
   );
 };
-
-// --- Sub-components & Helpers ---
-
-const NavCard = ({ title, desc, icon, color, onClick, testId }: any) => {
+const GalleryItem = ({ title, desc, icon, color, onClick }: any) => {
   const colorMap: any = {
-    indigo: 'hover:border-indigo-500/50 hover:bg-indigo-500/10 text-indigo-400',
-    blue: 'hover:border-blue-500/50 hover:bg-blue-500/10 text-blue-400',
-    purple: 'hover:border-purple-500/50 hover:bg-purple-500/10 text-purple-400',
-    emerald: 'hover:border-emerald-500/50 hover:bg-emerald-500/10 text-emerald-400',
-    amber: 'hover:border-amber-500/50 hover:bg-amber-500/10 text-amber-400',
-    red: 'hover:border-red-500/50 hover:bg-red-500/10 text-red-400',
-    orange: 'hover:border-orange-500/50 hover:bg-orange-500/10 text-orange-400',
-    cyan: 'hover:border-cyan-500/50 hover:bg-cyan-500/10 text-cyan-400',
-    slate: 'hover:border-slate-500/50 hover:bg-slate-500/10 text-slate-400',
-    yellow: 'hover:border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500',
+    indigo: 'hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+    blue: 'hover:border-blue-500/50 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    purple: 'hover:border-purple-500/50 hover:bg-purple-50 dark:hover:bg-purple-500/10 text-purple-600 dark:text-purple-400',
+    emerald: 'hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    slate: 'hover:border-slate-500/50 hover:bg-slate-100 dark:hover:bg-slate-500/10 text-slate-600 dark:text-slate-400',
   };
-
-  const bgStep = color === 'slate' ? 'bg-slate-800' : 'bg-slate-900';
 
   return (
     <button
       onClick={onClick}
-      data-testid={testId}
-      className={`w-full p-4 rounded-xl border border-slate-800 ${bgStep} text-left transition-all duration-200 group ${colorMap[color] || ''} hover:shadow-lg`}
+      className={`p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 text-left transition-all duration-200 group ${colorMap[color] || ''} hover:shadow-lg`}
     >
       <div className="flex items-start gap-4">
-        <div className={`p-3 rounded-lg bg-slate-950 border border-slate-800 group-hover:scale-110 transition-transform ${colorMap[color]?.replace('hover:', '')}`}>
-          {React.cloneElement(icon, { size: 20 })}
+        <div className={`p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 group-hover:scale-110 transition-transform ${colorMap[color]?.replace('hover:', '').replace('text-', 'bg-').split(' ')[0]}`}>
+          {React.cloneElement(icon, { size: 18 })}
         </div>
         <div>
-          <h4 className="font-bold text-slate-200 group-hover:text-white transition-colors">{title}</h4>
-          <p className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors">{desc}</p>
+          <h4 className="font-bold text-sm text-slate-900 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-white transition-colors">{title}</h4>
+          <p className="text-[10px] text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors line-clamp-2 mt-1">{desc}</p>
         </div>
       </div>
     </button>
@@ -414,33 +386,27 @@ const formatViewName = (view: string) => {
   return view.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 };
 
-const getSimpleDeviceName = (ua: string) => {
-  if (!ua) return 'Device';
-  if (ua.includes('iPhone')) return 'iPhone';
-  if (ua.includes('iPad')) return 'iPad';
-  if (ua.includes('Macintosh')) return 'Mac';
-  if (ua.includes('Windows')) return 'PC';
-  if (ua.includes('Android')) return 'Android';
-  return 'Browser';
-};
-
 const getViewIcon = (view: string) => {
   switch (view) {
-    case 'SHOT_CLOCK': return <Clock size={16} />;
-    case 'DIRECTOR': return <Monitor size={16} />;
+    case 'SETUP': return <Settings size={16} />;
     case 'TRACK': return <Activity size={16} />;
-    case 'WATCH': return <Watch size={16} />;
-    default: return <Users size={16} />;
-  }
-}
-
-const getViewColor = (view: string) => {
-  switch (view) {
-    case 'SHOT_CLOCK': return 'bg-red-500/20 text-red-400';
-    case 'DIRECTOR': return 'bg-indigo-500/20 text-indigo-400';
-    case 'TRACK': return 'bg-emerald-500/20 text-emerald-400';
-    case 'WATCH': return 'bg-cyan-500/20 text-cyan-400';
-    default: return 'bg-slate-700 text-slate-400';
+    case 'STATS': return <BarChart2 size={16} />;
+    case 'JURY': return <LayoutTemplate size={16} />;
+    case 'LIVE': return <Tv size={16} />;
+    case 'MATCH_HISTORY': return <History size={16} />;
+    case 'OVERALL_STATS': return <BarChart2 size={16} />;
+    case 'STRATEGY': return <BrainCircuit size={16} />;
+    case 'LIVESTREAM_STATS': return <Globe size={16} />;
+    case 'STREAM_OVERLAY': return <Video size={16} />;
+    case 'SEASON_MANAGER': return <Trophy size={16} />;
+    case 'CLUB_MANAGER': return <Users size={16} />;
+    case 'SPOTTER': return <Users size={16} />;
+    case 'DIRECTOR': return <Monitor size={16} />;
+    case 'SHOT_CLOCK': return <Clock size={16} />;
+    case 'ANALYSIS': return <BrainCircuit size={16} />;
+    case 'VOTING': return <Users size={16} />;
+    case 'TICKER': return <Code size={16} />;
+    default: return <ExternalLink size={16} />;
   }
 }
 

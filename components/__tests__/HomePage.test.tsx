@@ -1,7 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent } from '@testing-library/react';
 import HomePage from '../HomePage';
 import { MatchState } from '../../types';
+import { SettingsProvider } from '../../contexts/SettingsContext';
+
+const render = (ui: React.ReactElement, options = {}) =>
+    rtlRender(ui, { wrapper: SettingsProvider, ...options });
 
 describe('HomePage', () => {
     const mockNavigate = vi.fn();
@@ -69,7 +73,7 @@ describe('HomePage', () => {
             />
         );
 
-        const newMatchButton = screen.getByRole('button', { name: 'home.startNewMatch' });
+        const newMatchButton = screen.getByText('home.startNewMatch');
         fireEvent.click(newMatchButton);
 
         expect(mockNavigate).toHaveBeenCalledWith('SETUP');
@@ -84,8 +88,8 @@ describe('HomePage', () => {
             />
         );
 
-        // Navigation cards are clickable divs, not buttons
-        const historyCard = screen.getByText('views.matchHistory');
+        // Navigation cards are now widgets with dynamic titles or translation keys
+        const historyCard = screen.getByRole('heading', { name: /views\.match_history/i });
         fireEvent.click(historyCard);
 
         expect(mockNavigate).toHaveBeenCalledWith('MATCH_HISTORY');
@@ -119,7 +123,7 @@ describe('HomePage', () => {
             />
         );
 
-        const continueButton = screen.getByRole('button', { name: /home\.resumeTracker/ });
+        const continueButton = screen.getByText(/home\.resumeTracker/);
         fireEvent.click(continueButton);
 
         expect(mockNavigate).toHaveBeenCalledWith('TRACK');
@@ -166,9 +170,9 @@ describe('HomePage', () => {
             />
         );
 
-        // Check for main feature cards by text content
+        // Check for main feature cards by translation keys in headings
         expect(screen.getByText('home.startNewMatch')).toBeInTheDocument();
-        expect(screen.getByText('views.matchHistory')).toBeInTheDocument();
-        expect(screen.getByText('views.overallStats')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /views\.match_history/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /views\.overall_stats/i })).toBeInTheDocument();
     });
 });

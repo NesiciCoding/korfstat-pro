@@ -9,7 +9,7 @@ export const useBroadcastSync = (
     onSpotterAction?: (action: any) => void,
     onCompanionAction?: (action: any) => void
 ) => {
-    const socketRef = useRef<Socket | null>(null);
+    const [socket, setSocket] = useState<Socket | null>(null);
     const lastBroadcastStateStr = useRef<string>('');
     const lastReceivedStateStr = useRef<string>('');
     const isProcessingUpdate = useRef(false);
@@ -31,87 +31,63 @@ export const useBroadcastSync = (
 
     // Initialize Socket Once
     useEffect(() => {
-        // Connect to WebSocket Server
-        // Connect to WebSocket Server
-        // Use hostname to support mobile devices on same network
         const protocol = window.location.protocol;
         const hostname = window.location.hostname;
         const SOCKET_SERVER_URL = `${protocol}//${hostname}:3002`;
 
-        const socket = io(SOCKET_SERVER_URL);
-        socketRef.current = socket;
+        const newSocket = io(SOCKET_SERVER_URL);
+        setSocket(newSocket);
 
-        socket.on('connect', () => {
+        newSocket.on('connect', () => {
             console.log('[Sync] Connected to WebSocket Server');
-            // Request latest sessions in case we missed an update
-            socket.emit('request-active-sessions');
-
-            // Re-register view if we have one (useful for re-connections)
+            newSocket.emit('request-active-sessions');
             if (viewNameRef.current) {
-                socket.emit('register-view', viewNameRef.current);
+                newSocket.emit('register-view', viewNameRef.current);
             }
         });
 
-        socket.on('match-update', (newState: MatchState) => {
+        newSocket.on('match-update', (newState: MatchState) => {
             const newStateStr = JSON.stringify(newState);
-
-            // Prevent echo loops
             if (newStateStr === lastBroadcastStateStr.current) return;
-            // Prevent redundant updates
             if (newStateStr === lastReceivedStateStr.current) return;
 
-            console.log('[Sync] Received Update via WebSocket', { eventCount: newState.events.length });
-
+            console.log('[Sync] Received Update via WebSocket');
             lastReceivedStateStr.current = newStateStr;
             isProcessingUpdate.current = true;
 
-            // Call the fresh callback
             if (onUpdateRef.current) {
                 onUpdateRef.current(newState);
             }
 
-            // Reset flag after a tick to allow local changes again
             setTimeout(() => {
                 isProcessingUpdate.current = false;
             }, 50);
         });
 
-        // Listen for active sessions update
-        socket.on('active-sessions', (sessions: any[]) => {
-            console.log('[Sync] Received Active Sessions:', sessions.length);
+        newSocket.on('active-sessions', (sessions: any[]) => {
             setActiveSessions(sessions);
         });
 
-        // Listen for spotter actions
-        socket.on('spotter-action', (action: any) => {
-            console.log('[Sync] Received Spotter Action', action);
+        newSocket.on('disconnect', () => {
+            console.log('[Sync] Disconnected from WebSocket Server');
+        });
+
+        newSocket.on('spotter-action', (action: any) => {
             if (onSpotterActionRef.current) {
                 onSpotterActionRef.current(action);
             }
         });
 
-        // Listen for Companion / button-box actions (triggered by REST API + io.emit)
-        socket.on('companion-action', (action: any) => {
-            console.log('[Sync] Received Companion Action', action);
-            // If a dedicated handler is provided, use it; otherwise fall back to spotter handler
+        newSocket.on('companion-action', (action: any) => {
             if (onCompanionActionRef.current) {
                 onCompanionActionRef.current(action);
             } else if (onSpotterActionRef.current) {
-                // Translate Companion action names to Spotter action names for compatibility
-                const translated = { ...action };
-                onSpotterActionRef.current(translated);
+                onSpotterActionRef.current(action);
             }
         });
 
-        socket.on('disconnect', () => {
-            console.log('[Sync] Socket Disconnected');
-        });
-
-        // Listen for write-mode actions sent by the Wear OS watch
-        socket.on('watch-action', (payload: { action: string }) => {
-            console.log('[Sync] Received watch-action from watch:', payload?.action);
+        newSocket.on('watch-action', (payload: { action: string }) => {
             if (onSpotterActionRef.current) {
-                // Map watch action names to the spotter action format the web app understands
                 const actionMap: Record<string, string> = {
                     'TOGGLE_GAME_TIME':  'TOGGLE_TIMER',
                     'RESET_SHOT_CLOCK':  'RESET_SHOT_CLOCK',
@@ -124,29 +100,23 @@ export const useBroadcastSync = (
         });
 
         return () => {
-            socket.disconnect();
-            socketRef.current = null;
+            newSocket.disconnect();
+            setSocket(null);
         };
-    }, []); // Empty dependency array = Only connect ONCE on mount
+    }, []);
 
     const broadcastUpdate = useCallback((state: MatchState) => {
-        if (!socketRef.current) return;
-
-        // Don't broadcast if we are processing an incoming update (prevent loops)
+        if (!socket || !socket.connected) return;
         if (isProcessingUpdate.current) return;
 
         const stateStr = JSON.stringify(state);
-
-        // optimizing: only broadcast if changed significantly from last broadcast
         if (stateStr === lastBroadcastStateStr.current) return;
         if (stateStr === lastReceivedStateStr.current) return;
 
-        console.log('[Sync] Broadcasting Update via WebSocket', { eventCount: state.events.length });
-        socketRef.current.emit('match-update', state);
+        socket.emit('match-update', state);
         lastBroadcastStateStr.current = stateStr;
 
-        // --- MOCK WATCH SYNC ---
-        // Send state to local Vite plugin to sync with Android Wear OS emulator
+        // Sync with local watch sync plugin
         try {
             const lastSubEvent = state.events.slice().reverse().find(e => e.type === 'SUBSTITUTION');
             let subOutStr = "";
@@ -157,8 +127,6 @@ export const useBroadcastSync = (
                 const pIn = team.players.find(p => p.id === lastSubEvent.subInId);
                 subOutStr = pOut ? `#${pOut.number} ${pOut.name}` : "";
                 subInStr = pIn ? `#${pIn.number} ${pIn.name}` : "";
-                subOutStr = subOutStr.replace(/"/g, ''); // escape quotes for shell
-                subInStr = subInStr.replace(/"/g, '');
             }
 
             fetch('http://localhost:3000/api/sync-watch', {
@@ -176,66 +144,48 @@ export const useBroadcastSync = (
                     latestSubId: lastSubEvent?.id || "",
                     subOut: subOutStr,
                     subIn: subInStr,
-                    timeoutTeam: state.timeout?.isActive ? (state.timeout.teamId === 'HOME' ? state.homeTeam.name : state.awayTeam.name).replace(/"/g, '') : "",
+                    timeoutTeam: state.timeout?.isActive ? (state.timeout.teamId === 'HOME' ? state.homeTeam.name : state.awayTeam.name) : "",
                     watchControlMode: settings.watchControlMode
                 })
-            }).catch(e => console.error('[Watch Sync Failed]', e));
+            }).catch(() => {});
         } catch(e) {}
+    }, [socket, settings.watchControlMode]);
 
-    }, [settings.watchControlMode]);
-
-    // Debounced version for frequent updates (e.g., clock ticks)
     const debouncedBroadcast = useRef<NodeJS.Timeout | null>(null);
     const broadcastUpdateDebounced = useCallback((state: MatchState, delay: number = 100) => {
-        if (debouncedBroadcast.current) {
-            clearTimeout(debouncedBroadcast.current);
-        }
-        debouncedBroadcast.current = setTimeout(() => {
-            broadcastUpdate(state);
-        }, delay);
+        if (debouncedBroadcast.current) clearTimeout(debouncedBroadcast.current);
+        debouncedBroadcast.current = setTimeout(() => broadcastUpdate(state), delay);
     }, [broadcastUpdate]);
 
     const registerView = useCallback((viewName: string) => {
         viewNameRef.current = viewName;
-        if (socketRef.current) {
-            socketRef.current.emit('register-view', viewName);
-        }
-    }, []);
+        if (socket) socket.emit('register-view', viewName);
+    }, [socket]);
 
-    // Inject Watch as a visible session
     const watchSession = useMemo(() => ({
         id: 'wear-os-adb',
         view: 'WATCH',
         ip: 'ADB Bridge',
-        userAgent: `Wear OS Emulator (${settings.watchControlMode === 'read-only' ? 'Read-Only' : 'Write'})`,
+        userAgent: `Wear OS Emulator (${settings.watchControlMode})`,
         connectedAt: Date.now()
     }), [settings.watchControlMode]);
 
-    const combinedSessions = useMemo(() => {
-        return [...activeSessions, watchSession];
-    }, [activeSessions, watchSession]);
+    const combinedSessions = useMemo(() => [...activeSessions, watchSession], [activeSessions, watchSession]);
 
-    const sendHapticSignal = useCallback((signalType: 'TIMEOUT_PING' | 'SUB_PING' | 'SHOT_CLOCK_PING' | 'GAME_CLOCK_PING') => {
-        if (socketRef.current?.connected) {
-             socketRef.current.emit('haptic-signal', {
+    const sendHapticSignal = useCallback((signalType: string) => {
+        if (socket?.connected) {
+             socket.emit('haptic-signal', {
                  hapticSignal: signalType,
                  hapticSignalId: crypto.randomUUID()
              });
         }
-        
-        // Still fire HTTP call for legacy adb emulator mocking support
-        try {
-            fetch('http://localhost:3000/api/sync-watch', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    hapticSignal: signalType,
-                    hapticSignalId: crypto.randomUUID()
-                })
-            }).catch(e => console.error('[Watch Sync Failed]', e));
-        } catch(e) {}
-    }, []);
+        fetch('http://localhost:3000/api/sync-watch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hapticSignal: signalType, hapticSignalId: crypto.randomUUID() })
+        }).catch(() => {});
+    }, [socket]);
 
-    return { broadcastUpdate, broadcastUpdateDebounced, activeSessions: combinedSessions, registerView, sendHapticSignal, socket: socketRef.current };
-}; // End of file
+    return { broadcastUpdate, broadcastUpdateDebounced, activeSessions: combinedSessions, registerView, sendHapticSignal, socket };
+};
 
