@@ -29,6 +29,12 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ShortcutsModal from './components/ShortcutsModal';
 const LiveTicker = lazy(() => import('./components/LiveTicker'));
 const SpectatorVoting = lazy(() => import('./components/SpectatorVoting'));
+import LoginPage from './components/LoginPage';
+import { supabase } from './lib/supabase';
+import { User } from '@supabase/supabase-js';
+import { LogOut, Cloud, CloudOff } from 'lucide-react';
+import { syncService } from './services/SyncService';
+import StaticPages from './components/StaticPages';
 
 import { MatchState, MatchEvent, TeamId, ShotType, Team, OverlayMessage } from './types';
 import { MatchProfile, DEFAULT_PROFILES } from './types/profile';
@@ -40,14 +46,16 @@ import { calculateDerivedMatchState } from './utils/matchLogic';
 
 function AppContent() {
   // Initialize view from URL parameter
-  const [view, setView] = useState<'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS' | 'TICKER' | 'VOTING' | 'SCOUTING_REPORT'>(() => {
+  const [view, setView] = useState<'LANDING' | 'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS' | 'TICKER' | 'VOTING' | 'SCOUTING_REPORT' | 'ABOUT' | 'PRIVACY' | 'SUPPORT' | 'API_DOCS'>(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
-    const validViews = ['HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'TICKER', 'VOTING', 'SCOUTING_REPORT'];
+    const validViews = ['LANDING', 'HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'TICKER', 'VOTING', 'SCOUTING_REPORT', 'ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS'];
+    
+    // If we have a matchId in the URL, we might want to default to TRACK or STATS if configured
     if (viewParam && validViews.includes(viewParam)) {
       return viewParam as any;
     }
-    return 'HOME';
+    return 'LANDING';
   });
 
   const [scoutingTeam, setScoutingTeam] = useState<string>('');
@@ -55,6 +63,33 @@ function AppContent() {
   const { settings } = useSettings();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  
+  // Authentication State
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  // Check for existing session
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      syncService.setUserId(u?.id ?? null);
+      setIsAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      syncService.setUserId(u?.id ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
 
   // Base Match State (Persistent Source of Truth)
   const [matchState, setMatchState] = useState<MatchState>(() => {
@@ -95,19 +130,44 @@ function AppContent() {
   });
 
   useEffect(() => {
+    if (user && user.id !== 'guest') {
+      setIsAuthLoading(true);
+      syncService.loadMatches().then(cloudMatches => {
+        if (cloudMatches.length > 0) {
+          // Merge or prioritize cloud matches if needed.
+          // For now, let's just append new cloud matches to local ones if they don't exist.
+          setSavedMatches(prev => {
+             const existingIds = new Set(prev.map(m => m.id));
+             const newMatches = cloudMatches.filter(m => !existingIds.has(m.id));
+             return [...newMatches, ...prev];
+          });
+        }
+        setIsAuthLoading(false);
+      });
+    }
+  }, [user]);
+
+  useEffect(() => {
     localStorage.setItem('korfstat_matches', JSON.stringify(savedMatches));
   }, [savedMatches]);
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
   // Persist Current Match State
   useEffect(() => {
-    if (matchState.isConfigured) {
-      localStorage.setItem('korfstat_current_match', JSON.stringify(matchState));
-    } else {
-      // If not configured (e.g. at home), maybe we don't clear it immediately to avoid accidental loss?
-      // But handleExitToHome clears it.
-      // So if it's not configured, it's safe to assume we don't need to save it, or it is the empty state.
+    if (matchState.isConfigured && matchState.id) {
+       // Local Storage Sync (Immediate)
+       localStorage.setItem(`korfstat_match_${matchState.id}`, JSON.stringify(matchState));
+       localStorage.setItem('korfstat_current_match_id', matchState.id);
+       localStorage.setItem('korfstat_current_match', JSON.stringify(matchState));
+
+       // Cloud Sync (Background)
+       if (user && user.id !== 'guest') {
+         setIsSyncing(true);
+         syncService.syncMatch(matchState).finally(() => setIsSyncing(false));
+       }
     }
-  }, [matchState]);
+  }, [matchState, user]);
 
   const [tick, setTick] = useState(0); // Force re-render for timer updates
 
@@ -226,7 +286,7 @@ function AppContent() {
     });
   }, []);
 
-  const { broadcastUpdate, activeSessions, registerView, sendHapticSignal, socket } = useBroadcastSync(matchState, handleRemoteUpdate, handleSpotterAction);
+  const { broadcastUpdate, activeSessions, registerView, sendHapticSignal, socket } = useBroadcastSync(matchState.id, matchState, handleRemoteUpdate, handleSpotterAction);
 
   // Register View on Change
   useEffect(() => {
@@ -391,8 +451,47 @@ function AppContent() {
     setView('HOME');
   }, [settings, broadcastUpdate]);
 
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-400 mt-4 font-bold tracking-widest text-sm uppercase">KorfStat Pro</p>
+      </div>
+    );
+  }
+
+  if (!user && !['LANDING', 'ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS'].includes(view)) {
+    return <LoginPage onLoginSuccess={setUser} onBack={() => setView('LANDING')} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 font-sans transition-colors duration-300">
+      
+      {/* Logout Floater */}
+      <button
+        onClick={handleLogout}
+        className="fixed bottom-4 left-16 z-[90] p-2 bg-white/10 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-full backdrop-blur-sm transition-all"
+        title="Logout"
+      >
+        <LogOut size={20} />
+      </button>
+
+      {/* Sync Status Badge */}
+      {user && user.id !== 'guest' && (
+        <div className="fixed bottom-4 left-28 z-[90] flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full backdrop-blur-sm transition-all text-[10px] font-bold tracking-widest uppercase">
+          {isSyncing ? (
+            <>
+              <Cloud size={12} className="text-blue-400 animate-pulse" />
+              <span className="text-blue-400">Syncing...</span>
+            </>
+          ) : (
+            <>
+              <Cloud size={12} className="text-green-500" />
+              <span className="text-green-500">Cloud Active</span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Settings Floater */}
       <button
@@ -425,6 +524,17 @@ function AppContent() {
       {/* Locked Screen */}
 
 
+      {view === 'LANDING' && (
+        <LandingGateway 
+          onNavigate={setView} 
+          onSelectMatch={(match) => { setMatchState(match); setView('STATS'); }}
+          activeSessions={activeSessions}
+          matchState={derivedMatchState}
+          savedMatches={savedMatches}
+          isAuthenticated={!!user}
+        />
+      )}
+
       {view === 'HOME' && (
         <HomePage
           onNavigate={setView}
@@ -432,6 +542,12 @@ function AppContent() {
           matchState={derivedMatchState}
         />
       )}
+
+      {/* Note: I should probably use LandingGateway as the entry point if not configured, 
+          but App.tsx currently uses HomePage as the HOME view. 
+          Wait, HomePage and LandingGateway roles seem to overlap. 
+          Let's see where LandingGateway is used.
+      */}
 
       {view === 'SETUP' && (
         <MatchSetup onStartMatch={handleStartMatch} onNavigate={setView} savedMatches={savedMatches} />
@@ -579,6 +695,13 @@ function AppContent() {
           teamName={scoutingTeam}
           allMatches={savedMatches}
           onBack={() => setView('MATCH_HISTORY')}
+        />
+      )}
+
+      {['ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS'].includes(view) && (
+        <StaticPages 
+          view={view as any} 
+          onBack={() => setView('LANDING')} 
         />
       )}
     </div>

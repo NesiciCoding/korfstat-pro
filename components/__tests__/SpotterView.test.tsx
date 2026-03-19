@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import SpotterView from '../SpotterView';
 import { MatchState, Player } from '../../types';
 import { io } from 'socket.io-client';
@@ -86,13 +86,13 @@ describe('SpotterView', () => {
         expect(screen.getByText(/commandRegistered/)).toBeInTheDocument();
     });
 
-    it('toggles voice help visibility', () => {
+    it('toggles voice help visibility', async () => {
         render(<SpotterView matchState={mockMatchState} onBack={() => {}} />);
         
         const infoButton = screen.getByTestId('voice-help-button');
         fireEvent.click(infoButton);
         
-        expect(screen.getByText('spotter.helpText')).toBeInTheDocument();
+        expect(await screen.findByText('spotter.helpText')).toBeInTheDocument();
         
         fireEvent.click(infoButton);
         expect(screen.queryByText('spotter.helpText')).not.toBeInTheDocument();
@@ -111,7 +111,9 @@ describe('SpotterView', () => {
         
         // Simulate voice command via the helper
         const { __triggerCommand } = await import('../../hooks/useVoiceCommands') as any;
-        __triggerCommand({ type: 'GOAL', team: 'HOME', playerNumber: 5 });
+        act(() => {
+            __triggerCommand({ type: 'GOAL', team: 'HOME', playerNumber: 5 });
+        });
 
         expect(mockSocket.emit).toHaveBeenCalledWith('spotter-action', expect.objectContaining({
             type: 'GOAL',

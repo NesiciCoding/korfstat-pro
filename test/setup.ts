@@ -1,6 +1,54 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Global Fetch Mock
+global.fetch = vi.fn().mockImplementation(() => 
+    Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ localIp: '127.0.0.1' }),
+        text: () => Promise.resolve(''),
+        blob: () => Promise.resolve(new Blob()),
+    })
+) as any;
+
+// Mock Supabase
+vi.mock('@supabase/supabase-js', () => ({
+    createClient: vi.fn(() => ({
+        auth: {
+            getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: 'test-user', email: 'test@example.com' } } }, error: null }),
+            onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+            signInWithPassword: vi.fn().mockResolvedValue({ data: { user: {} }, error: null }),
+            signUp: vi.fn().mockResolvedValue({ data: { user: {} }, error: null }),
+            signOut: vi.fn().mockResolvedValue({ error: null }),
+        },
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        insert: vi.fn().mockReturnThis(),
+        upsert: vi.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
+        delete: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        single: vi.fn().mockReturnThis(),
+    })),
+}));
+
+// Mock SyncService
+vi.mock('../services/SyncService', () => ({
+    syncService: {
+        setUserId: vi.fn(),
+        syncMatch: vi.fn().mockResolvedValue({}),
+        loadMatches: vi.fn().mockResolvedValue([]),
+        deleteMatch: vi.fn().mockResolvedValue({}),
+    },
+    SyncService: vi.fn().mockImplementation(() => ({
+        setUserId: vi.fn(),
+        syncMatch: vi.fn().mockResolvedValue({}),
+        loadMatches: vi.fn().mockResolvedValue([]),
+        deleteMatch: vi.fn().mockResolvedValue({}),
+    })),
+}));
+
 // Mock react-i18next
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({

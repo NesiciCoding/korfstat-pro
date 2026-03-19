@@ -40,6 +40,19 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
     return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
   });
   const [isGalleryOpen, setIsGalleryOpen] = React.useState(false);
+  const [activeMatches, setActiveMatches] = React.useState<MatchState[]>([]);
+
+  React.useEffect(() => {
+    // Fetch active matches from server on mount
+    fetch('http://localhost:3002/api/matches/active')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setActiveMatches(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
   
   const saveWidgets = (newWidgets: WidgetConfig[]) => {
     setWidgets(newWidgets);
@@ -188,6 +201,39 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+
+        {/* ACTIVE CLOUD/LAN MATCHES */}
+        {activeMatches.length > 0 && (
+          <div className="bg-indigo-600/5 dark:bg-indigo-500/5 border border-indigo-200/50 dark:border-indigo-500/20 rounded-3xl p-6 shadow-sm overflow-hidden relative group">
+             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                <Trophy size={120} className="text-indigo-600" />
+             </div>
+             <div className="relative z-10">
+                <h2 className="text-lg font-bold text-indigo-900 dark:text-indigo-100 flex items-center gap-2 mb-4">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  {t('home.activeDiscovery', { defaultValue: 'Live Matches on Network / Cloud' })}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {activeMatches.map(match => (
+                    <button
+                      key={match.id}
+                      onClick={() => onNavigate('TRACK')} // In a more advanced version, we'd pass the matchId to TRACK
+                      className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between hover:border-indigo-500 transition-all shadow-sm hover:shadow-md"
+                    >
+                      <div>
+                         <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-tighter mb-1">Join Session</div>
+                         <div className="text-sm font-bold text-slate-900 dark:text-white">
+                            {match.homeTeam.name} vs {match.awayTeam.name}
+                         </div>
+                         <div className="text-[10px] text-slate-500 font-mono mt-1">{match.id?.slice(0, 8)}</div>
+                      </div>
+                      <ExternalLink size={18} className="text-slate-300 group-hover:text-indigo-500" />
+                    </button>
+                  ))}
+                </div>
+             </div>
+          </div>
+        )}
 
         {/* DYNAMIC WIDGET GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] grid-flow-row-dense">

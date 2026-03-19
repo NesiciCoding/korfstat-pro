@@ -63,7 +63,7 @@ describe('useBroadcastSync', () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        renderHook(() => useBroadcastSync(matchState, onUpdate));
+        renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
 
         expect(io).toHaveBeenCalledWith(expect.stringContaining(':3002'));
         expect(mockSocket.on).toHaveBeenCalledWith('connect', expect.any(Function));
@@ -77,7 +77,7 @@ describe('useBroadcastSync', () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { unmount } = renderHook(() => useBroadcastSync(matchState, onUpdate));
+        const { unmount } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
 
         unmount();
 
@@ -89,7 +89,7 @@ describe('useBroadcastSync', () => {
         const onUpdate = vi.fn();
         const newMatchState = { ...matchState, currentHalf: 2 };
 
-        renderHook(() => useBroadcastSync(matchState, onUpdate));
+        renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
 
         // Simulate receiving match update
         act(() => {
@@ -105,7 +105,7 @@ describe('useBroadcastSync', () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync(matchState, onUpdate));
+        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
 
         const updatedState = { ...matchState, currentHalf: 2 };
 
@@ -113,14 +113,14 @@ describe('useBroadcastSync', () => {
             result.current.broadcastUpdate(updatedState);
         });
 
-        expect(mockSocket.emit).toHaveBeenCalledWith('match-update', updatedState);
+        expect(mockSocket.emit).toHaveBeenCalledWith('match-update', { ...updatedState, id: 'test-match' });
     });
 
     it('should not broadcast identical states', () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync(matchState, onUpdate));
+        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
 
         act(() => {
             result.current.broadcastUpdate(matchState);
@@ -135,7 +135,7 @@ describe('useBroadcastSync', () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync(matchState, onUpdate));
+        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
 
         expect(result.current.broadcastUpdateDebounced).toBeDefined();
         expect(typeof result.current.broadcastUpdateDebounced).toBe('function');
@@ -145,7 +145,7 @@ describe('useBroadcastSync', () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync(matchState, onUpdate));
+        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
 
         act(() => {
             result.current.registerView('TRACK');
@@ -158,7 +158,7 @@ describe('useBroadcastSync', () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync(matchState, onUpdate));
+        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
 
         const sessions = [{ id: '1', view: 'TRACK' }, { id: '2', view: 'STATS' }];
 
@@ -182,7 +182,7 @@ describe('useBroadcastSync', () => {
         const onUpdate = vi.fn();
         const onSpotterAction = vi.fn();
 
-        renderHook(() => useBroadcastSync(matchState, onUpdate, onSpotterAction));
+        renderHook(() => useBroadcastSync('test-match', matchState, onUpdate, onSpotterAction));
 
         const spotterAction = { type: 'GOAL', teamId: 'HOME' };
 
@@ -197,7 +197,7 @@ describe('useBroadcastSync', () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync(matchState, onUpdate));
+        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
 
         const updatedState = { ...matchState, currentHalf: 2 };
 

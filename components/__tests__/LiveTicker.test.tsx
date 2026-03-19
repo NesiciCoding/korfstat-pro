@@ -29,36 +29,30 @@ describe('LiveTicker', () => {
         });
     });
 
-    it('renders connecting state initially', () => {
-        act(() => {
-            render(<LiveTicker />);
-        });
-        expect(screen.getByText(/Connecting to Match.../i)).toBeInTheDocument();
+    it('renders loading state initially', async () => {
+    render(<LiveTicker />);
+    expect(screen.getByText(/Connecting to Match.../i)).toBeInTheDocument();
+    // Wait for loading to finish to avoid act warning
+    await waitFor(() => expect(screen.queryByText(/Connecting to Match.../i)).not.toBeInTheDocument());
+    // Wait for data to load to avoid act warning
+    await screen.findByText('Home Team');
     });
 
     it('renders match data after successful fetch', async () => {
-        act(() => {
-            render(<LiveTicker />);
-        });
+        render(<LiveTicker />);
         
-        await waitFor(() => {
-            expect(screen.getByText('Home Team')).toBeInTheDocument();
-            expect(screen.getByText('Away Team')).toBeInTheDocument();
-            expect(screen.getByText('10')).toBeInTheDocument();
-            expect(screen.getByText('8')).toBeInTheDocument();
-            expect(screen.getByText("15'")).toBeInTheDocument();
-        });
+        expect(await screen.findByText('Home Team')).toBeInTheDocument();
+        expect(await screen.findByText('Away Team')).toBeInTheDocument();
+        expect(await screen.findByText('10')).toBeInTheDocument();
+        expect(await screen.findByText('8')).toBeInTheDocument();
+        expect(await screen.findByText("15'")).toBeInTheDocument();
     });
 
     it('displays the last event description', async () => {
-        act(() => {
-            render(<LiveTicker />);
-        });
+        render(<LiveTicker />);
         
-        await waitFor(() => {
-            expect(screen.getByText(/Home Team score!/i)).toBeInTheDocument();
-            expect(screen.getByText('[GOAL]')).toBeInTheDocument();
-        });
+        expect(await screen.findByText(/Home Team score!/i)).toBeInTheDocument();
+        expect(await screen.findByText('[GOAL]')).toBeInTheDocument();
     });
 
     it('updates when socket emits ticker-update', async () => {
@@ -67,11 +61,9 @@ describe('LiveTicker', () => {
             if (event === 'ticker-update') updateCallback = cb;
         });
 
-        act(() => {
-            render(<LiveTicker />);
-        });
+        render(<LiveTicker />);
 
-        await waitFor(() => expect(screen.getByText('Home Team')).toBeInTheDocument());
+        expect(await screen.findByText('Home Team')).toBeInTheDocument();
 
         // Simulate socket update
         const updatedData = {
@@ -86,39 +78,26 @@ describe('LiveTicker', () => {
             updateCallback(updatedData);
         });
 
-        await waitFor(() => {
-            expect(screen.getByText('11')).toBeInTheDocument();
-            expect(screen.getByText("16'")).toBeInTheDocument();
-            expect(screen.getByText(/Another goal!/i)).toBeInTheDocument();
-        });
+        expect(await screen.findByText('11')).toBeInTheDocument();
+        expect(await screen.findByText("16'")).toBeInTheDocument();
+        expect(await screen.findByText(/Another goal!/i)).toBeInTheDocument();
     });
 
     it('shows offline state when no data and socket disconnected', async () => {
         (global.fetch as any).mockRejectedValue(new Error('API Down'));
         
-        // Trigger disconnect
         let disconnectCallback: any;
-        mockSocket.on.mockImplementation((event, cb) => {
-            if (event === 'disconnect') disconnectCallback = cb;
-        });
-
-        // Wait for connect event first to set status to LIVE (simulated)
-        let connectCallback: any;
         mockSocket.on.mockImplementation((event, cb) => {
             if (event === 'connect') cb();
             if (event === 'disconnect') disconnectCallback = cb;
         });
 
-        act(() => {
-            render(<LiveTicker />);
-        });
+        render(<LiveTicker />);
         
         act(() => {
             disconnectCallback();
         });
 
-        await waitFor(() => {
-            expect(screen.getByText(/No Active Match Found/i)).toBeInTheDocument();
-        });
+        expect(await screen.findByText(/No Active Match Found/i)).toBeInTheDocument();
     });
 });

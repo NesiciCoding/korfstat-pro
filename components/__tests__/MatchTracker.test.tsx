@@ -131,23 +131,15 @@ describe('MatchTracker High Intensity Coverage', () => {
         render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
         
         // Card flow via UI
-        fireEvent.click(screen.getByTestId('mock-field'));
-        await waitFor(() => expect(screen.getByTestId('select-team-modal')).toBeInTheDocument());
-        fireEvent.click(screen.getByTestId('select-home-team-btn'));
+        fireEvent.click(await screen.findByTestId('mock-field'));
+        fireEvent.click(await screen.findByTestId('select-home-team-btn'));
+        fireEvent.click(within(await screen.findByTestId('select-player-modal')).getByTestId('player-btn-P1'));
         
-        await waitFor(() => expect(screen.getByTestId('select-player-modal')).toBeInTheDocument());
-        fireEvent.click(within(screen.getByTestId('select-player-modal')).getByTestId('player-btn-P1'));
-        
-        await waitFor(() => expect(screen.getByTestId('select-action-modal')).toBeInTheDocument());
-        // Since there is no "Card" button in the UI, we must use the shortcut 'c' 
-        // BUT we need to make sure the modal is CLOSED first or handles it.
-        // Actually, let's just trigger 'c' and see if it opens the player modal.
+        await screen.findByTestId('select-action-modal');
         fireEvent.click(screen.getByTestId('context-menu-overlay')); // Close previous
         
-        act(() => {
-            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'c', bubbles: true }));
-        });
-        await waitFor(() => expect(screen.getByTestId('select-player-modal')).toBeInTheDocument());
+        fireEvent.keyDown(window, { key: 'c', bubbles: true });
+        await screen.findByTestId('select-player-modal');
 
         // Substitution Exception via Field Click
         fireEvent.click(screen.getByTestId('mock-field'), { clientX: 10, clientY: 50 });
@@ -169,12 +161,12 @@ describe('MatchTracker High Intensity Coverage', () => {
     it('covers Toolbar and General Interactions', async () => {
         render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
         
-        fireEvent.click(screen.getByTestId('mute-btn'));
-        fireEvent.click(screen.getByTestId('undo-btn'));
-        fireEvent.click(screen.getByTestId('shot-clock-toggle'));
-        fireEvent.click(screen.getByTestId('switch-possession-btn'));
-        fireEvent.click(screen.getByTestId('timeout-btn'));
-        fireEvent.click(screen.getByTestId('vote-btn'));
+        fireEvent.click(await screen.findByTestId('mute-btn'));
+        fireEvent.click(await screen.findByTestId('undo-btn'));
+        fireEvent.click(await screen.findByTestId('shot-clock-toggle'));
+        fireEvent.click(await screen.findByTestId('switch-possession-btn'));
+        fireEvent.click(await screen.findByTestId('timeout-btn'));
+        fireEvent.click(await screen.findByTestId('vote-btn'));
         
         expect(onUpdateMatch).toHaveBeenCalled();
     });
@@ -183,49 +175,44 @@ describe('MatchTracker High Intensity Coverage', () => {
         const state = { ...mockMatchState, timer: { ...mockMatchState.timer, elapsedSeconds: 1501 } };
         render(<MatchTracker matchState={state as any} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
         
-        fireEvent.click(screen.getAllByTestId('end-period-btn')[0]);
+        const endBtns = await screen.findAllByTestId('end-period-btn');
+        fireEvent.click(endBtns[0]);
         await screen.findByTestId('half-end-modal');
-        fireEvent.click(screen.getByTestId('start-break-btn-main'));
+        fireEvent.click(await screen.findByTestId('start-break-btn-main'));
 
         const endState = { ...mockMatchState, currentHalf: 2, timer: { ...mockMatchState.timer, elapsedSeconds: 1501 } };
         render(<MatchTracker matchState={endState as any} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
-        fireEvent.click(screen.getAllByTestId('end-period-btn')[0]);
-        await screen.findByTestId('match-end-modal');
-        fireEvent.click(screen.getByTestId('overtime-btn'));
         
-        fireEvent.click(screen.getAllByTestId('end-period-btn')[0]);
+        const endBtns2 = await screen.findAllByTestId('end-period-btn');
+        fireEvent.click(endBtns2[0]);
         await screen.findByTestId('match-end-modal');
-        fireEvent.click(screen.getAllByTestId('finish-match-btn')[0]);
+        fireEvent.click(await screen.findByTestId('overtime-btn'));
+        
+        const endBtns3 = await screen.findAllByTestId('end-period-btn');
+        fireEvent.click(endBtns3[0]);
+        await screen.findByTestId('match-end-modal');
+        const finishBtns = await screen.findAllByTestId('finish-match-btn');
+        fireEvent.click(finishBtns[0]);
     });
 
     it('covers Penalty and Free Throw UI sequences', async () => {
         render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
         
         // Penalty Flow 
-        fireEvent.click(screen.getByTestId('mock-field'), { clientX: 90, clientY: 50 });
-        const teamModal = await screen.findByTestId('select-team-modal');
-        fireEvent.click(within(teamModal).getByTestId('select-home-team-btn'));
-        const playerModal = await screen.findByTestId('select-player-modal');
-        fireEvent.click(within(playerModal).getByTestId('player-btn-P1'));
-        const actionModal = await screen.findByTestId('select-action-modal');
-        fireEvent.click(within(actionModal).getByTestId('goal-miss-action-btn'));
-        const shotTypeModal = await screen.findByTestId('select-shot-type-modal');
-        fireEvent.click(within(shotTypeModal).getByTestId('shot-type-btn-PENALTY'));
-        const resultModal = await screen.findByTestId('select-result-modal');
-        fireEvent.click(within(resultModal).getByTestId('result-goal-btn'));
+        fireEvent.click(await screen.findByTestId('mock-field'), { clientX: 90, clientY: 50 });
+        fireEvent.click(await screen.findByTestId('select-home-team-btn'));
+        fireEvent.click(within(await screen.findByTestId('select-player-modal')).getByTestId('player-btn-P1'));
+        fireEvent.click(await screen.findByTestId('goal-miss-action-btn'));
+        fireEvent.click(await screen.findByTestId('shot-type-btn-PENALTY'));
+        fireEvent.click(await screen.findByTestId('result-goal-btn'));
 
         // Free Throw Flow
-        fireEvent.click(screen.getByTestId('mock-field'));
-        const teamModalFT = await screen.findByTestId('select-team-modal');
-        fireEvent.click(within(teamModalFT).getByTestId('select-home-team-btn'));
-        const playerModalFT = await screen.findByTestId('select-player-modal');
-        fireEvent.click(within(playerModalFT).getByTestId('player-btn-P2'));
-        const actionModalFT = await screen.findByTestId('select-action-modal');
-        fireEvent.click(within(actionModalFT).getByTestId('goal-miss-action-btn'));
-        const shotTypeModalFT = await screen.findByTestId('select-shot-type-modal');
-        fireEvent.click(within(shotTypeModalFT).getByTestId('shot-type-btn-FREE_THROW'));
-        const resultModal2 = await screen.findByTestId('select-result-modal');
-        fireEvent.click(within(resultModal2).getByTestId('result-miss-btn'));
+        fireEvent.click(await screen.findByTestId('mock-field'));
+        fireEvent.click(await screen.findByTestId('select-home-team-btn'));
+        fireEvent.click(within(await screen.findByTestId('select-player-modal')).getByTestId('player-btn-P2'));
+        fireEvent.click(await screen.findByTestId('goal-miss-action-btn'));
+        fireEvent.click(await screen.findByTestId('shot-type-btn-FREE_THROW'));
+        fireEvent.click(await screen.findByTestId('result-miss-btn'));
 
         expect(onUpdateMatch).toHaveBeenCalled();
     });
@@ -234,31 +221,22 @@ describe('MatchTracker High Intensity Coverage', () => {
          render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
          // Turnover
-         fireEvent.click(screen.getByTestId('mock-field'));
-         const teamModalTO = await screen.findByTestId('select-team-modal');
-         fireEvent.click(within(teamModalTO).getByTestId('select-home-team-btn'));
-         const playerModalTO = await screen.findByTestId('select-player-modal');
-         fireEvent.click(within(playerModalTO).getByTestId('player-btn-P1'));
-         const actionModalTO = await screen.findByTestId('select-action-modal');
-         fireEvent.click(within(actionModalTO).getByTestId('turnover-action-btn'));
+         fireEvent.click(await screen.findByTestId('mock-field'));
+         fireEvent.click(await screen.findByTestId('select-home-team-btn'));
+         fireEvent.click(within(await screen.findByTestId('select-player-modal')).getByTestId('player-btn-P1'));
+         fireEvent.click(await screen.findByTestId('turnover-action-btn'));
 
          // Foul
-         fireEvent.click(screen.getByTestId('mock-field'));
-         const teamModalF = await screen.findByTestId('select-team-modal');
-         fireEvent.click(within(teamModalF).getByTestId('select-home-team-btn'));
-         const playerModalF = await screen.findByTestId('select-player-modal');
-         fireEvent.click(within(playerModalF).getByTestId('player-btn-P1'));
-         const actionModalF = await screen.findByTestId('select-action-modal');
-         fireEvent.click(within(actionModalF).getByTestId('foul-action-btn'));
+         fireEvent.click(await screen.findByTestId('mock-field'));
+         fireEvent.click(await screen.findByTestId('select-home-team-btn'));
+         fireEvent.click(within(await screen.findByTestId('select-player-modal')).getByTestId('player-btn-P1'));
+         fireEvent.click(await screen.findByTestId('foul-action-btn'));
 
          // Rebound
-         fireEvent.click(screen.getByTestId('mock-field'));
-         const teamModalR = await screen.findByTestId('select-team-modal');
-         fireEvent.click(within(teamModalR).getByTestId('select-home-team-btn'));
-         const playerModalR = await screen.findByTestId('select-player-modal');
-         fireEvent.click(within(playerModalR).getByTestId('player-btn-P1'));
-         const actionModalR = await screen.findByTestId('select-action-modal');
-         fireEvent.click(within(actionModalR).getByTestId('rebound-action-btn'));
+         fireEvent.click(await screen.findByTestId('mock-field'));
+         fireEvent.click(await screen.findByTestId('select-home-team-btn'));
+         fireEvent.click(within(await screen.findByTestId('select-player-modal')).getByTestId('player-btn-P1'));
+         fireEvent.click(await screen.findByTestId('rebound-action-btn'));
 
          expect(onUpdateMatch).toHaveBeenCalled();
     });
@@ -266,25 +244,11 @@ describe('MatchTracker High Intensity Coverage', () => {
     it('covers Goal via UI flow', async () => {
          render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
-         // 1. Click field to open menu
-         fireEvent.click(screen.getByTestId('mock-field'), { clientX: 10, clientY: 50 });
-         
-         // 2. Select Team
-         const teamBtn = await screen.findByTestId('select-home-team-btn');
-         fireEvent.click(teamBtn);
-         
-         // 3. Select Player
-         const playerModal = await screen.findByTestId('select-player-modal');
-         const playerBtn = within(playerModal).getByTestId('player-btn-P1');
-         fireEvent.click(playerBtn);
-         
-         // 4. Select Action
-         const goalBtn = await screen.findByTestId('goal-miss-action-btn');
-         fireEvent.click(goalBtn);
-         
-         // 5. Select Shot Type
-         const shotBtn = await screen.findByTestId('shot-type-btn-RUNNING_IN');
-         fireEvent.click(shotBtn);
+         fireEvent.click(await screen.findByTestId('mock-field'), { clientX: 10, clientY: 50 });
+         fireEvent.click(await screen.findByTestId('select-home-team-btn'));
+         fireEvent.click(within(await screen.findByTestId('select-player-modal')).getByTestId('player-btn-P1'));
+         fireEvent.click(await screen.findByTestId('goal-miss-action-btn'));
+         fireEvent.click(await screen.findByTestId('shot-type-btn-RUNNING_IN'));
          
          await waitFor(() => expect(onUpdateMatch).toHaveBeenCalled());
     });
@@ -292,14 +256,10 @@ describe('MatchTracker High Intensity Coverage', () => {
     it('covers Card via Shortcut sequence: C -> 1 -> Yellow', async () => {
          render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
-         act(() => {
-             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'c', bubbles: true }));
-         });
+         fireEvent.keyDown(window, { key: 'c', bubbles: true });
          await screen.findByTestId('select-player-modal');
          
-         act(() => {
-             window.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true }));
-         });
+         fireEvent.keyDown(window, { key: '1', bubbles: true });
          const cardModal = await screen.findByTestId('select-card-type-modal');
          fireEvent.click(within(cardModal).getByTestId('yellow-card-btn'));
          expect(onUpdateMatch).toHaveBeenCalled();
@@ -312,68 +272,49 @@ describe('MatchTracker High Intensity Coverage', () => {
          };
          render(<MatchTracker matchState={matchStateWithNoSubs} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
-         act(() => {
-             window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', bubbles: true }));
-         });
-         await waitFor(() => expect(screen.getByTestId('select-team-for-sub-modal')).toBeInTheDocument());
+         fireEvent.keyDown(window, { key: 's', bubbles: true });
+         await screen.findByTestId('select-team-for-sub-modal');
          
-         act(() => {
-             window.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true }));
-         }); 
-         await waitFor(() => expect(screen.getByTestId('select-sub-out-modal')).toBeInTheDocument());
+         fireEvent.keyDown(window, { key: '1', bubbles: true });
+         await screen.findByTestId('select-sub-out-modal');
          
-         act(() => {
-             window.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true }));
-         });
-         await waitFor(() => expect(screen.getByTestId('select-sub-in-modal')).toBeInTheDocument());
+         fireEvent.keyDown(window, { key: '1', bubbles: true });
+         await screen.findByTestId('select-sub-in-modal');
          
-         act(() => {
-             window.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true }));
-         });
+         fireEvent.keyDown(window, { key: '1', bubbles: true });
          await waitFor(() => expect(onUpdateMatch).toHaveBeenCalled());
     });
 
     it('covers Undo and Timeout interactions', async () => {
          const { rerender } = render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
-         // Timeout
-         fireEvent.click(screen.getByTestId('timeout-btn'));
+         fireEvent.click(await screen.findByTestId('timeout-btn'));
          expect(onUpdateMatch).toHaveBeenCalledWith(expect.objectContaining({
              timer: expect.objectContaining({ isRunning: false })
          }));
 
-         // Undo (with an event)
          const stateWithEvent = {
              ...mockMatchState,
              events: [{ id: 'e1', teamId: 'HOME', type: 'SHOT', result: 'GOAL', timestamp: 10, realTime: Date.now(), half: 1 }]
          };
-          rerender(<MatchTracker matchState={stateWithEvent as any} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+         rerender(<MatchTracker matchState={stateWithEvent as any} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
-         fireEvent.click(screen.getByTestId('undo-btn'));
+         fireEvent.click(await screen.findByTestId('undo-btn'));
          expect(onUpdateMatch).toHaveBeenCalled();
     });
 
     it('covers Penalty sequence via UI', async () => {
          render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
-         fireEvent.click(screen.getByTestId('mock-field'), { clientX: 90, clientY: 50 });
-         await waitFor(() => expect(screen.getByTestId('select-team-modal')).toBeInTheDocument());
-         fireEvent.click(screen.getByTestId('select-home-team-btn'));
+         fireEvent.click(await screen.findByTestId('mock-field'), { clientX: 90, clientY: 50 });
+         fireEvent.click(await screen.findByTestId('select-home-team-btn'));
          
-         // Wait for the team modal to be GONE and player modal to be HERE
-         await waitFor(() => expect(screen.queryByTestId('select-team-modal')).not.toBeInTheDocument(), { timeout: 2000 });
-         await waitFor(() => expect(screen.getByTestId('select-player-modal')).toBeInTheDocument(), { timeout: 2000 });
+         const playerModal = await screen.findByTestId('select-player-modal');
+         fireEvent.click(within(playerModal).getByTestId('player-btn-P1'));
          
-         fireEvent.click(within(screen.getByTestId('select-player-modal')).getByTestId('player-btn-P1'));
-         
-         await waitFor(() => expect(screen.getByTestId('goal-miss-action-btn')).toBeInTheDocument());
-         fireEvent.click(screen.getByTestId('goal-miss-action-btn'));
-         
-         await waitFor(() => expect(screen.getByTestId('shot-type-btn-PENALTY')).toBeInTheDocument());
-         fireEvent.click(screen.getByTestId('shot-type-btn-PENALTY'));
-         
-         await waitFor(() => expect(screen.getByTestId('result-goal-btn')).toBeInTheDocument());
-         fireEvent.click(screen.getByTestId('result-goal-btn'));
+         fireEvent.click(await screen.findByTestId('goal-miss-action-btn'));
+         fireEvent.click(await screen.findByTestId('shot-type-btn-PENALTY'));
+         fireEvent.click(await screen.findByTestId('result-goal-btn'));
          
          await waitFor(() => expect(onUpdateMatch).toHaveBeenCalled());
     });

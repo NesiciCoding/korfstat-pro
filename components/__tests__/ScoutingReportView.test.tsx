@@ -59,67 +59,53 @@ describe('ScoutingReportView', () => {
   });
 
   it('renders loading state initially', async () => {
-    act(() => {
-      render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    });
+    render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
     expect(screen.getByText(/Aggregating historical patterns/i)).toBeInTheDocument();
+    // Wait for loading to finish to avoid act warning
+    await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
   });
 
   it('renders report data after loading', async () => {
-    act(() => {
-      render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    });
+    render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
     
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
     
-    expect(screen.getByText(mockTeamName)).toBeInTheDocument();
-    expect(screen.getByText('Mock AI Analysis Result')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument(); // matches analyzed
-    expect(screen.getByText('45%')).toBeInTheDocument(); // efficiency
+    expect(await screen.findByText(mockTeamName)).toBeInTheDocument();
+    expect(await screen.findByText('Mock AI Analysis Result')).toBeInTheDocument();
+    expect(await screen.findByText('3')).toBeInTheDocument();
+    expect(await screen.findByText('45%')).toBeInTheDocument();
   });
 
   it('calls onBack when back button is clicked', async () => {
-    act(() => {
-      render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    });
+    render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
     
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
     
-    const backBtn = screen.getByTestId('arrow-left').parentElement;
-    act(() => {
-      fireEvent.click(backBtn!);
-    });
+    const backBtn = (await screen.findByTestId('arrow-left')).parentElement;
+    fireEvent.click(backBtn!);
     
     expect(mockOnBack).toHaveBeenCalled();
   });
 
   it('handles copy to clipboard', async () => {
-    act(() => {
-      render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    });
+    render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
     
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
     
-    const copyBtn = screen.getByText(/Copy Text/i);
-    act(() => {
-      fireEvent.click(copyBtn);
-    });
+    const copyBtn = await screen.findByText(/Copy Text/i);
+    fireEvent.click(copyBtn);
     
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Mock AI Analysis Result');
-    expect(screen.getByText(/Copied/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Copied/i)).toBeInTheDocument();
   });
 
   it('triggers PDF generation', async () => {
-    act(() => {
-      render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    });
+    render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
     
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
     
-    const exportBtn = screen.getByText(/Export PDF/i);
-    act(() => {
-      fireEvent.click(exportBtn);
-    });
+    const exportBtn = await screen.findByText(/Export PDF/i);
+    fireEvent.click(exportBtn);
     
     expect(generateScoutingPDF).toHaveBeenCalledWith(mockScoutData, 'Mock AI Analysis Result');
   });
@@ -127,12 +113,10 @@ describe('ScoutingReportView', () => {
   it('handles error in report generation', async () => {
     vi.mocked(generateScoutingReport).mockRejectedValue(new Error('AI Fail'));
     
-    act(() => {
-      render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    });
+    render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
     
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
     
-    expect(screen.getByText(/Failed to generate report/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Failed to generate report/i)).toBeInTheDocument();
   });
 });

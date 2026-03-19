@@ -67,7 +67,10 @@
     "or": "OR",
     "unknown": "Unknown",
     "save": "Save",
-    "remove": "Remove"
+    "remove": "Remove",
+    "logout": "Logout",
+    "syncing": "Syncing...",
+    "cloudActive": "Cloud Active"
   },
   "home": {
     "commandCenter": "Command Center",
@@ -89,7 +92,9 @@
     "addWidget": "Add Widget",
     "quickLink": "Quick Link",
     "selectRoute": "Select Target Route",
-    "widgetGallery": "Widget Gallery"
+    "widgetGallery": "Widget Gallery",
+    "activeDiscovery": "Live Matches on Network / Cloud",
+    "joinSession": "Join Session"
   },
   "views": {
     "director": "Director Dashboard",
@@ -412,5 +417,18 @@
     "helpExample2": "\"Away 12 Miss\"",
     "helpExample3": "\"Home 3 Turnover\"",
     "commandRegistered": "Command Registered!"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email Address",
+    "password": "Password",
+    "createAccount": "Create Account",
+    "verifyEmail": "Verification email sent. Check your inbox.",
+    "guestMode": "Continue in Offline/Guest Mode",
+    "alreadyHaveAccount": "Already have an account? Sign In",
+    "dontHaveAccount": "Don't have an account? Sign Up",
+    "signInToSync": "Sign in to sync your matches",
+    "createClubAccount": "Create your club account"
   }
 }

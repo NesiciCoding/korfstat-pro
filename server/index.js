@@ -6,7 +6,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { saveMatchState, getLatestMatchState, saveMatchTemplate, getAllTemplates, deleteTemplate } from './db.js';
+import { saveMatchState, getMatchState, getLatestMatchState, saveMatchTemplate, getAllTemplates, deleteTemplate } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,8 +99,26 @@ const companionAuth = (req, res, next) => {
  * Companion polls this endpoint to update button labels and LED colours.
  * Returns a flat object with all key match values.
  */
+// --- Active Matches State ---
+const activeMatches = new Map(); // matchId -> MatchState
+
+/**
+ * GET /api/companion/status
+ * Companion polls this endpoint to update button labels and LED colours.
+ * Returns a flat object with all key match values for the LATEST match by default,
+ * or a specific match if matchId is provided in headers.
+ */
 app.get('/api/companion/status', companionAuth, (req, res) => {
-    const s = currentState;
+    const matchId = req.headers['x-match-id'];
+    let s = null;
+    
+    if (matchId && activeMatches.has(matchId)) {
+        s = activeMatches.get(matchId);
+    } else {
+        // Fallback to latest match in memory or DB
+        s = Array.from(activeMatches.values())[0] || getLatestMatchState();
+    }
+
     if (!s) return res.json({ active: false });
 
     // Derive score from events
@@ -141,7 +159,14 @@ app.get('/api/companion/status', companionAuth, (req, res) => {
  * Returns a suggested 15-button layout for Companion auto-config.
  */
 app.get('/api/companion/buttons', companionAuth, (req, res) => {
-    const s = currentState;
+    const matchId = req.headers['x-match-id'];
+    let s = null;
+    if (matchId && activeMatches.has(matchId)) {
+        s = activeMatches.get(matchId);
+    } else {
+        s = Array.from(activeMatches.values())[0] || getLatestMatchState();
+    }
+
     const home = s?.homeTeam?.name ?? 'HOME';
     const away = s?.awayTeam?.name ?? 'AWAY';
     const isRunning = s?.clock?.isRunning ?? false;
@@ -168,53 +193,61 @@ app.get('/api/companion/buttons', companionAuth, (req, res) => {
 // ── Companion Action Endpoints ──────────────────────────────────────────────
 
 app.post('/api/companion/clock/toggle', companionAuth, (req, res) => {
-    io.emit('companion-action', { type: 'CLOCK_TOGGLE' });
+    const matchId = req.headers['x-match-id'];
+    io.to(matchId || 'global').emit('companion-action', { type: 'CLOCK_TOGGLE', matchId });
     res.json({ ok: true, action: 'CLOCK_TOGGLE' });
 });
 
 app.post('/api/companion/clock/reset', companionAuth, (req, res) => {
-    io.emit('companion-action', { type: 'CLOCK_RESET' });
+    const matchId = req.headers['x-match-id'];
+    io.to(matchId || 'global').emit('companion-action', { type: 'CLOCK_RESET', matchId });
     res.json({ ok: true, action: 'CLOCK_RESET' });
 });
 
 app.post('/api/companion/shotclock/reset', companionAuth, (req, res) => {
-    io.emit('companion-action', { type: 'SHOTCLOCK_RESET' });
+    const matchId = req.headers['x-match-id'];
+    io.to(matchId || 'global').emit('companion-action', { type: 'SHOTCLOCK_RESET', matchId });
     res.json({ ok: true, action: 'SHOTCLOCK_RESET' });
 });
 
 app.post('/api/companion/goal/:team', companionAuth, (req, res) => {
-    const team = req.params.team.toUpperCase(); // 'HOME' or 'AWAY'
+    const team = req.params.team.toUpperCase();
+    const matchId = req.headers['x-match-id'];
     if (!['HOME', 'AWAY'].includes(team)) return res.status(400).json({ error: 'Team must be home or away' });
-    io.emit('companion-action', { type: 'GOAL', teamId: team });
+    io.to(matchId || 'global').emit('companion-action', { type: 'GOAL', teamId: team, matchId });
     res.json({ ok: true, action: 'GOAL', teamId: team });
 });
 
 app.post('/api/companion/goal/:team/undo', companionAuth, (req, res) => {
     const team = req.params.team.toUpperCase();
+    const matchId = req.headers['x-match-id'];
     if (!['HOME', 'AWAY'].includes(team)) return res.status(400).json({ error: 'Team must be home or away' });
-    io.emit('companion-action', { type: 'GOAL_UNDO', teamId: team });
+    io.to(matchId || 'global').emit('companion-action', { type: 'GOAL_UNDO', teamId: team, matchId });
     res.json({ ok: true, action: 'GOAL_UNDO', teamId: team });
 });
 
 app.post('/api/companion/foul/:team', companionAuth, (req, res) => {
     const team = req.params.team.toUpperCase();
+    const matchId = req.headers['x-match-id'];
     if (!['HOME', 'AWAY'].includes(team)) return res.status(400).json({ error: 'Team must be home or away' });
-    io.emit('companion-action', { type: 'FOUL', teamId: team });
+    io.to(matchId || 'global').emit('companion-action', { type: 'FOUL', teamId: team, matchId });
     res.json({ ok: true, action: 'FOUL', teamId: team });
 });
 
 app.post('/api/companion/period/next', companionAuth, (req, res) => {
-    io.emit('companion-action', { type: 'PERIOD_NEXT' });
+    const matchId = req.headers['x-match-id'];
+    io.to(matchId || 'global').emit('companion-action', { type: 'PERIOD_NEXT', matchId });
     res.json({ ok: true, action: 'PERIOD_NEXT' });
 });
 
 app.post('/api/companion/graphics/:type', companionAuth, (req, res) => {
     const graphicType = req.params.type;
+    const matchId = req.headers['x-match-id'];
     const VALID_GRAPHICS = ['lineup', 'halftime', 'goal_celebration', 'stats', 'dismiss'];
     if (!VALID_GRAPHICS.includes(graphicType)) {
         return res.status(400).json({ error: `Unknown graphic type. Valid: ${VALID_GRAPHICS.join(', ')}` });
     }
-    io.emit('companion-action', { type: 'SHOW_GRAPHIC', graphic: graphicType });
+    io.to(matchId || 'global').emit('companion-action', { type: 'SHOW_GRAPHIC', graphic: graphicType, matchId });
     res.json({ ok: true, action: 'SHOW_GRAPHIC', graphic: graphicType });
 });
 
@@ -261,7 +294,13 @@ app.get('/api/companion/setup-info', async (req, res) => {
  * Returns a Companion v3 importable JSON with pre-configured buttons.
  */
 app.get('/api/companion/profile.json', companionAuth, (req, res) => {
-    const s = currentState;
+    const matchId = req.headers['x-match-id'];
+    let s = null;
+    if (matchId && activeMatches.has(matchId)) {
+        s = activeMatches.get(matchId);
+    } else {
+        s = Array.from(activeMatches.values())[0] || getLatestMatchState();
+    }
     const home = s?.homeTeam?.name ?? 'HOME';
     const away = s?.awayTeam?.name ?? 'AWAY';
     const baseUrl = `http://127.0.0.1:${PORT}`;
@@ -398,8 +437,10 @@ app.post('/api/companion/push', companionAuth, (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-app.get('/api/match', (req, res) => {
-    res.json(currentState || { message: "No active match" });
+app.get('/api/match/:id', (req, res) => {
+    const match = activeMatches.get(req.params.id) || getMatchState(req.params.id);
+    if (!match) return res.status(404).json({ error: "Match not found" });
+    res.json(match);
 });
 
 // --- Match Templates API ---
@@ -429,10 +470,11 @@ const connectedClients = new Map(); // socketId -> { id, view, ip, userAgent, co
 let currentVotes = {}; // playerId -> count
 let votedIps = new Set(); // Keep it simple: prevent double voting by IP
 
-// Load last known state from DB
-let currentState = getLatestMatchState();
-if (currentState) {
-    console.log(`Loaded existing match state from DB: ${currentState.id}`);
+// Load last known active matches from DB (simplified: load all from last 24h OR latest)
+const latestState = getLatestMatchState();
+if (latestState) {
+    activeMatches.set(latestState.id, latestState);
+    console.log(`Loaded latest match state from DB: ${latestState.id}`);
 } else {
     console.log('No existing match state found. Starting fresh.');
 }
@@ -447,10 +489,12 @@ const throttledSave = (state) => {
 };
 
 // Reset votes on new match or manual reset
-const resetVotes = () => {
+const resetVotes = (matchId) => {
+    // Voting might also need to be match-specific?
+    // For now, keep it global or scope by matchId if possible.
     currentVotes = {};
     votedIps.clear();
-    io.emit('vote-update', currentVotes);
+    io.to(matchId || 'global').emit('vote-update', currentVotes);
 };
 
 io.on('connection', (socket) => {
@@ -472,15 +516,28 @@ io.on('connection', (socket) => {
     // Broadcast list immediately (so they show up as "Unknown" or just connected)
     io.emit('active-sessions', Array.from(connectedClients.values()));
 
-    // Send current state to new client if available
-    if (currentState) {
-        socket.emit('match-update', currentState);
-        const tickerData = getTickerData(currentState);
-        socket.emit('ticker-update', tickerData);
-    }
-    
     // Send current votes
     socket.emit('vote-update', currentVotes);
+
+    socket.on('join-match', (matchId) => {
+        if (!matchId) return;
+        socket.join(matchId);
+        console.log(`[Socket] Client ${socket.id} joined match ${matchId}`);
+        
+        // Send current state for this match
+        const state = activeMatches.get(matchId) || getMatchState(matchId);
+        if (state) {
+            activeMatches.set(matchId, state); // Ensure it's in memory
+            socket.emit('match-update', state);
+            const tickerData = getTickerData(state);
+            socket.emit('ticker-update', tickerData);
+        }
+    });
+
+    socket.on('leave-match', (matchId) => {
+        socket.leave(matchId);
+        console.log(`[Socket] Client ${socket.id} left match ${matchId}`);
+    });
 
     socket.on('register-view', (viewName) => {
         const client = connectedClients.get(socket.id);
@@ -498,14 +555,16 @@ io.on('connection', (socket) => {
 
     // Relay write-mode actions from the watch back to the web app
     socket.on('watch-action', (payload) => {
-        console.log('[Watch] Received watch-action:', payload?.action);
-        // Broadcast to all OTHER clients (web app) as a spotter-action so the
-        // existing action handler in the web app can process it without extra code.
-        socket.broadcast.emit('watch-action', payload);
+        console.log('[Watch] Received watch-action:', payload?.action, 'for match:', payload?.matchId);
+        // Broadcast to specific match room
+        const room = payload?.matchId || 'global';
+        socket.broadcast.to(room).emit('watch-action', payload);
     });
 
     socket.on('match-update', (state) => {
-        currentState = state;
+        if (!state || !state.id) return;
+        const matchId = state.id;
+        activeMatches.set(matchId, state);
 
         // Save to SQLite
         throttledSave(state);
@@ -513,44 +572,43 @@ io.on('connection', (socket) => {
         // Push variables to Companion (debounced, no-op if URL not configured)
         debouncedPushToCompanion(state);
 
-        // Broadcast to all other clients
-        socket.broadcast.emit('match-update', state);
+        // Broadcast to specifically this match room
+        socket.broadcast.to(matchId).emit('match-update', state);
 
-        // Broadcast simplified ticker data to all clients (including external tickers)
+        // Broadcast simplified ticker data to all clients in that match room
         const tickerData = getTickerData(state);
-        io.emit('ticker-update', tickerData);
+        io.to(matchId).emit('ticker-update', tickerData);
 
         // --- Watch Flattening specific mapping ---
-        if (state) {
-            try {
-                let homeScore = 0;
-                let awayScore = 0;
-                if (state.events) {
-                    homeScore = state.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === state.homeTeam.id).length;
-                    awayScore = state.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === state.awayTeam.id).length;
-                }
+        try {
+            let homeScore = 0;
+            let awayScore = 0;
+            if (state.events) {
+                homeScore = state.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === state.homeTeam.id).length;
+                awayScore = state.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === state.awayTeam.id).length;
+            }
 
-                const watchPayload = {
-                    homeScore: homeScore,
-                    awayScore: awayScore,
-                    isGameTimeRunning: state.timer ? state.timer.isRunning : false,
-                    isShotClockRunning: state.shotClock ? state.shotClock.isRunning : false,
-                    gameTime: state.timer ? ((state.halfDurationSeconds - state.timer.elapsedSeconds) * 1000) : 0,
-                    shotClock: state.shotClock ? (state.shotClock.seconds * 1000) : 0,
-                    period: state.currentHalf || 1,
-                    subPending: false,
-                    latestSubId: '',
-                    subOut: '',
-                    subIn: '',
-                    isReadOnly: true,
-                    timeoutTeam: state.timeout && state.timeout.isActive ? "ACTIVE" : "NONE"
-                };
+            const watchPayload = {
+                matchId,
+                homeScore: homeScore,
+                awayScore: awayScore,
+                isGameTimeRunning: state.timer ? state.timer.isRunning : false,
+                isShotClockRunning: state.shotClock ? state.shotClock.isRunning : false,
+                gameTime: state.timer ? ((state.halfDurationSeconds - state.timer.elapsedSeconds) * 1000) : 0,
+                shotClock: state.shotClock ? (state.shotClock.seconds * 1000) : 0,
+                period: state.currentHalf || 1,
+                subPending: false,
+                latestSubId: '',
+                subOut: '',
+                subIn: '',
+                isReadOnly: true,
+                timeoutTeam: state.timeout && state.timeout.isActive ? "ACTIVE" : "NONE"
+            };
 
-                // Broadcast flattened representation explicitly for wear OS clients parsing Maps
-                io.emit('watch-update', watchPayload);
+            // Broadcast flattened representation explicitly for wear OS clients
+            io.to(matchId).emit('watch-update', watchPayload);
 
-            } catch (e) { }
-        }
+        } catch (e) { }
     });
 
     socket.on('request-active-sessions', () => {
@@ -559,9 +617,10 @@ io.on('connection', (socket) => {
 
     // Handle Spotter Actions (Relay to Tracker)
     socket.on('spotter-action', (action) => {
-        console.log('Spotter action received:', action.type);
-        // Broadcast to all clients (Tracker will pick this up)
-        socket.broadcast.emit('spotter-action', action);
+        console.log('Spotter action received:', action.type, 'for match:', action.matchId);
+        // Broadcast to specific match room
+        const room = action.matchId || 'global';
+        socket.broadcast.to(room).emit('spotter-action', action);
     });
 
     socket.on('disconnect', (reason) => {
@@ -591,12 +650,12 @@ io.on('connection', (socket) => {
         io.emit('vote-update', currentVotes);
     });
 
-    socket.on('vote-reset', () => {
+    socket.on('vote-reset', (matchId) => {
         // Simple auth check: only Tracker/Director can reset
         const client = connectedClients.get(socket.id);
         if (client?.view === 'TRACKER' || client?.view === 'DIRECTOR') {
-            console.log('[Vote] Resetting votes');
-            resetVotes();
+            console.log(`[Vote] Resetting votes for match: ${matchId}`);
+            resetVotes(matchId);
         }
     });
 });
@@ -677,13 +736,16 @@ function getEventDescription(event, state) {
 }
 
 // REST API Endpoints
-app.get('/api/match', (req, res) => {
-    res.json(currentState || { message: "No active match" });
+app.get('/api/match/:id', (req, res) => {
+    const match = activeMatches.get(req.params.id) || getMatchState(req.params.id);
+    if (!match) return res.status(404).json({ error: "Match not found" });
+    res.json(match);
 });
 
-app.get('/api/ticker', (req, res) => {
-    if (!currentState) return res.status(404).json({ message: "No active match" });
-    res.json(getTickerData(currentState));
+app.get('/api/ticker/:id', (req, res) => {
+    const match = activeMatches.get(req.params.id) || getMatchState(req.params.id);
+    if (!match) return res.status(404).json({ message: "Match not found" });
+    res.json(getTickerData(match));
 });
 
 app.get('/api/votes', (req, res) => {
@@ -697,7 +759,7 @@ app.get('/health', (req, res) => {
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         connections: connectedClients.size,
-        hasActiveMatch: currentState !== null
+        activeMatches: activeMatches.size
     });
 });
 

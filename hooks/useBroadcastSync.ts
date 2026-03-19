@@ -4,6 +4,7 @@ import { MatchState } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 
 export const useBroadcastSync = (
+    matchId: string | undefined,
     currentState: MatchState,
     onUpdate: (newState: MatchState) => void,
     onSpotterAction?: (action: any) => void,
@@ -43,6 +44,10 @@ export const useBroadcastSync = (
             newSocket.emit('request-active-sessions');
             if (viewNameRef.current) {
                 newSocket.emit('register-view', viewNameRef.current);
+            }
+            if (matchId) {
+                newSocket.emit('join-match', matchId);
+                console.log(`[Sync] Joined match room: ${matchId}`);
             }
         });
 
@@ -100,10 +105,13 @@ export const useBroadcastSync = (
         });
 
         return () => {
+            if (matchId) {
+                newSocket.emit('leave-match', matchId);
+            }
             newSocket.disconnect();
             setSocket(null);
         };
-    }, []);
+    }, [matchId]);
 
     const broadcastUpdate = useCallback((state: MatchState) => {
         if (!socket || !socket.connected) return;
@@ -113,7 +121,7 @@ export const useBroadcastSync = (
         if (stateStr === lastBroadcastStateStr.current) return;
         if (stateStr === lastReceivedStateStr.current) return;
 
-        socket.emit('match-update', state);
+        socket.emit('match-update', { ...state, id: matchId || state.id });
         lastBroadcastStateStr.current = stateStr;
 
         // Sync with local watch sync plugin
@@ -175,6 +183,7 @@ export const useBroadcastSync = (
     const sendHapticSignal = useCallback((signalType: string) => {
         if (socket?.connected) {
              socket.emit('haptic-signal', {
+                 matchId,
                  hapticSignal: signalType,
                  hapticSignalId: crypto.randomUUID()
              });

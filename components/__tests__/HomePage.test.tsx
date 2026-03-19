@@ -37,7 +37,7 @@ describe('HomePage', () => {
         timeout: { isActive: false, startTime: 0, remainingSeconds: 60 }
     });
 
-    it('renders welcome message and title', () => {
+    it('renders welcome message and title', async () => {
         render(
             <HomePage
                 onNavigate={mockNavigate}
@@ -46,12 +46,11 @@ describe('HomePage', () => {
             />
         );
 
-        expect(screen.getByText('KorfStat Pro')).toBeInTheDocument();
-        expect(screen.getByText('KorfStat Pro')).toBeInTheDocument();
+        expect(await screen.findByText('KorfStat Pro')).toBeInTheDocument();
         expect(screen.getByText('home.commandCenter')).toBeInTheDocument();
     });
 
-    it('displays active sessions count', () => {
+    it('displays active sessions count', async () => {
         render(
             <HomePage
                 onNavigate={mockNavigate}
@@ -60,7 +59,7 @@ describe('HomePage', () => {
             />
         );
 
-        expect(screen.getByTestId('active-sessions-count')).toHaveTextContent('3');
+        expect(await screen.findByTestId('active-sessions-count')).toHaveTextContent('3');
         expect(screen.getByText('home.activeSessions')).toBeInTheDocument();
     });
 
@@ -161,7 +160,7 @@ describe('HomePage', () => {
         expect(screen.queryByText('home.resumeTracker')).not.toBeInTheDocument();
     });
 
-    it('shows all navigation cards', () => {
+    it('shows all navigation cards', async () => {
         render(
             <HomePage
                 onNavigate={mockNavigate}
@@ -171,7 +170,7 @@ describe('HomePage', () => {
         );
 
         // Check for main feature cards by translation keys in headings
-        expect(screen.getByText('home.startNewMatch')).toBeInTheDocument();
+        expect(await screen.findByText('home.startNewMatch')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: /views\.match_history/i })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: /views\.overall_stats/i })).toBeInTheDocument();
     });

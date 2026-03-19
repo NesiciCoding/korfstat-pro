@@ -92,6 +92,19 @@ export const saveMatchState = (state) => {
     }
 };
 
+export const getMatchState = (id) => {
+    if (!id) return null;
+    try {
+        const row = db.prepare('SELECT data_json FROM match_states WHERE id = ?').get(id);
+        if (row) {
+            return JSON.parse(row.data_json);
+        }
+    } catch (err) {
+        console.error(`Error loading match state ${id} from DB:`, err);
+    }
+    return null;
+};
+
 export const getLatestMatchState = () => {
     try {
         const row = db.prepare('SELECT data_json FROM match_states ORDER BY updatedAt DESC LIMIT 1').get();

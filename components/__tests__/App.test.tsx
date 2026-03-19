@@ -89,7 +89,10 @@ describe('App Navigation', () => {
 
     it('renders home page by default', async () => {
         render(<App />);
-        expect(await screen.findByText(/KorfStat Pro/i)).toBeInTheDocument();
+        // Wait for loading state to finish and use a custom matcher to find segmented text
+        expect(await screen.findByText((content, element) => {
+            return element?.tagName.toLowerCase() === 'h1' && content.includes('KorfStat') && content.includes('Pro');
+        }, {}, { timeout: 3000 })).toBeInTheDocument();
     });
 
     it('navigates through all major views using global home button', async () => {
