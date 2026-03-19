@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render as rtlRender, screen, fireEvent } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import HomePage from '../HomePage';
 import { MatchState } from '../../types';
 import { SettingsProvider } from '../../contexts/SettingsContext';
@@ -81,7 +81,7 @@ describe('HomePage', () => {
         expect(screen.getByText('home.activeSessions')).toBeInTheDocument();
     });
 
-    it('navigates to Match Setup when "Start New Match" is clicked', () => {
+    it('navigates to Match Setup when "Start New Match" is clicked', async () => {
         render(
             <HomePage
                 onNavigate={mockNavigate}
@@ -90,13 +90,18 @@ describe('HomePage', () => {
             />
         );
 
+        // Wait for mounting effects to settle
+        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+
         const newMatchButton = screen.getByText('home.startNewMatch');
-        fireEvent.click(newMatchButton);
+        await act(async () => {
+            fireEvent.click(newMatchButton);
+        });
 
         expect(mockNavigate).toHaveBeenCalledWith('SETUP');
     });
 
-    it('navigates to Match History when history card is clicked', () => {
+    it('navigates to Match History when history card is clicked', async () => {
         render(
             <HomePage
                 onNavigate={mockNavigate}
@@ -105,14 +110,18 @@ describe('HomePage', () => {
             />
         );
 
+        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+
         // Navigation cards are now widgets with dynamic titles or translation keys
         const historyCard = screen.getByRole('heading', { name: /views\.match_history/i });
-        fireEvent.click(historyCard);
+        await act(async () => {
+            fireEvent.click(historyCard);
+        });
 
         expect(mockNavigate).toHaveBeenCalledWith('MATCH_HISTORY');
     });
 
-    it('shows "Resume Tracker" button when match is in progress', () => {
+    it('shows "Resume Tracker" button when match is in progress', async () => {
         const activeMatch = createMockMatchState(true);
 
         render(
@@ -122,14 +131,13 @@ describe('HomePage', () => {
                 matchState={activeMatch}
             />
         );
+
+        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
         expect(screen.getByText('home.resumeTracker')).toBeInTheDocument();
-        // Team names are not displayed on HomePage, only match status
-        // expect(screen.getByText(/Home Blazers/i)).toBeInTheDocument();
-        // expect(screen.getByText(/Away Stars/i)).toBeInTheDocument();
     });
 
-    it('navigates to tracker when "Resume Tracker" is clicked', () => {
+    it('navigates to tracker when "Resume Tracker" is clicked', async () => {
         const activeMatch = createMockMatchState(true);
 
         render(
@@ -140,13 +148,17 @@ describe('HomePage', () => {
             />
         );
 
+        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+
         const continueButton = screen.getByText(/home\.resumeTracker/);
-        fireEvent.click(continueButton);
+        await act(async () => {
+            fireEvent.click(continueButton);
+        });
 
         expect(mockNavigate).toHaveBeenCalledWith('TRACK');
     });
 
-    it('displays match in progress information', () => {
+    it('displays match in progress information', async () => {
         const activeMatch = createMockMatchState(true);
 
         render(
@@ -157,16 +169,13 @@ describe('HomePage', () => {
             />
         );
 
-        // Check that teams are displayed
-        // Team names are not displayed on HomePage
-        // expect(screen.getByText('Home Blazers')).toBeInTheDocument();
-        // expect(screen.getByText('Away Stars')).toBeInTheDocument();
+        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
         // Check match active indicator
         expect(screen.getByText('home.matchActive')).toBeInTheDocument();
     });
 
-    it('does not show "Resume Tracker" when no active match', () => {
+    it('does not show "Resume Tracker" when no active match', async () => {
         render(
             <HomePage
                 onNavigate={mockNavigate}
@@ -174,6 +183,8 @@ describe('HomePage', () => {
                 matchState={null}
             />
         );
+
+        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
         expect(screen.queryByText('home.resumeTracker')).not.toBeInTheDocument();
     });

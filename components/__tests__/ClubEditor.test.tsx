@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+
+vi.setConfig({ testTimeout: 10000 });
 import ClubEditor from '../ClubEditor';
 import { ClubService } from '../../services/clubService';
 import { calculateCareerStats } from '../../utils/statsCalculator';

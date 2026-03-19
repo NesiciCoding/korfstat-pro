@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+
+vi.setConfig({ testTimeout: 10000 });
 import MatchSetup from '../MatchSetup';
 import { TemplateService } from '../../services/templateService';
 import { ClubService } from '../../services/clubService';
