@@ -34,6 +34,28 @@ vi.mock('../ShortcutsModal', () => ({ default: ({ isOpen, onClose }: any) => isO
 vi.mock('../OverallStats', () => ({ default: () => <div data-testid="overall-stats">Overall Stats</div> }));
 vi.mock('../StrategyPlanner', () => ({ default: () => <div data-testid="strategy-planner">Strategy Planner</div> }));
 
+// Mock supabase
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+      signOut: vi.fn(() => Promise.resolve()),
+    }
+  }
+}));
+
+// Mock fetch
+global.fetch = vi.fn().mockImplementation((url: string) => {
+    if (url.includes('/api/matches/active')) {
+        return Promise.resolve({ json: () => Promise.resolve([]) });
+    }
+    if (url.includes('/api/companion/setup-info')) {
+        return Promise.resolve({ json: () => Promise.resolve({ localIp: 'localhost' }) });
+    }
+    return Promise.resolve({ json: () => Promise.resolve({}) });
+});
+
 // Mock i18next
 vi.mock('i18next', () => {
   const i18n: any = {
@@ -87,16 +109,29 @@ describe('App Navigation', () => {
         localStorage.clear();
     });
 
-    it('renders home page by default', async () => {
+    it('renders landing page by default', async () => {
         render(<App />);
-        // Wait for loading state to finish and use a custom matcher to find segmented text
-        expect(await screen.findByText((content, element) => {
-            return element?.tagName.toLowerCase() === 'h1' && content.includes('KorfStat') && content.includes('Pro');
-        }, {}, { timeout: 3000 })).toBeInTheDocument();
+        // Wait for loading state to finish (the spinner has "KorfStat Pro" text)
+        // Then the landing page should appear
+        expect(await screen.findByText(/The Future of/i)).toBeInTheDocument();
+        expect(screen.getByText(/Korfball Analytics/i)).toBeInTheDocument();
     });
+
+    const navigateToDashboard = async () => {
+        const getStartedBtn = await screen.findByText(/Open App Free|Enter Dashboard/i);
+        fireEvent.click(getStartedBtn);
+        
+        // This takes us to LoginPage because user is null
+        const guestBtn = await screen.findByText(/Continue in Offline\/Guest Mode/i);
+        fireEvent.click(guestBtn);
+
+        // Now we should be on the HOME view (dashboard)
+        await screen.findByText('home.commandCenter');
+    };
 
     it('navigates through all major views using global home button', async () => {
         render(<App />);
+        await navigateToDashboard();
         
         const views = [
             { id: 'nav-club-manager', testId: 'club-manager' },
@@ -124,6 +159,7 @@ describe('App Navigation', () => {
 
     it('successfully starts a match, finishes it, and returns to stats', async () => {
         render(<App />);
+        await navigateToDashboard();
         fireEvent.click(await screen.findByTestId('start-match-btn'));
         fireEvent.click(await screen.findByText('Start'));
         expect(await screen.findByTestId('match-tracker')).toBeInTheDocument();
@@ -136,6 +172,7 @@ describe('App Navigation', () => {
 
     it('toggles shortcuts modal with "?" key', async () => {
         render(<App />);
+        await navigateToDashboard();
         fireEvent.keyDown(window, { key: '?' });
         expect(await screen.findByTestId('shortcuts-modal')).toBeInTheDocument();
     });
@@ -145,6 +182,7 @@ describe('App Navigation', () => {
         localStorage.setItem('korfstat_matches', JSON.stringify([mockMatch]));
         
         render(<App />);
+        await navigateToDashboard();
         fireEvent.click(await screen.findByTestId('nav-match-history'));
         
         const deleteBtn = await screen.findByText('Delete delete-me');
@@ -155,6 +193,16 @@ describe('App Navigation', () => {
 
     it('handles back navigation to tracker', async () => {
         render(<App />);
+        await navigateToDashboard();
+        // Since many views go to tracker when match is configured
+        // First start a match
+        fireEvent.click(screen.getByTestId('start-match-btn'));
+        fireEvent.click(screen.getByText('Start'));
+        
+        // Go back HOME to see the dashboard widgets
+        const homeBtn = await screen.findByTitle(/Go to Home/i);
+        fireEvent.click(homeBtn);
+
         fireEvent.click(await screen.findByTestId('nav-jury'));
         const backBtn = await screen.findByText('Back');
         fireEvent.click(backBtn);
@@ -176,6 +224,7 @@ describe('App Navigation', () => {
         localStorage.setItem('korfstat_matches', JSON.stringify([mockMatch]));
 
         render(<App />);
+        await navigateToDashboard();
         fireEvent.click(await screen.findByTestId('nav-match-history'));
         
         const analyzeBtn = await screen.findByText('Analyze analyze-me');

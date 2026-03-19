@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render as rtlRender, screen, fireEvent } from '@testing-library/react';
 import HomePage from '../HomePage';
 import { MatchState } from '../../types';
@@ -10,6 +10,24 @@ const render = (ui: React.ReactElement, options = {}) =>
 describe('HomePage', () => {
     const mockNavigate = vi.fn();
     const mockActiveSessions: any[] = [{ id: '1', view: 'JURY' }, { id: '2', view: 'STATS' }, { id: '3', view: 'LIVE' }];
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        // Mock fetch for active matches and setup info
+        global.fetch = vi.fn().mockImplementation((url: string) => {
+            if (url.includes('/api/matches/active')) {
+                return Promise.resolve({
+                    json: () => Promise.resolve([])
+                });
+            }
+            if (url.includes('/api/companion/setup-info')) {
+                return Promise.resolve({
+                    json: () => Promise.resolve({ localIp: '192.168.1.10' })
+                });
+            }
+            return Promise.reject(new Error('Unknown fetch URL'));
+        });
+    });
 
     const createMockMatchState = (isConfigured: boolean): MatchState => ({
         id: 'test-match-123',

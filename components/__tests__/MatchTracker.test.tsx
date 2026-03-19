@@ -21,6 +21,16 @@ Object.assign(navigator, {
 window.alert = vi.fn();
 window.open = vi.fn();
 
+// Mock fetch
+global.fetch = vi.fn().mockImplementation((url: string) => {
+    if (url.includes('/api/companion/setup-info')) {
+        return Promise.resolve({
+            json: () => Promise.resolve({ localIp: '192.168.1.10' })
+        });
+    }
+    return Promise.resolve({ json: () => Promise.resolve({}) });
+});
+
 // Mock hooks
 vi.mock('../../contexts/SettingsContext', () => ({
   useSettings: () => ({
