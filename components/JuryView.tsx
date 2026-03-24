@@ -3,6 +3,7 @@ import { MatchState, TeamId, CardType, MatchEvent } from '../types';
 import { Clock, Play, Pause, AlertTriangle, AlertOctagon, Repeat, ArrowLeft, Timer, RotateCcw, Edit, X } from 'lucide-react';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { formatTime } from '../utils/matchUtils';
+import { generateUUID } from '../utils/uuid';
 
 interface JuryViewProps {
     matchState: MatchState;
@@ -73,7 +74,7 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
         if (!disciplinaryFlow.cardType || !disciplinaryFlow.selectedTeam) return;
 
         const event: MatchEvent = {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             timestamp: Math.floor(matchState.timer.elapsedSeconds),
             realTime: Date.now(),
             half: matchState.currentHalf,
@@ -100,7 +101,7 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
                 teamId: matchState.possession || 'HOME'
             },
             events: [...matchState.events, {
-                id: crypto.randomUUID(),
+                id: generateUUID(),
                 timestamp: Math.floor(matchState.timer.elapsedSeconds),
                 realTime: Date.now(),
                 half: matchState.currentHalf,

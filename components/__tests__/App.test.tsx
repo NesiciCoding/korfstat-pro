@@ -107,26 +107,37 @@ describe('App Navigation', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         localStorage.clear();
+        localStorage.clear();
+        // Provide a configured match to allow dashboard access
+        const mockMatch = {
+            id: 'm1',
+            isConfigured: true,
+            homeTeam: { id: 'H', name: 'Home', players: [], color: '#f00' },
+            awayTeam: { id: 'A', name: 'Away', players: [], color: '#00f' },
+            events: [],
+            currentHalf: 1,
+            timer: { elapsedSeconds: 0, isRunning: false },
+            shotClock: { seconds: 25, isRunning: false },
+            timeout: { isActive: false, startTime: 0, remainingSeconds: 60 }
+        };
+        localStorage.setItem('korfstat_current_match', JSON.stringify(mockMatch));
     });
 
     it('renders landing page by default', async () => {
         render(<App />);
-        // Wait for loading state to finish (the spinner has "KorfStat Pro" text)
-        // Then the landing page should appear
+        // LandingGateway uses hardcoded text (no i18n)
         expect(await screen.findByText(/The Future of/i)).toBeInTheDocument();
         expect(screen.getByText(/Korfball Analytics/i)).toBeInTheDocument();
     });
 
     const navigateToDashboard = async () => {
+        // LandingGateway hero CTA uses hardcoded text (no i18n)
         const getStartedBtn = await screen.findByText(/Open App Free|Enter Dashboard/i);
         fireEvent.click(getStartedBtn);
         
-        // This takes us to LoginPage because user is null
+        // Clicking 'HOME' goes to LoginPage because user is null after auth loading
         const guestBtn = await screen.findByText(/Continue in Offline\/Guest Mode/i);
         fireEvent.click(guestBtn);
-
-        // Now we should be on the HOME view (dashboard)
-        await screen.findByText('home.commandCenter');
     };
 
     it('navigates through all major views using global home button', async () => {
@@ -158,9 +169,14 @@ describe('App Navigation', () => {
     });
 
     it('successfully starts a match, finishes it, and returns to stats', async () => {
+        localStorage.removeItem('korfstat_current_match');
         render(<App />);
         await navigateToDashboard();
-        fireEvent.click(await screen.findByTestId('start-match-btn'));
+        
+        // On discovery screen, click start match
+        fireEvent.click(await screen.findByText('home.startNewMatch'));
+        
+        // Now in setup
         fireEvent.click(await screen.findByText('Start'));
         expect(await screen.findByTestId('match-tracker')).toBeInTheDocument();
 
@@ -178,7 +194,17 @@ describe('App Navigation', () => {
     });
 
     it('handles match deletion from history', async () => {
-        const mockMatch = { id: 'delete-me', isConfigured: true, homeTeam: { name: 'H', players: [], color: '', id: 'H', substitutionCount: 0 }, awayTeam: { name: 'A', players: [], color: '', id: 'A', substitutionCount: 0 }, events: [] };
+        const mockMatch = { 
+            id: 'delete-me', 
+            isConfigured: true, 
+            homeTeam: { name: 'H', players: [], color: '', id: 'H', substitutionCount: 0 }, 
+            awayTeam: { name: 'A', players: [], color: '', id: 'A', substitutionCount: 0 }, 
+            events: [],
+            currentHalf: 1,
+            timer: { elapsedSeconds: 0, isRunning: false },
+            shotClock: { seconds: 25, isRunning: false },
+            timeout: { isActive: false, startTime: 0, remainingSeconds: 60 }
+        };
         localStorage.setItem('korfstat_matches', JSON.stringify([mockMatch]));
         
         render(<App />);
@@ -195,9 +221,9 @@ describe('App Navigation', () => {
         render(<App />);
         await navigateToDashboard();
         // Since many views go to tracker when match is configured
-        // First start a match
-        fireEvent.click(screen.getByTestId('start-match-btn'));
-        fireEvent.click(screen.getByText('Start'));
+        // First navigate to tracker
+        const resumeBtn = await screen.findByText('home.resumeTracker');
+        fireEvent.click(resumeBtn);
         
         // Go back HOME to see the dashboard widgets
         const homeBtn = await screen.findByTitle(/Go to Home/i);

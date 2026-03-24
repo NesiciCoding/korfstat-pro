@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import i18n from '../i18n';
+import { useDialog } from '../hooks/useDialog';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -40,7 +41,9 @@ export interface Settings {
 
 interface SettingsContextType {
     settings: Settings;
+    lastSaved: number | null;
     updateSettings: (newSettings: Partial<Settings>) => void;
+    notifyAutoSave: () => void;
     resetSettings: () => void;
     clearAllData: () => void;
 }
@@ -70,6 +73,8 @@ const defaultSettings: Settings = {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { confirm } = useDialog();
+    const [lastSaved, setLastSaved] = useState<number | null>(null);
     const [settings, setSettings] = useState<Settings>(() => {
         try {
             const saved = localStorage.getItem('korfstat_settings');
@@ -82,6 +87,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     useEffect(() => {
         localStorage.setItem('korfstat_settings', JSON.stringify(settings));
+        setLastSaved(Date.now());
         applyTheme(settings.theme);
         if (i18n.language !== settings.language) {
             i18n.changeLanguage(settings.language);
@@ -121,15 +127,19 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSettings(defaultSettings);
     };
 
-    const clearAllData = () => {
-        if (window.confirm(i18n.t('common.confirmClearAll'))) {
+    const clearAllData = async () => {
+        if (await confirm(i18n.t('common.confirmClearAll'))) {
             localStorage.clear();
             window.location.reload();
         }
     }
 
+    const notifyAutoSave = () => {
+        setLastSaved(Date.now());
+    };
+
     return (
-        <SettingsContext.Provider value={{ settings, updateSettings, resetSettings, clearAllData }}>
+        <SettingsContext.Provider value={{ settings, lastSaved, updateSettings, resetSettings, clearAllData, notifyAutoSave }}>
             {children}
         </SettingsContext.Provider>
     );

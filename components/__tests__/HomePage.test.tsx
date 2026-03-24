@@ -1,11 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render as rtlRender, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { screen, fireEvent, waitFor, act, renderWithProviders } from '../../test/test-utils';
 import HomePage from '../HomePage';
 import { MatchState } from '../../types';
-import { SettingsProvider } from '../../contexts/SettingsContext';
-
-const render = (ui: React.ReactElement, options = {}) =>
-    rtlRender(ui, { wrapper: SettingsProvider, ...options });
 
 describe('HomePage', () => {
     const mockNavigate = vi.fn();
@@ -56,7 +52,7 @@ describe('HomePage', () => {
     });
 
     it('renders welcome message and title', async () => {
-        render(
+        renderWithProviders(
             <HomePage
                 onNavigate={mockNavigate}
                 activeSessions={mockActiveSessions}
@@ -64,16 +60,16 @@ describe('HomePage', () => {
             />
         );
 
-        expect(await screen.findByText('KorfStat Pro')).toBeInTheDocument();
-        expect(screen.getByText('home.commandCenter')).toBeInTheDocument();
+        expect(await screen.findByText('home.activeDiscovery')).toBeInTheDocument();
+        expect(screen.getByText('home.startNewMatch')).toBeInTheDocument();
     });
 
     it('displays active sessions count', async () => {
-        render(
+        renderWithProviders(
             <HomePage
                 onNavigate={mockNavigate}
                 activeSessions={mockActiveSessions}
-                matchState={null}
+                matchState={createMockMatchState(true)}
             />
         );
 
@@ -82,7 +78,7 @@ describe('HomePage', () => {
     });
 
     it('navigates to Match Setup when "Start New Match" is clicked', async () => {
-        render(
+        renderWithProviders(
             <HomePage
                 onNavigate={mockNavigate}
                 activeSessions={mockActiveSessions}
@@ -102,11 +98,11 @@ describe('HomePage', () => {
     });
 
     it('navigates to Match History when history card is clicked', async () => {
-        render(
+        renderWithProviders(
             <HomePage
                 onNavigate={mockNavigate}
                 activeSessions={mockActiveSessions}
-                matchState={null}
+                matchState={createMockMatchState(true)}
             />
         );
 
@@ -124,7 +120,7 @@ describe('HomePage', () => {
     it('shows "Resume Tracker" button when match is in progress', async () => {
         const activeMatch = createMockMatchState(true);
 
-        render(
+        renderWithProviders(
             <HomePage
                 onNavigate={mockNavigate}
                 activeSessions={mockActiveSessions}
@@ -140,7 +136,7 @@ describe('HomePage', () => {
     it('navigates to tracker when "Resume Tracker" is clicked', async () => {
         const activeMatch = createMockMatchState(true);
 
-        render(
+        renderWithProviders(
             <HomePage
                 onNavigate={mockNavigate}
                 activeSessions={mockActiveSessions}
@@ -161,7 +157,7 @@ describe('HomePage', () => {
     it('displays match in progress information', async () => {
         const activeMatch = createMockMatchState(true);
 
-        render(
+        renderWithProviders(
             <HomePage
                 onNavigate={mockNavigate}
                 activeSessions={mockActiveSessions}
@@ -176,7 +172,7 @@ describe('HomePage', () => {
     });
 
     it('does not show "Resume Tracker" when no active match', async () => {
-        render(
+        renderWithProviders(
             <HomePage
                 onNavigate={mockNavigate}
                 activeSessions={mockActiveSessions}
@@ -190,11 +186,11 @@ describe('HomePage', () => {
     });
 
     it('shows all navigation cards', async () => {
-        render(
+        renderWithProviders(
             <HomePage
                 onNavigate={mockNavigate}
                 activeSessions={mockActiveSessions}
-                matchState={null}
+                matchState={createMockMatchState(true)}
             />
         );
 

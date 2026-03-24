@@ -1,15 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor, act, renderWithProviders } from '../../test/test-utils';
 import userEvent from '@testing-library/user-event';
 import MatchTracker from '../MatchTracker';
 import { MatchState } from '../../types';
 
-// Mock i18next
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
+// i18next mock is handled globally in test/setup.ts
 
 // Mock clipboard
 Object.assign(navigator, {
@@ -35,8 +30,10 @@ global.fetch = vi.fn().mockImplementation((url: string) => {
 vi.mock('../../contexts/SettingsContext', () => ({
   useSettings: () => ({
     settings: { soundEnabled: true, vibration: true, soundEffects: true, autoShotClock: true },
-    updateSettings: vi.fn()
-  })
+    updateSettings: vi.fn(),
+    saveSettings: vi.fn().mockResolvedValue(true)
+  }),
+  SettingsProvider: ({ children }: { children: React.ReactNode }) => children
 }));
 
 vi.mock('../../hooks/useGameAudio', () => ({
@@ -118,7 +115,7 @@ describe('MatchTracker High Intensity Coverage', () => {
     });
 
     it('covers basic action and results', async () => {
-        render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+        renderWithProviders(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
         
         fireEvent.click(screen.getByTestId('mock-field'));
         
@@ -138,7 +135,7 @@ describe('MatchTracker High Intensity Coverage', () => {
     });
 
     it('covers Card and Substitution Exception flows', async () => {
-        render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+        renderWithProviders(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
         
         // Card flow via UI
         fireEvent.click(await screen.findByTestId('mock-field'));
@@ -169,7 +166,7 @@ describe('MatchTracker High Intensity Coverage', () => {
     });
 
     it('covers Toolbar and General Interactions', async () => {
-        render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+        renderWithProviders(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
         
         fireEvent.click(await screen.findByTestId('mute-btn'));
         fireEvent.click(await screen.findByTestId('undo-btn'));
@@ -183,7 +180,7 @@ describe('MatchTracker High Intensity Coverage', () => {
 
     it('covers Phase Transitions and Overtime', async () => {
         const state = { ...mockMatchState, timer: { ...mockMatchState.timer, elapsedSeconds: 1501 } };
-        render(<MatchTracker matchState={state as any} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+        renderWithProviders(<MatchTracker matchState={state as any} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
         
         const endBtns = await screen.findAllByTestId('end-period-btn');
         fireEvent.click(endBtns[0]);
@@ -191,7 +188,7 @@ describe('MatchTracker High Intensity Coverage', () => {
         fireEvent.click(await screen.findByTestId('start-break-btn-main'));
 
         const endState = { ...mockMatchState, currentHalf: 2, timer: { ...mockMatchState.timer, elapsedSeconds: 1501 } };
-        render(<MatchTracker matchState={endState as any} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+        renderWithProviders(<MatchTracker matchState={endState as any} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
         
         const endBtns2 = await screen.findAllByTestId('end-period-btn');
         fireEvent.click(endBtns2[0]);
@@ -206,7 +203,7 @@ describe('MatchTracker High Intensity Coverage', () => {
     });
 
     it('covers Penalty and Free Throw UI sequences', async () => {
-        render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+        renderWithProviders(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
         
         // Penalty Flow 
         fireEvent.click(await screen.findByTestId('mock-field'), { clientX: 90, clientY: 50 });
@@ -228,7 +225,7 @@ describe('MatchTracker High Intensity Coverage', () => {
     });
 
     it('covers more advanced interactions', async () => {
-         render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+         renderWithProviders(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
          // Turnover
          fireEvent.click(await screen.findByTestId('mock-field'));
@@ -252,7 +249,7 @@ describe('MatchTracker High Intensity Coverage', () => {
     });
 
     it('covers Goal via UI flow', async () => {
-         render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+         renderWithProviders(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
          fireEvent.click(await screen.findByTestId('mock-field'), { clientX: 10, clientY: 50 });
          fireEvent.click(await screen.findByTestId('select-home-team-btn'));
@@ -264,7 +261,7 @@ describe('MatchTracker High Intensity Coverage', () => {
     });
 
     it('covers Card via Shortcut sequence: C -> 1 -> Yellow', async () => {
-         render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+         renderWithProviders(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
          fireEvent.keyDown(window, { key: 'c', bubbles: true });
          await screen.findByTestId('select-player-modal');
@@ -280,7 +277,7 @@ describe('MatchTracker High Intensity Coverage', () => {
            ...mockMatchState,
            homeTeam: { ...mockMatchState.homeTeam, substitutionCount: 0 }
          };
-         render(<MatchTracker matchState={matchStateWithNoSubs} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+         renderWithProviders(<MatchTracker matchState={matchStateWithNoSubs} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
          fireEvent.keyDown(window, { key: 's', bubbles: true });
          await screen.findByTestId('select-team-for-sub-modal');
@@ -296,7 +293,7 @@ describe('MatchTracker High Intensity Coverage', () => {
     });
 
     it('covers Undo and Timeout interactions', async () => {
-         const { rerender } = render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+         const { rerender } = renderWithProviders(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
          fireEvent.click(await screen.findByTestId('timeout-btn'));
          expect(onUpdateMatch).toHaveBeenCalledWith(expect.objectContaining({
@@ -314,7 +311,7 @@ describe('MatchTracker High Intensity Coverage', () => {
     });
 
     it('covers Penalty sequence via UI', async () => {
-         render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+         renderWithProviders(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
          
          fireEvent.click(await screen.findByTestId('mock-field'), { clientX: 90, clientY: 50 });
          fireEvent.click(await screen.findByTestId('select-home-team-btn'));
@@ -338,7 +335,7 @@ describe('MatchTracker High Intensity Coverage', () => {
                     { id: 'e2', teamId: 'HOME', type: 'SHOT', result: 'MISS', timestamp: 20, realTime: Date.now(), half: 1 }
                 ]
             };
-            render(<MatchTracker matchState={stateWithEvents as any} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+            renderWithProviders(<MatchTracker matchState={stateWithEvents as any} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
             
             // Undo once
             fireEvent.click(screen.getByTestId('undo-btn'));
@@ -355,7 +352,7 @@ describe('MatchTracker High Intensity Coverage', () => {
 
     describe('Penalty and Free Throw Success/Fail', () => {
         it('tracks penalty success vs failure correctly', async () => {
-            render(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
+            renderWithProviders(<MatchTracker matchState={mockMatchState} onUpdateMatch={onUpdateMatch} onFinishMatch={onFinishMatch} onViewChange={onViewChange} socket={null} onSpotterAction={() => {}} />);
             
             // Click field for Penalty
             fireEvent.click(screen.getByTestId('mock-field'));

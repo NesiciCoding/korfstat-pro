@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDialog } from '../hooks/useDialog';
 import { MatchState, MatchEvent } from '../types';
 import VideoPlayer, { VideoPlayerRef } from './VideoPlayer';
 import VideoSyncControls from './VideoSyncControls';
@@ -12,6 +13,7 @@ interface MatchAnalysisProps {
 
 const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
     const { t } = useTranslation();
+    const { alert } = useDialog();
     const videoRef = useRef<VideoPlayerRef>(null);
     const [videoUrl, setVideoUrl] = useState<string | undefined>(match.videoUrl);
     const [videoOffset, setVideoOffset] = useState<number | undefined>(match.videoOffset);
@@ -28,7 +30,7 @@ const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
         // saveMatch(match);
     };
 
-    const jumpToEvent = (event: MatchEvent) => {
+    const jumpToEvent = async (event: MatchEvent) => {
         if (videoRef.current && videoOffset !== undefined) {
             // Calculate exact time in video
             // Event timestamp is relative to match start (00:00)
@@ -38,7 +40,7 @@ const MatchAnalysis: React.FC<MatchAnalysisProps> = ({ match, onBack }) => {
             const targetTime = Math.max(0, videoOffset + event.timestamp - 10);
             videoRef.current.seekTo(targetTime);
         } else {
-            alert(t('stats.syncVideoAlert'));
+            await alert(t('stats.syncVideoAlert'));
         }
     };
 

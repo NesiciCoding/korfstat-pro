@@ -1,5 +1,6 @@
 import { Club, ClubPlayer } from '../types/club';
 import { SavedTeam } from '../types';
+import { generateUUID } from '../utils/uuid';
 
 const STORAGE_KEY = 'korfstat_clubs';
 
@@ -51,7 +52,7 @@ export const ClubService = {
 
         const newPlayer: ClubPlayer = {
             ...player,
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             active: true
         };
 
@@ -101,12 +102,12 @@ export const ClubService = {
                 if (clubs.some(c => c.name === team.name)) return;
 
                 const newClub: Club = {
-                    id: crypto.randomUUID(),
+                    id: generateUUID(),
                     name: team.name,
                     shortName: team.name.substring(0, 3).toUpperCase(),
                     primaryColor: team.color,
                     players: team.players.map(p => ({
-                        id: crypto.randomUUID(), // Generate persistent ID
+                        id: generateUUID(), // Generate persistent ID
                         firstName: p.name.split(' ')[0] || 'Unknown',
                         lastName: p.name.split(' ').slice(1).join(' ') || '',
                         gender: p.gender,

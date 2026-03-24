@@ -13,6 +13,16 @@ global.fetch = vi.fn().mockImplementation(() => Promise.resolve({
     json: () => Promise.resolve({ success: true })
 }));
 
+// Mock BroadcastChannel for jsdom
+class MockBroadcastChannel {
+    name: string;
+    onmessage: ((ev: MessageEvent) => any) | null = null;
+    constructor(name: string) { this.name = name; }
+    postMessage(message: any) { }
+    close() { }
+}
+global.BroadcastChannel = MockBroadcastChannel as any;
+
 // Mock Settings Context
 vi.mock('../../contexts/SettingsContext', () => ({
     useSettings: () => ({
@@ -47,6 +57,7 @@ describe('useBroadcastSync', () => {
     });
 
     const createMockMatchState = (): MatchState => ({
+        id: 'test-match',
         isConfigured: true,
         halfDurationSeconds: 1500,
         homeTeam: { id: 'HOME', name: 'Home', players: [], color: '', substitutionCount: 0 },
@@ -59,11 +70,20 @@ describe('useBroadcastSync', () => {
         timeout: { isActive: false, startTime: 0, remainingSeconds: 60 },
     });
 
-    it('should connect to websocket server on mount', () => {
+    const renderAndWaitForSocket = async (matchId: string, state: MatchState, onUpdate: any, onSpotter?: any) => {
+        const result = renderHook(() => useBroadcastSync(matchId, state, onUpdate, onSpotter));
+        await waitFor(() => {
+            expect(io).toHaveBeenCalled();
+            expect(eventHandlers['connect']).toBeDefined();
+        });
+        return result;
+    };
+
+    it('should connect to websocket server on mount', async () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
+        await renderAndWaitForSocket('test-match', matchState, onUpdate);
 
         expect(io).toHaveBeenCalledWith(expect.stringContaining(':3002'));
         expect(mockSocket.on).toHaveBeenCalledWith('connect', expect.any(Function));
@@ -73,15 +93,17 @@ describe('useBroadcastSync', () => {
         expect(mockSocket.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
     });
 
-    it('should disconnect on unmount', () => {
+    it('should disconnect on unmount', async () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { unmount } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
+        const { unmount } = await renderAndWaitForSocket('test-match', matchState, onUpdate);
 
         unmount();
 
-        expect(mockSocket.disconnect).toHaveBeenCalled();
+        await waitFor(() => {
+            expect(mockSocket.disconnect).toHaveBeenCalled();
+        });
     });
 
     it('should call onUpdate when receiving match-update event', async () => {
@@ -89,9 +111,8 @@ describe('useBroadcastSync', () => {
         const onUpdate = vi.fn();
         const newMatchState = { ...matchState, currentHalf: 2 };
 
-        renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
+        await renderAndWaitForSocket('test-match', matchState, onUpdate);
 
-        // Simulate receiving match update
         act(() => {
             eventHandlers['match-update'](newMatchState);
         });
@@ -101,11 +122,11 @@ describe('useBroadcastSync', () => {
         });
     });
 
-    it('should broadcast updates via socket', () => {
+    it('should broadcast updates via socket', async () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
+        const { result } = await renderAndWaitForSocket('test-match', matchState, onUpdate);
 
         const updatedState = { ...matchState, currentHalf: 2 };
 
@@ -116,36 +137,39 @@ describe('useBroadcastSync', () => {
         expect(mockSocket.emit).toHaveBeenCalledWith('match-update', { ...updatedState, id: 'test-match' });
     });
 
-    it('should not broadcast identical states', () => {
+    it('should not broadcast identical states', async () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
+        const { result } = await renderAndWaitForSocket('test-match', matchState, onUpdate);
+
+        await waitFor(() => {
+            expect(result.current.socket).not.toBeNull();
+        }, { timeout: 2000 });
 
         act(() => {
             result.current.broadcastUpdate(matchState);
-            result.current.broadcastUpdate(matchState); // Same state again
+            result.current.broadcastUpdate(matchState); 
         });
 
-        // Should only emit once (first call)
         expect(mockSocket.emit).toHaveBeenCalledTimes(1);
     });
 
-    it('should provide debounced broadcast function', () => {
+    it('should provide debounced broadcast function', async () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
+        const { result } = await renderAndWaitForSocket('test-match', matchState, onUpdate);
 
         expect(result.current.broadcastUpdateDebounced).toBeDefined();
         expect(typeof result.current.broadcastUpdateDebounced).toBe('function');
     });
 
-    it('should register view with socket', () => {
+    it('should register view with socket', async () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
+        const { result } = await renderAndWaitForSocket('test-match', matchState, onUpdate);
 
         act(() => {
             result.current.registerView('TRACK');
@@ -154,11 +178,11 @@ describe('useBroadcastSync', () => {
         expect(mockSocket.emit).toHaveBeenCalledWith('register-view', 'TRACK');
     });
 
-    it('should update active sessions when receiving active-sessions event', () => {
+    it('should update active sessions when receiving active-sessions event', async () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
+        const { result } = await renderAndWaitForSocket('test-match', matchState, onUpdate);
 
         const sessions = [{ id: '1', view: 'TRACK' }, { id: '2', view: 'STATS' }];
 
@@ -177,12 +201,12 @@ describe('useBroadcastSync', () => {
         ]);
     });
 
-    it('should call onSpotterAction when receiving spotter-action event', () => {
+    it('should call onSpotterAction when receiving spotter-action event', async () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
         const onSpotterAction = vi.fn();
 
-        renderHook(() => useBroadcastSync('test-match', matchState, onUpdate, onSpotterAction));
+        await renderAndWaitForSocket('test-match', matchState, onUpdate, onSpotterAction);
 
         const spotterAction = { type: 'GOAL', teamId: 'HOME' };
 
@@ -197,21 +221,18 @@ describe('useBroadcastSync', () => {
         const matchState = createMockMatchState();
         const onUpdate = vi.fn();
 
-        const { result } = renderHook(() => useBroadcastSync('test-match', matchState, onUpdate));
+        const { result } = await renderAndWaitForSocket('test-match', matchState, onUpdate);
 
         const updatedState = { ...matchState, currentHalf: 2 };
 
-        // Broadcast an update
         act(() => {
             result.current.broadcastUpdate(updatedState);
         });
 
-        // Simulate receiving the same update back
         act(() => {
             eventHandlers['match-update'](updatedState);
         });
 
-        // onUpdate should not be called for echoed broadcasts
         await waitFor(() => {
             expect(onUpdate).toHaveBeenCalledTimes(0);
         });

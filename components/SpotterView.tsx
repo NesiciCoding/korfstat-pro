@@ -10,8 +10,18 @@ interface SpotterViewProps {
     onBack: () => void;
 }
 
-// Ensure socket connection
-const socket: Socket = io(window.location.hostname === 'localhost' ? 'http://localhost:3002' : `http://${window.location.hostname}:3002`);
+// Ensure socket connection logic matches App.tsx networking
+const getSocketUrl = () => {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    if (protocol === 'tauri:' || hostname === 'tauri.localhost' || hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:3002';
+    }
+    // For companion devices, connect to the IP in the URL
+    return `${window.location.origin.replace(':5173', ':3002').replace(':3000', ':3002')}`;
+};
+
+const socket: Socket = io(getSocketUrl());
 
 const SpotterView: React.FC<SpotterViewProps> = ({ matchState, onBack }) => {
     const { t } = useTranslation();
@@ -19,19 +29,23 @@ const SpotterView: React.FC<SpotterViewProps> = ({ matchState, onBack }) => {
     const [showVoiceHelp, setShowVoiceHelp] = useState(false);
 
     useEffect(() => {
-        // Notify server we are a spotter
-        socket.emit('register-view', 'SPOTTER');
+        // Notify server we are a spotter for THIS specific match
+        if (matchState.id) {
+            socket.emit('register-view', 'SPOTTER');
+            socket.emit('join-match', matchState.id);
+        }
 
         return () => {
             socket.off('spotter-action');
         };
-    }, []);
+    }, [matchState.id]);
 
     const sendAction = useCallback((type: 'GOAL' | 'MISS' | 'TURNOVER' | 'FOUL' | 'PENALTY' | 'FREE_THROW' | 'TIMEOUT' | 'UNDO', teamId?: TeamId, playerId?: string) => {
         const action = {
             type,
             teamId,
             playerId,
+            matchId: matchState.id,
             timestamp: Date.now()
         };
 
@@ -88,7 +102,7 @@ const SpotterView: React.FC<SpotterViewProps> = ({ matchState, onBack }) => {
             <div className="grid grid-cols-2 gap-4 flex-1">
                 <button
                     onClick={() => sendAction('GOAL', teamId)}
-                    className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 rounded-xl flex flex-col items-center justify-center p-4 transition-all active:scale-95"
+                    className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 rounded-xl flex flex-col items-center justify-center p-4 transition-all active:scale-95 touch-manipulation"
                 >
                     <Target size={32} className="mb-2" />
                     <span className="font-bold text-lg">{t('matchTracker.goal')}</span>
@@ -96,7 +110,7 @@ const SpotterView: React.FC<SpotterViewProps> = ({ matchState, onBack }) => {
 
                 <button
                     onClick={() => sendAction('MISS', teamId)}
-                    className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl flex flex-col items-center justify-center p-4 transition-all active:scale-95"
+                    className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl flex flex-col items-center justify-center p-4 transition-all active:scale-95 touch-manipulation"
                 >
                     <BadgeX size={32} className="mb-2" />
                     <span className="font-bold text-lg">{t('matchTracker.miss')}</span>
@@ -104,7 +118,7 @@ const SpotterView: React.FC<SpotterViewProps> = ({ matchState, onBack }) => {
 
                 <button
                     onClick={() => sendAction('TURNOVER', teamId)}
-                    className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50 rounded-xl flex flex-col items-center justify-center p-4 transition-all active:scale-95"
+                    className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50 rounded-xl flex flex-col items-center justify-center p-4 transition-all active:scale-95 touch-manipulation"
                 >
                     <Activity size={32} className="mb-2" />
                     <span className="font-bold text-lg">{t('matchTracker.turnover')}</span>
@@ -112,7 +126,7 @@ const SpotterView: React.FC<SpotterViewProps> = ({ matchState, onBack }) => {
 
                 <button
                     onClick={() => sendAction('FOUL', teamId)}
-                    className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-xl flex flex-col items-center justify-center p-4 transition-all active:scale-95"
+                    className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-xl flex flex-col items-center justify-center p-4 transition-all active:scale-95 touch-manipulation"
                 >
                     <ShieldAlert size={32} className="mb-2" />
                     <span className="font-bold text-lg">{t('matchTracker.foul')}</span>
@@ -122,7 +136,7 @@ const SpotterView: React.FC<SpotterViewProps> = ({ matchState, onBack }) => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 flex flex-col">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 flex flex-col touch-manipulation">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <button onClick={onBack} data-testid="back-button" className="p-2 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300">

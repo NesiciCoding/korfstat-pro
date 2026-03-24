@@ -1,17 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, renderWithProviders } from '../../test/test-utils';
 import SeasonManager from '../SeasonManager';
 
-// Mock translation
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, options?: any) => {
-            if (options?.count !== undefined) return `${key}_${options.count}`;
-            if (options?.id !== undefined) return `${key}_${options.id}`;
-            return key;
-        }
-    })
-}));
+// i18next mock is handled globally in test/setup.ts
 
 // Mock subcomponents
 vi.mock('../TournamentBracket', () => ({
@@ -84,21 +75,21 @@ describe('SeasonManager', () => {
     });
 
     it('renders season list', () => {
-        render(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
+        renderWithProviders(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
         expect(screen.getByText('season.title')).toBeTruthy();
         expect(screen.getByText('Season 2024')).toBeTruthy();
         expect(screen.getByText('season.createSeason')).toBeTruthy();
     });
 
     it('toggles creation form', () => {
-        render(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
+        renderWithProviders(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
         fireEvent.click(screen.getByText('season.createSeason'));
         expect(screen.getByPlaceholderText('season.seasonPlaceholder')).toBeTruthy();
         expect(screen.getByRole('button', { name: /season.create/i })).toBeTruthy();
     });
 
     it('creates a new season', () => {
-        render(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
+        renderWithProviders(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
         fireEvent.click(screen.getByText('season.createSeason'));
         
         const input = screen.getByPlaceholderText('season.seasonPlaceholder');
@@ -111,7 +102,7 @@ describe('SeasonManager', () => {
     });
 
     it('opens active season view', () => {
-        render(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
+        renderWithProviders(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
         fireEvent.click(screen.getByText('Season 2024'));
         
         expect(screen.getByText('season.breadcrumb')).toBeTruthy();
@@ -133,7 +124,7 @@ describe('SeasonManager', () => {
         ];
         localStorageMock.getItem.mockReturnValue(JSON.stringify(knockoutSeason));
         
-        render(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
+        renderWithProviders(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
         fireEvent.click(screen.getByText('Cup 2024'));
         
         expect(screen.getByTestId('tournament-bracket')).toBeTruthy();
@@ -151,7 +142,7 @@ describe('SeasonManager', () => {
         ];
         localStorageMock.getItem.mockReturnValue(JSON.stringify(groupSeason));
         
-        render(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
+        renderWithProviders(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
         fireEvent.click(screen.getByText('Group Cup'));
         
         expect(screen.getByTestId('group-stage')).toBeTruthy();
@@ -159,7 +150,7 @@ describe('SeasonManager', () => {
     });
     
     it('back from active season to list', () => {
-        render(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
+        renderWithProviders(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
         fireEvent.click(screen.getByText('Season 2024'));
         
         fireEvent.click(screen.getByText('season.breadcrumb'));
@@ -168,7 +159,7 @@ describe('SeasonManager', () => {
     });
 
     it('calls onBack prop when main back button is clicked', () => {
-        render(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
+        renderWithProviders(<SeasonManager onBack={mockOnBack} matches={mockMatches} />);
         const buttons = screen.getAllByRole('button');
         fireEvent.click(buttons[0]); // first button is back arrow
         expect(mockOnBack).toHaveBeenCalled();

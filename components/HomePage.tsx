@@ -9,11 +9,13 @@ import { useTranslation } from 'react-i18next';
 import { MatchState } from '../types';
 import DashboardWidget, { WidgetConfig } from './DashboardWidget';
 import { useSettings } from '../contexts/SettingsContext';
+import { generateUUID } from '../utils/uuid';
 
 interface HomePageProps {
   onNavigate: (view: any) => void;
   activeSessions?: any[];
   matchState?: MatchState;
+  onJoinMatch?: (match: MatchState) => void;
 }
 
 const DEFAULT_WIDGETS: WidgetConfig[] = [
@@ -29,9 +31,10 @@ const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: 'seasons', type: 'QUICK_LINK', targetView: 'SEASON_MANAGER', w: 1, h: 1 },
   { id: 'spotter', type: 'QUICK_LINK', targetView: 'SPOTTER', w: 1, h: 1 },
   { id: 'live-stats', type: 'QUICK_LINK', targetView: 'LIVESTREAM_STATS', w: 1, h: 1 },
+  { id: 'physical-testing', type: 'QUICK_LINK', targetView: 'PHYSICAL_TESTING', w: 1, h: 1 },
 ];
 
-const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], matchState }) => {
+const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], matchState, onJoinMatch }) => {
   const [serverIp, setServerIp] = React.useState<string>('localhost');
   const [isTickerModalOpen, setIsTickerModalOpen] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
@@ -44,7 +47,13 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
 
   React.useEffect(() => {
     // Fetch active matches from server on mount
-    fetch('http://localhost:3002/api/matches/active')
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const fetchUrl = (protocol === 'tauri:' || hostname === 'tauri.localhost' || hostname === 'localhost' || hostname === '127.0.0.1')
+        ? 'http://localhost:3002'
+        : `${window.location.origin.replace(':5173', ':3002').replace(':3000', ':3002')}`;
+
+    fetch(`${fetchUrl}/api/matches/active`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -61,7 +70,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
 
   const handleAddWidget = (type: WidgetConfig['type'], targetView?: string) => {
     const newWidget: WidgetConfig = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       type,
       targetView,
       w: type === 'MATCH_CONTROL' ? 2 : 1,
@@ -127,7 +136,13 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
   React.useEffect(() => {
     const fetchIp = async () => {
       try {
-        const response = await fetch(`${window.location.origin.replace(':5173', ':3002')}/api/companion/setup-info`);
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const fetchUrl = (protocol === 'tauri:' || hostname === 'tauri.localhost' || hostname === 'localhost' || hostname === '127.0.0.1')
+            ? 'http://localhost:3002'
+            : `${window.location.origin.replace(':5173', ':3002').replace(':3000', ':3002')}`;
+
+        const response = await fetch(`${fetchUrl}/api/companion/setup-info`);
         const data = await response.json();
         if (data.localIp) {
           setServerIp(data.localIp);
@@ -155,8 +170,68 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
   const AVAILABLE_VIEWS = [
     'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 
     'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 
-    'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'VOTING', 'TICKER'
+    'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'VOTING', 'TICKER', 'PHYSICAL_TESTING'
   ];
+
+  if (!matchState?.isConfigured) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col pt-12 text-slate-900 dark:text-slate-200 transition-colors duration-300">
+        <div className="max-w-4xl mx-auto px-6 w-full flex-1 flex flex-col items-center">
+            
+            <div className="text-center mb-12">
+                <div className="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-indigo-600/20 md:mb-6 mb-4">
+                  <Activity className="text-white" size={32} />
+                </div>
+                <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">{t('home.activeDiscovery')}</h1>
+                <p className="text-slate-500 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
+                  Before accessing your Dashboard Widgets, you must explicitly connect to a Live Match on the network, or start a new match.
+                </p>
+            </div>
+            
+            <div className="w-full flex md:flex-row flex-col gap-6 justify-center mb-16">
+                <button onClick={() => onNavigate('SETUP')} className="flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-4 rounded-2xl shadow-xl shadow-indigo-600/20 active:scale-95 transition-all w-full md:w-auto">
+                    <Plus size={20} />
+                    {t('home.startNewMatch')}
+                </button>
+            </div>
+            
+            {activeMatches.length > 0 ? (
+                <div className="w-full">
+                   <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-6 text-center">Live Network Matches</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                     {activeMatches.map(match => (
+                       <button
+                         key={match.id}
+                         onClick={() => {
+                           if (onJoinMatch) onJoinMatch(match);
+                         }}
+                         className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-left hover:border-indigo-500 transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
+                       >
+                         <div className="flex items-center justify-between mb-4">
+                            <span className="flex items-center gap-1.5 text-[10px] uppercase font-black tracking-widest text-green-600 bg-green-500/10 px-2 py-0.5 rounded">
+                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                Live Now
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">{match.id?.slice(0, 8)}</span>
+                         </div>
+                         <div className="text-lg font-bold text-slate-900 dark:text-white mb-1 truncate">{match.homeTeam.name}</div>
+                         <div className="text-xs text-slate-400 font-medium mb-3">vs</div>
+                         <div className="text-lg font-bold text-slate-900 dark:text-white truncate">{match.awayTeam.name}</div>
+                       </button>
+                     ))}
+                   </div>
+                </div>
+            ) : (
+                <div className="py-16 text-center text-slate-400 dark:text-slate-600 flex flex-col items-center">
+                    <Wifi size={48} className="mb-4 opacity-50" />
+                    <p className="font-semibold">No external active matches discovered on port 3002.</p>
+                </div>
+            )}
+            
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 font-sans selection:bg-indigo-500/30 transition-colors duration-300">
@@ -201,39 +276,6 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-
-        {/* ACTIVE CLOUD/LAN MATCHES */}
-        {activeMatches.length > 0 && (
-          <div className="bg-indigo-600/5 dark:bg-indigo-500/5 border border-indigo-200/50 dark:border-indigo-500/20 rounded-3xl p-6 shadow-sm overflow-hidden relative group">
-             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-                <Trophy size={120} className="text-indigo-600" />
-             </div>
-             <div className="relative z-10">
-                <h2 className="text-lg font-bold text-indigo-900 dark:text-indigo-100 flex items-center gap-2 mb-4">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  {t('home.activeDiscovery', { defaultValue: 'Live Matches on Network / Cloud' })}
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {activeMatches.map(match => (
-                    <button
-                      key={match.id}
-                      onClick={() => onNavigate('TRACK')} // In a more advanced version, we'd pass the matchId to TRACK
-                      className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between hover:border-indigo-500 transition-all shadow-sm hover:shadow-md"
-                    >
-                      <div>
-                         <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-tighter mb-1">Join Session</div>
-                         <div className="text-sm font-bold text-slate-900 dark:text-white">
-                            {match.homeTeam.name} vs {match.awayTeam.name}
-                         </div>
-                         <div className="text-[10px] text-slate-500 font-mono mt-1">{match.id?.slice(0, 8)}</div>
-                      </div>
-                      <ExternalLink size={18} className="text-slate-300 group-hover:text-indigo-500" />
-                    </button>
-                  ))}
-                </div>
-             </div>
-          </div>
-        )}
 
         {/* DYNAMIC WIDGET GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] grid-flow-row-dense">
@@ -402,25 +444,26 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
 };
 const GalleryItem = ({ title, desc, icon, color, onClick }: any) => {
   const colorMap: any = {
-    indigo: 'hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
-    blue: 'hover:border-blue-500/50 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-blue-600 dark:text-blue-400',
-    purple: 'hover:border-purple-500/50 hover:bg-purple-50 dark:hover:bg-purple-500/10 text-purple-600 dark:text-purple-400',
-    emerald: 'hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    slate: 'hover:border-slate-500/50 hover:bg-slate-100 dark:hover:bg-slate-500/10 text-slate-600 dark:text-slate-400',
+    indigo: 'active:bg-indigo-600 active:text-white text-indigo-600 dark:text-indigo-400',
+    blue: 'active:bg-blue-600 active:text-white text-blue-600 dark:text-blue-400',
+    purple: 'active:bg-purple-600 active:text-white text-purple-600 dark:text-purple-400',
+    emerald: 'active:bg-emerald-600 active:text-white text-emerald-600 dark:text-emerald-400',
+    slate: 'active:bg-slate-200 active:text-slate-900 text-slate-600 dark:text-slate-400',
   };
 
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 text-left transition-all duration-200 group ${colorMap[color] || ''} hover:shadow-lg`}
+      className={`p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 text-left transition-all duration-200 active:scale-95 active:shadow-inner ${colorMap[color] || ''} touch-manipulation`}
     >
       <div className="flex items-start gap-4">
-        <div className={`p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 group-hover:scale-110 transition-transform ${colorMap[color]?.replace('hover:', '').replace('text-', 'bg-').split(' ')[0]}`}>
+        <div className={`p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 ${colorMap[color]?.replace('active:bg-', 'bg-').split(' ')[0]}`}>
           {React.cloneElement(icon, { size: 18 })}
         </div>
         <div>
-          <h4 className="font-bold text-sm text-slate-900 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-white transition-colors">{title}</h4>
-          <p className="text-[10px] text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors line-clamp-2 mt-1">{desc}</p>
+          <h4 className="font-bold text-sm text-slate-900 dark:text-slate-200 transition-colors">{title}</h4>
+          <p className="text-[10px] text-slate-500 transition-colors line-clamp-2 mt-1">{desc}</p>
         </div>
       </div>
     </button>
@@ -452,6 +495,7 @@ const getViewIcon = (view: string) => {
     case 'ANALYSIS': return <BrainCircuit size={16} />;
     case 'VOTING': return <Users size={16} />;
     case 'TICKER': return <Code size={16} />;
+    case 'PHYSICAL_TESTING': return <Activity size={16} />;
     default: return <ExternalLink size={16} />;
   }
 }

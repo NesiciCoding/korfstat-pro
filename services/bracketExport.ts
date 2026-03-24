@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import { toPng } from 'html-to-image';
 
-export const exportBracketToPDF = async (elementId: string, seasonName: string) => {
+export const exportBracketToPDF = async (elementId: string, seasonName: string, onAlert?: (msg: string) => Promise<void>) => {
     const element = document.getElementById(elementId);
     if (!element) {
         console.error('Bracket element not found');
@@ -69,6 +69,10 @@ export const exportBracketToPDF = async (elementId: string, seasonName: string) 
         doc.save(`bracket_${seasonName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
     } catch (error) {
         console.error('Failed to generate bracket PDF', error);
-        alert('Failed to generate bracket PDF. Ensure the bracket is fully loaded on screen.');
+        if (onAlert) {
+            await onAlert('Failed to generate bracket PDF. Ensure the bracket is fully loaded on screen.');
+        } else {
+            console.error('Failed to generate bracket PDF. Ensure the bracket is fully loaded on screen.');
+        }
     }
 };

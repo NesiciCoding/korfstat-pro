@@ -27,9 +27,12 @@ import MatchAnalysis from './components/MatchAnalysis';
 import ScoutingReportView from './components/ScoutingReportView';
 import ErrorBoundary from './components/ErrorBoundary';
 import ShortcutsModal from './components/ShortcutsModal';
+import PhysicalTesting from './components/PhysicalTesting';
 const LiveTicker = lazy(() => import('./components/LiveTicker'));
 const SpectatorVoting = lazy(() => import('./components/SpectatorVoting'));
+const CompanionDashboard = lazy(() => import('./components/CompanionDashboard'));
 import LoginPage from './components/LoginPage';
+import AutoSaveIndicator from './components/AutoSaveIndicator';
 import { supabase } from './lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { LogOut, Cloud, CloudOff } from 'lucide-react';
@@ -40,16 +43,18 @@ import { MatchState, MatchEvent, TeamId, ShotType, Team, OverlayMessage } from '
 import { MatchProfile, DEFAULT_PROFILES } from './types/profile';
 
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
+import { DialogProvider } from './contexts/DialogContext';
 import { Settings } from 'lucide-react';
 import { useBroadcastSync } from './hooks/useBroadcastSync';
 import { calculateDerivedMatchState } from './utils/matchLogic';
+import { generateUUID } from './utils/uuid';
 
 function AppContent() {
   // Initialize view from URL parameter
-  const [view, setView] = useState<'LANDING' | 'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS' | 'TICKER' | 'VOTING' | 'SCOUTING_REPORT' | 'ABOUT' | 'PRIVACY' | 'SUPPORT' | 'API_DOCS'>(() => {
+  const [view, setView] = useState<'LANDING' | 'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS' | 'TICKER' | 'VOTING' | 'SCOUTING_REPORT' | 'PHYSICAL_TESTING' | 'ABOUT' | 'PRIVACY' | 'SUPPORT' | 'API_DOCS' | 'COMPANION_DASHBOARD'>(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
-    const validViews = ['LANDING', 'HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'TICKER', 'VOTING', 'SCOUTING_REPORT', 'ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS'];
+    const validViews = ['LANDING', 'HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'TICKER', 'VOTING', 'SCOUTING_REPORT', 'PHYSICAL_TESTING', 'ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS', 'COMPANION_DASHBOARD'];
     
     // If we have a matchId in the URL, we might want to default to TRACK or STATS if configured
     if (viewParam && validViews.includes(viewParam)) {
@@ -152,6 +157,7 @@ function AppContent() {
   }, [savedMatches]);
 
   const [isSyncing, setIsSyncing] = useState(false);
+  const { lastSaved } = useSettings();
 
   // Persist Current Match State
   useEffect(() => {
@@ -282,6 +288,53 @@ function AppContent() {
         };
       }
 
+      if (actionType === 'RESET_TIMER') {
+        return {
+          ...prev,
+          timer: {
+            ...prev.timer,
+            elapsedSeconds: 0,
+            isRunning: false,
+            lastStartTime: undefined,
+          },
+          shotClock: {
+            ...prev.shotClock,
+            seconds: prev.profile?.shotClockDurationSeconds ?? 25,
+            isRunning: false,
+            lastStartTime: undefined,
+          }
+        };
+      }
+
+      if (actionType === 'ADJUST_TIMER') {
+        const delta = action.delta || 0;
+        const newElapsed = Math.max(0, prev.timer.elapsedSeconds - delta); // delta is usually positive to ADD time to clock, but elapsed is "time played", so subtract delta to reduce elapsed/increase remaining
+        // Wait, delta=60 means +1m to clock. If clock is count down (remaining = total - elapsed),
+        // then remaining + 60 => (total - elapsed) + 60 => total - (elapsed - 60).
+        // So yes, subtract delta from elapsedSeconds.
+        return {
+          ...prev,
+          timer: {
+            ...prev.timer,
+            elapsedSeconds: newElapsed,
+            lastStartTime: prev.timer.isRunning ? now : undefined
+          }
+        };
+      }
+
+      if (actionType === 'OVERRIDE_SHOT_CLOCK') {
+        const seconds = action.seconds ?? 25;
+        return {
+          ...prev,
+          shotClock: {
+            ...prev.shotClock,
+            seconds: seconds,
+            isRunning: prev.timer.isRunning,
+            lastStartTime: prev.timer.isRunning ? now : undefined
+          }
+        };
+      }
+
       return prev;
     });
   }, []);
@@ -365,7 +418,7 @@ function AppContent() {
     const shotClockSecs = profile ? profile.shotClockDurationSeconds : 25;
 
     const newState: MatchState = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       seasonId,
       date: Date.now(),
       isConfigured: true,
@@ -403,6 +456,17 @@ function AppContent() {
     setSavedMatches(newHistory); // Triggers useEffect to save to localStorage
 
     console.log('Match saved to local storage');
+
+    // Notify backend to remove from active memory
+    if (finalState.id) {
+       const protocol = window.location.protocol;
+       const hostname = window.location.hostname;
+       const fetchUrl = (protocol === 'tauri:' || hostname === 'tauri.localhost' || hostname === 'localhost' || hostname === '127.0.0.1')
+           ? 'http://localhost:3002'
+           : `${window.location.origin.replace(':5173', ':3002').replace(':3000', ':3002')}`;
+       
+       fetch(`${fetchUrl}/api/matches/active/${finalState.id}`, { method: 'DELETE' }).catch(()=>console.error("Failed to delete active match"));
+    }
 
     setView('STATS');
   }, [derivedMatchState, savedMatches, broadcastUpdate]);
@@ -516,8 +580,9 @@ function AppContent() {
 
       {view !== 'TICKER' && (
         <>
-          <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+          <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onNavigate={setView} />
           <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+          <AutoSaveIndicator lastSaved={lastSaved} className="fixed bottom-4 left-64 z-[90]" />
         </>
       )}
 
@@ -540,6 +605,7 @@ function AppContent() {
           onNavigate={setView}
           activeSessions={activeSessions}
           matchState={derivedMatchState}
+          onJoinMatch={(match) => { setMatchState(match); }}
         />
       )}
 
@@ -698,6 +764,19 @@ function AppContent() {
         />
       )}
 
+      {view === 'PHYSICAL_TESTING' && (
+        <PhysicalTesting onBack={() => setView('HOME')} />
+      )}
+
+      {view === 'COMPANION_DASHBOARD' && (
+        <Suspense fallback={<div className="loading-fallback">Loading Dashboard...</div>}>
+          <CompanionDashboard
+            socket={socket}
+            onBack={() => setView('HOME')}
+          />
+        </Suspense>
+      )}
+
       {['ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS'].includes(view) && (
         <StaticPages 
           view={view as any} 
@@ -712,10 +791,12 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <SettingsProvider>
-        <AppContent />
-        <UpdateChecker />
-      </SettingsProvider>
+      <DialogProvider>
+        <SettingsProvider>
+          <AppContent />
+          <UpdateChecker />
+        </SettingsProvider>
+      </DialogProvider>
     </ErrorBoundary>
   );
 };

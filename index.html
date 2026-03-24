@@ -59,6 +59,23 @@
     .animate-marquee {
       animation: marquee 25s linear infinite;
     }
+
+    /* Fix iOS/iPad double-tap-to-click hover bug */
+    /* Only allow hovering on devices that have a real cursor */
+    @media (hover: hover) {
+      .hover\:scale-110:hover { transform: scale(1.1); }
+      .hover\:bg-gray-200:hover { background-color: rgb(229 231 235); }
+      .hover\:border-indigo-500:hover { border-color: rgb(79 70 229); }
+      .hover\:shadow-lg:hover { --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+    }
+
+    @media (hover: none) {
+      /* Suppress hover transitions on touch devices */
+      [class*="hover:"]:hover {
+        transform: none !important;
+        transition: none !important;
+      }
+    }
   </style>
 
 

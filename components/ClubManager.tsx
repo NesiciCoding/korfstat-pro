@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDialog } from '../hooks/useDialog';
 import { Club } from '../types/club';
 import { ClubService } from '../services/clubService';
 import { Plus, Trash2, Edit2, Users, ArrowLeft, Download, BarChart2, Brain } from 'lucide-react';
 import ClubEditor from './ClubEditor';
 import { MatchState } from '../types';
 import { calculateCareerStats } from '../utils/statsCalculator';
+import { generateUUID } from '../utils/uuid';
 
 interface ClubManagerProps {
     onBack: () => void;
@@ -15,6 +17,7 @@ interface ClubManagerProps {
 
 const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [], onScoutTeam }) => {
     const { t } = useTranslation();
+    const { alert, confirm } = useDialog();
     const [clubs, setClubs] = useState<Club[]>([]);
     const [selectedClub, setSelectedClub] = useState<Club | null>(null);
 
@@ -28,7 +31,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [], on
 
     const handleCreate = () => {
         const newClub: Club = {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             name: `${t('settings.new')} ${t('settings.club')}`.trim() || 'New Club',
             shortName: 'NEW',
             primaryColor: '#000000',
@@ -41,22 +44,22 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [], on
         setSelectedClub(newClub);
     };
 
-    const handleDelete = (id: string, e: React.MouseEvent) => {
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (confirm(t('clubManager.confirmDelete'))) {
+        if (await confirm(t('clubManager.confirmDelete'))) {
             ClubService.deleteClub(id);
             loadClubs();
             if (selectedClub?.id === id) setSelectedClub(null);
         }
     };
 
-    const handleImportLegacy = () => {
+    const handleImportLegacy = async () => {
         const count = ClubService.migrateLegacyTeams();
         if (count > 0) {
-            alert(t('clubManager.migrated', { count }));
+            await alert(t('clubManager.migrated', { count }));
             loadClubs();
         } else {
-            alert(t('clubManager.noMigration'));
+            await alert(t('clubManager.noMigration'));
         }
     };
 

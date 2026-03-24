@@ -1,0 +1,953 @@
+{
+  "version": 4,
+  "type": "full",
+  "connections": {
+    "korfstat-pro-id": {
+      "id": "korfstat-pro-id",
+      "instance_type": "generic-http",
+      "module_id": "generic-http",
+      "label": "KorfStat Pro",
+      "config": {
+        "baseUrl": "http://127.0.0.1:3003",
+        "default_headers": "X-Companion-Token: test\nContent-Type: application/json"
+      },
+      "enabled": true
+    }
+  },
+  "controls": {
+    "ks-btn-0": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 2278750,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null,
+        "text": "Clock"
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-0-0",
+          "action_sets": {
+            "down": [
+              {
+                "id": "action-0-0",
+                "actionId": "generic-http:post",
+                "connectionId": "korfstat-pro-id",
+                "options": {
+                  "path": "/path"
+                },
+                "delay": 0
+              }
+            ],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-1": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-1-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-2": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-2-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-3": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-3-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-4": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-4-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-5": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-5-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-6": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-6-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-7": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-7-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-8": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-8-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-9": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-9-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-10": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-10-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-11": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-11-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-12": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-12-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-13": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-13-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-14": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-14-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-15": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-15-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-16": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-16-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-17": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-17-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-18": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-18-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-19": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-19-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-20": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-20-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-21": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-21-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-22": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-22-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-23": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-23-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-24": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-24-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-25": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-25-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-26": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-26-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-27": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-27-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-28": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-28-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-29": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-29-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-30": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-30-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    },
+    "ks-btn-31": {
+      "type": "button",
+      "style": {
+        "size": "18",
+        "color": 16777215,
+        "bgcolor": 0,
+        "alignment": "center:center",
+        "valignment": "center",
+        "png64": null
+      },
+      "options": {
+        "stepAutoProgress": true
+      },
+      "steps": [
+        {
+          "id": "step-31-0",
+          "action_sets": {
+            "down": [],
+            "up": []
+          },
+          "options": {
+            "runWhileHeld": []
+          }
+        }
+      ],
+      "feedbacks": []
+    }
+  },
+  "pages": {
+    "1": {
+      "name": "KorfStat Pro",
+      "controls": {
+        "0": "ks-btn-0",
+        "1": "ks-btn-1",
+        "2": "ks-btn-2",
+        "3": "ks-btn-3",
+        "4": "ks-btn-4",
+        "5": "ks-btn-5",
+        "6": "ks-btn-6",
+        "7": "ks-btn-7",
+        "8": "ks-btn-8",
+        "9": "ks-btn-9",
+        "10": "ks-btn-10",
+        "11": "ks-btn-11",
+        "12": "ks-btn-12",
+        "13": "ks-btn-13",
+        "14": "ks-btn-14",
+        "15": "ks-btn-15",
+        "16": "ks-btn-16",
+        "17": "ks-btn-17",
+        "18": "ks-btn-18",
+        "19": "ks-btn-19",
+        "20": "ks-btn-20",
+        "21": "ks-btn-21",
+        "22": "ks-btn-22",
+        "23": "ks-btn-23",
+        "24": "ks-btn-24",
+        "25": "ks-btn-25",
+        "26": "ks-btn-26",
+        "27": "ks-btn-27",
+        "28": "ks-btn-28",
+        "29": "ks-btn-29",
+        "30": "ks-btn-30",
+        "31": "ks-btn-31"
+      },
+      "gridSize": {
+        "minColumn": 0,
+        "maxColumn": 7,
+        "minRow": 0,
+        "maxRow": 3
+      }
+    }
+  },
+  "triggers": {},
+  "surfaces": {},
+  "user_config": {
+    "gridSize": {
+      "minColumn": 0,
+      "maxColumn": 7,
+      "minRow": 0,
+      "maxRow": 3
+    }
+  },
+  "backups": {
+    "rules": []
+  },
+  "custom_variables": {}
+}

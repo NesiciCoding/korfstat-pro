@@ -1,15 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, renderWithProviders, waitFor } from '../../test/test-utils';
 import ClubManager from '../ClubManager';
 import { ClubService } from '../../services/clubService';
 import { calculateCareerStats } from '../../utils/statsCalculator';
-
-// Mock translation
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string) => key
-    })
-}));
 
 // Mock services and utils
 vi.mock('../../services/clubService', () => ({
@@ -63,21 +56,21 @@ describe('ClubManager', () => {
     });
 
     it('renders club list and create card', () => {
-        render(<ClubManager onBack={mockOnBack} />);
+        renderWithProviders(<ClubManager onBack={mockOnBack} />);
         expect(screen.getByText('clubManager.title')).toBeTruthy();
         expect(screen.getByText('Club One')).toBeTruthy();
         expect(screen.getByText('clubManager.createNew')).toBeTruthy();
     });
 
     it('calls onBack when back button is clicked', () => {
-        render(<ClubManager onBack={mockOnBack} />);
+        renderWithProviders(<ClubManager onBack={mockOnBack} />);
         const backBtn = screen.getByTestId('back-button');
         fireEvent.click(backBtn);
         expect(mockOnBack).toHaveBeenCalled();
     });
 
     it('handles club creation', () => {
-        render(<ClubManager onBack={mockOnBack} />);
+        renderWithProviders(<ClubManager onBack={mockOnBack} />);
         fireEvent.click(screen.getByText('clubManager.createNew'));
         expect(ClubService.saveClub).toHaveBeenCalled();
         // It should also open the editor for the new club
@@ -85,45 +78,52 @@ describe('ClubManager', () => {
     });
 
     it('opens editor when a club is clicked', () => {
-        render(<ClubManager onBack={mockOnBack} />);
+        renderWithProviders(<ClubManager onBack={mockOnBack} />);
         fireEvent.click(screen.getByText('Club One'));
         expect(screen.getByTestId('club-editor')).toBeTruthy();
         expect(screen.getByText('Editor for Club One')).toBeTruthy();
     });
 
-    it('handles club deletion after confirmation', () => {
-        mockConfirm.mockReturnValue(true);
-        render(<ClubManager onBack={mockOnBack} />);
+    it('handles club deletion after confirmation', async () => {
+        renderWithProviders(<ClubManager onBack={mockOnBack} />);
         
         const deleteBtn = screen.getByTestId('delete-club-1');
         fireEvent.click(deleteBtn);
         
-        expect(mockConfirm).toHaveBeenCalled();
-        expect(ClubService.deleteClub).toHaveBeenCalledWith('1');
+        // Find and click the confirm button in the dialog
+        const confirmBtn = await screen.findByText('common.confirm');
+        fireEvent.click(confirmBtn);
+        
+        await waitFor(() => {
+            expect(ClubService.deleteClub).toHaveBeenCalledWith('1');
+        });
     });
 
-    it('does not delete club if not confirmed', () => {
-        mockConfirm.mockReturnValue(false);
-        render(<ClubManager onBack={mockOnBack} />);
+    it('does not delete club if not confirmed', async () => {
+        renderWithProviders(<ClubManager onBack={mockOnBack} />);
         
         const deleteBtn = screen.getByTestId('delete-club-1');
         fireEvent.click(deleteBtn);
+        
+        // Find and click the cancel button in the dialog
+        const cancelBtn = await screen.findByText('common.cancel');
+        fireEvent.click(cancelBtn);
         
         expect(ClubService.deleteClub).not.toHaveBeenCalled();
     });
 
-    it('handles legacy migration', () => {
+    it('handles legacy migration', async () => {
         vi.mocked(ClubService.migrateLegacyTeams).mockReturnValue(5);
-        render(<ClubManager onBack={mockOnBack} />);
+        renderWithProviders(<ClubManager onBack={mockOnBack} />);
         
         fireEvent.click(screen.getByText('clubManager.importLegacy'));
         expect(ClubService.migrateLegacyTeams).toHaveBeenCalled();
-        expect(mockAlert).toHaveBeenCalledWith('clubManager.migrated');
+        expect(await screen.findByText('clubManager.migrated')).toBeInTheDocument();
     });
 
     it('shows stats if savedMatches are provided', () => {
         const mockMatches = [{ id: 'm1', events: [] }] as any;
-        render(<ClubManager onBack={mockOnBack} savedMatches={mockMatches} />);
+        renderWithProviders(<ClubManager onBack={mockOnBack} savedMatches={mockMatches} />);
         expect(screen.getByText('clubManager.statsAvailable')).toBeTruthy();
         expect(screen.getByText('clubManager.topScorers')).toBeTruthy();
         expect(screen.getByText('John Doe')).toBeTruthy();

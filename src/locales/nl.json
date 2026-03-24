@@ -57,6 +57,10 @@
     "confirm": "Bevestigen",
     "delete": "Verwijderen",
     "edit": "Bewerken",
+    "autoSave": "Auto-opslaan",
+    "lastSaved": "Laatst opgeslagen: {{time}}",
+    "draftRestored": "Conceptopstelling hersteld",
+    "clearDraft": "Concept Wissen",
     "loading": "Laden...",
     "device": "Apparaat",
     "pc": "PC",
@@ -127,7 +131,9 @@
     "voting": "Publieksstemmen",
     "voting_desc": "Stem op het Doelpunt van de Wedstrijd",
     "ticker": "Live-Ticker",
-    "ticker_desc": "Openbare embeddable live scores"
+    "ticker_desc": "Openbare embeddable live scores",
+    "physical_testing": "Fysieke Testen",
+    "physical_testing_desc": "Standaard 20m Piepjestest"
   },
   "matchTracker": {
     "period": "Periode",

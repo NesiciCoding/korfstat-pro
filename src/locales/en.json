@@ -57,6 +57,10 @@
     "confirm": "Confirm",
     "delete": "Delete",
     "edit": "Edit",
+    "autoSave": "Auto-save",
+    "lastSaved": "Last saved: {{time}}",
+    "draftRestored": "Draft lineup restored",
+    "clearDraft": "Clear Draft",
     "loading": "Loading...",
     "device": "Device",
     "pc": "PC",
@@ -132,7 +136,9 @@
     "voting": "Audience Voting",
     "voting_desc": "Goal of the Match fan voting",
     "ticker": "Live-Ticker",
-    "ticker_desc": "Public embeddable live scores"
+    "ticker_desc": "Public embeddable live scores",
+    "physical_testing": "Physical Testing",
+    "physical_testing_desc": "Standard 20m Beep Test"
   },
   "matchTracker": {
     "period": "Period",

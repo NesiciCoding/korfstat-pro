@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import { vi, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
 
 // Global Fetch Mock
 global.fetch = vi.fn().mockImplementation(() => 
@@ -15,7 +16,7 @@ global.fetch = vi.fn().mockImplementation(() =>
 vi.mock('@supabase/supabase-js', () => ({
     createClient: vi.fn(() => ({
         auth: {
-            getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: 'test-user', email: 'test@example.com' } } }, error: null }),
+            getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
             onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
             signInWithPassword: vi.fn().mockResolvedValue({ data: { user: {} }, error: null }),
             signUp: vi.fn().mockResolvedValue({ data: { user: {} }, error: null }),
@@ -73,8 +74,10 @@ vi.mock('react-i18next', () => ({
         type: '3rdParty',
         init: () => { },
     },
+    I18nextProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+// Mock i18next
 vi.mock('i18next', () => {
     const t = (key: string, options?: any) => {
         if (!options || (Object.keys(options).length === 1 && options.defaultValue)) {
@@ -102,14 +105,20 @@ vi.mock('i18next', () => {
     };
 });
 
+afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    localStorage.clear();
+});
+
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: (query: any) => ({
         matches: false,
         media: query,
         onchange: null,
-        addListener: () => { }, // Deprecated
-        removeListener: () => { }, // Deprecated
+        addListener: () => { },
+        removeListener: () => { },
         addEventListener: () => { },
         removeEventListener: () => { },
         dispatchEvent: () => false,

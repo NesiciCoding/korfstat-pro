@@ -15,6 +15,8 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 import { getScore, formatTime } from '../utils/matchUtils';
 import { getPlayerRole, getTotalGoals } from '../utils/lineupUtils';
+import { generateUUID } from '../utils/uuid';
+import { useDialog } from '../hooks/useDialog';
 import SocialShareModal from './SocialShareModal';
 import { useVoiceCommands, VoiceCommandAction } from '../hooks/useVoiceCommands';
 
@@ -22,13 +24,14 @@ interface MatchTrackerProps {
   matchState: MatchState;
   onUpdateMatch: (newState: MatchState) => void;
   onFinishMatch: () => void;
-  onViewChange?: (view: 'STATS' | 'JURY' | 'LIVE' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY') => void;
+  onViewChange?: (view: 'STATS' | 'JURY' | 'LIVE' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'HOME' | 'LANDING') => void;
   socket: any;
   onSpotterAction: (action: any) => void;
 }
 
 const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, onFinishMatch, onViewChange, socket, onSpotterAction }) => {
   const { t } = useTranslation();
+  const { alert } = useDialog();
   const { settings, updateSettings } = useSettings();
   const soundEnabled = settings.soundEnabled;
   const { playShotClockBuzzer, playGameEndHorn } = useGameAudio(!soundEnabled);
@@ -93,22 +96,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     prevGameTimeRef.current = currentGameTime;
   }, [matchState.shotClock.seconds, matchState.timer.elapsedSeconds, matchState.halfDurationSeconds, matchState.shotClock.lastStartTime, playShotClockBuzzer, playGameEndHorn]);
 
-  React.useEffect(() => {
-    if (!socket) return;
 
-    socket.on('watch-action', (payload: any) => {
-      onSpotterAction(payload);
-    });
-
-    socket.on('vote-update', (v: Record<string, number>) => {
-      setVotes(v);
-    });
-
-    return () => {
-      socket.off('watch-action');
-      socket.off('vote-update');
-    };
-  }, [socket, onSpotterAction]);
 
   // --- Keyboard Shortcuts Logic ---
 
@@ -150,7 +138,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
 
   const addEvent = (eventData: Partial<MatchEvent>) => {
     const newEvent: MatchEvent = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       timestamp: Math.floor(matchState.timer.elapsedSeconds),
       realTime: Date.now(),
       half: matchState.currentHalf,
@@ -206,7 +194,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
       };
 
       const subEntry: MatchEvent = {
-        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'sub-' + Math.random().toString(36).substring(2, 9),
+        id: generateUUID(),
         timestamp: Math.floor(matchState.timer.elapsedSeconds),
         realTime: Date.now(),
         half: matchState.currentHalf,
@@ -574,7 +562,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
         teamId: matchState.possession || 'HOME'
       },
       events: [...matchState.events, {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         timestamp: Math.floor(matchState.timer.elapsedSeconds),
         realTime: Date.now(),
         half: matchState.currentHalf,
@@ -656,6 +644,64 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     }
     // Other types can be added as needed or wanted
   };
+
+  React.useEffect(() => {
+    if (!socket) return;
+
+    socket.on('companion-action', (payload: any) => {
+      console.log('[MatchTracker] Received Companion Action:', payload);
+      const { type, teamId, playerId, delta, seconds, cardType } = payload;
+      
+      const team = teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
+      
+      if (type === 'CLOCK_TOGGLE') onSpotterAction({ action: 'TOGGLE_TIMER' });
+      else if (type === 'CLOCK_RESET') onSpotterAction({ action: 'RESET_TIMER' });
+      else if (type === 'SHOTCLOCK_RESET') onSpotterAction({ action: 'RESET_SHOT_CLOCK' });
+      else if (type === 'CLOCK_ADJUST') onSpotterAction({ action: 'ADJUST_TIMER', delta });
+      else if (type === 'SHOTCLOCK_OVERRIDE') onSpotterAction({ action: 'OVERRIDE_SHOT_CLOCK', seconds });
+      else if (type === 'PLAYER_GOAL') {
+        if (playerId) {
+          addEvent({ teamId: teamId as TeamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location: { x: 50, y: 50 } });
+        }
+      }
+      else if (type === 'GOAL') { // Legacy/Generic
+        const firstActivePlayer = team.players.find(p => p.onField);
+        if (firstActivePlayer) {
+          addEvent({ teamId: teamId as TeamId, playerId: firstActivePlayer.id, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location: { x: 50, y: 50 } });
+        }
+      }
+      else if (type === 'GOAL_UNDO') handleUndo();
+      else if (type === 'PLAYER_FOUL') {
+        if (playerId) addEvent({ teamId: teamId as TeamId, playerId, type: 'FOUL', location: { x: 50, y: 50 } });
+      }
+      else if (type === 'FOUL') { // Legacy/Generic
+        const firstActivePlayer = team.players.find(p => p.onField);
+        if (firstActivePlayer) {
+          addEvent({ teamId: teamId as TeamId, playerId: firstActivePlayer.id, type: 'FOUL', location: { x: 50, y: 50 } });
+        }
+      }
+      else if (type === 'CARD') {
+        const firstActivePlayer = team.players.find(p => p.onField);
+        if (firstActivePlayer) {
+          addEvent({ teamId: teamId as TeamId, playerId: firstActivePlayer.id, type: 'CARD', cardType: cardType as CardType });
+        }
+      }
+      else if (type === 'PERIOD_NEXT') handlePhaseEnd();
+      else if (type === 'TIMEOUT') startTimeout();
+      else if (type === 'MATCH_RESET') {
+          // Confirm or just do it? Usually Companion means "do it"
+          onFinishMatch(); // Reuse finish logic or maybe we need a dedicated reset that doesn't save?
+          // The user requested "Match reset" in Companion. 
+          // If we want a clean reset, we should maybe call onViewChange('HOME') or similar.
+          // But onFinishMatch saves to history. 
+          if (onViewChange) onViewChange('HOME'); 
+      }
+    });
+
+    return () => {
+      socket.off('companion-action');
+    };
+  }, [socket, matchState, addEvent, handleUndo, handlePhaseEnd, startTimeout, onSpotterAction]);
 
   const { isListening, toggleListening, transcript } = useVoiceCommands({
     onCommand: handleVoiceCommand,
@@ -1394,9 +1440,9 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
                </div>
                <button 
                 data-testid="copy-link-btn"
-                onClick={() => {
-                  navigator.clipboard.writeText(`http://${serverIp}:3002/?view=VOTING`);
-                  alert(t('matchTracker.copySuccess'));
+                onClick={async () => {
+                  await navigator.clipboard.writeText(`http://${serverIp}:3002/?view=VOTING`);
+                  await alert(t('matchTracker.copySuccess'));
                 }}
                 className="w-full py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm"
                >

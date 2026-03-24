@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Copy, Download, CheckCircle, XCircle, RefreshCw, Wifi, Zap, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { useDialog } from '../hooks/useDialog';
+import { Copy, Download, CheckCircle, XCircle, RefreshCw, Wifi, Zap, ChevronDown, ChevronUp, ExternalLink, ShieldCheck } from 'lucide-react';
 
 interface SetupInfo {
   serverUrl: string;
@@ -18,7 +19,12 @@ interface ConnectionStatus {
 
 const COMPANION_DOWNLOAD_URL = 'https://bitfocus.io/companion';
 
-const CompanionSetup: React.FC = () => {
+interface CompanionSetupProps {
+  onNavigate?: (view: any) => void;
+}
+
+const CompanionSetup: React.FC<CompanionSetupProps> = ({ onNavigate }) => {
+  const { alert } = useDialog();
   const [setupInfo, setSetupInfo] = useState<SetupInfo | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>({ connected: false, active: false, checking: true });
   const [copied, setCopied] = useState<string | null>(null);
@@ -102,7 +108,7 @@ const CompanionSetup: React.FC = () => {
   const downloadProfile = async () => {
     try {
       const token = setupInfo?.token || 'korfstat';
-      const res = await fetch(`${serverBase}/api/companion/profile.json`, {
+      const res = await fetch(`${serverBase}/api/companion/korfstat.companionconfig`, {
         headers: { 'X-Companion-Token': token },
       });
       if (!res.ok) throw new Error('Failed to fetch');
@@ -110,13 +116,13 @@ const CompanionSetup: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'korfstat-companion.json';
+      a.download = 'korfstat-pro-v9.companionconfig';
       a.click();
       URL.revokeObjectURL(url);
       setDownloadSucceeded(true);
       setTimeout(() => setDownloadSucceeded(false), 3000);
     } catch {
-      alert('Could not download profile — ensure the server is running.');
+      await alert('Could not download profile — ensure the server is running.');
     }
   };
 
@@ -145,6 +151,25 @@ const CompanionSetup: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      {/* Master Dashboard Entry */}
+      {onNavigate && (
+        <button
+          onClick={() => onNavigate('COMPANION_DASHBOARD')}
+          className="w-full flex items-center justify-between p-4 bg-indigo-900 shadow-lg shadow-indigo-900/20 border-2 border-indigo-500 rounded-xl group transition-all hover:bg-indigo-800 hover:-translate-y-0.5 active:translate-y-0"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-600 rounded-lg group-hover:scale-110 transition-transform">
+              <ShieldCheck className="text-white" size={20} />
+            </div>
+            <div className="text-left">
+              <p className="text-xs font-black text-indigo-300 uppercase tracking-widest leading-none mb-1">Advanced Control</p>
+              <h3 className="text-sm font-bold text-white">Open Master Companion Dashboard</h3>
+            </div>
+          </div>
+          <ExternalLink size={18} className="text-indigo-400 group-hover:text-white group-hover:translate-x-1 transition-all" />
+        </button>
+      )}
+
       {/* Status Bar */}
       <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${status.checking
           ? 'bg-gray-800/60 border-gray-700 text-gray-400'
@@ -293,7 +318,7 @@ const CompanionSetup: React.FC = () => {
             {
               n: 4,
               title: 'Set up variables for live labels',
-              body: `Add a "Custom Variable" module and create a trigger that polls GET /api/companion/status every 1s. Map $(korfstat:scoreDisplay) to button labels so your Stream Deck buttons always show the live score.`,
+              body: `The profile includes triggers that automatically poll KorfStat. Use variables like $(custom:ks_home) or $(custom:ks_match) in button labels so your Stream Deck always shows the live match state.`,
             },
             {
               n: 5,
@@ -319,17 +344,16 @@ const CompanionSetup: React.FC = () => {
             </p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               {[
-                ['scoreDisplay', 'e.g. "3 - 2"'],
-                ['homeTeamName', 'Home team name'],
-                ['awayTeamName', 'Away team name'],
-                ['clockDisplay', 'MM:SS game clock'],
-                ['shotClockDisplay', 'MM:SS shot clock'],
-                ['period', 'Current period number'],
-                ['isRunning', 'Clock running state'],
-                ['scoreHome', 'Home score (integer)'],
+                ['ks_home', 'Home score (integer)'],
+                ['ks_away', 'Away score (integer)'],
+                ['ks_match', 'MM:SS game clock'],
+                ['ks_shotclock', 'Seconds remaining'],
+                ['ks_period', 'Current period'],
+                ['ks_fouls_home', 'Home fouls count'],
+                ['ks_fouls_away', 'Away fouls count'],
               ].map(([varName, desc]) => (
                 <div key={varName} className="flex items-baseline gap-1 text-[11px]">
-                  <code className="text-emerald-400 font-mono shrink-0">{varName}</code>
+                  <code className="text-emerald-400 font-mono shrink-0">$(custom:{varName})</code>
                   <span className="text-gray-500">— {desc}</span>
                 </div>
               ))}

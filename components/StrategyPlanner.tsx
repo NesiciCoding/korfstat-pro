@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, MouseEvent } from 'react';
 import { MatchState, TeamId } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 import { ArrowLeft, Save, Trash2, Undo, Circle, Hexagon, Eraser, Pen, MousePointer2, Move, Download, Upload, RefreshCw, X, Play, Square } from 'lucide-react';
+import { generateUUID } from '../utils/uuid';
+import { useDialog } from '../hooks/useDialog';
 
 interface StrategyPlannerProps {
   matches: MatchState[];
@@ -50,6 +52,7 @@ const KORFBALL_FIELD_RATIO = 2; // 40m / 20m = 2
 
 const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) => {
   const { settings } = useSettings();
+  const { alert, confirm, prompt } = useDialog();
   // ----- State -----
   const [frames, setFrames] = useState<Frame[]>([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
@@ -105,15 +108,60 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
     const saved = localStorage.getItem('korfstat_strategies');
     if (saved) {
       try {
-        setSavedPlays(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.length > 0) {
+          setSavedPlays(parsed);
+          return;
+        }
       } catch (e) {
         console.error("Failed to load plays", e);
       }
     }
+
+    // Default built-in plays for first-time users
+    const defaultPlays: SavedPlay[] = [
+      {
+        id: 'default_1',
+        name: 'Basic 4-0 Attack',
+        date: Date.now(),
+        frames: [
+          {
+            id: 'f1', duration: 1000,
+            tokens: [
+              { id: 'h1', x: 5, y: 50, type: 'ATTACK', gender: 'FEMALE', label: 'AST', color: '#3b82f6' },
+              { id: 'h2', x: 25, y: 25, type: 'ATTACK', gender: 'FEMALE', label: 'C1', color: '#3b82f6' },
+              { id: 'h3', x: 25, y: 75, type: 'ATTACK', gender: 'MALE', label: 'C2', color: '#3b82f6' },
+              { id: 'h4', x: 25, y: 50, type: 'ATTACK', gender: 'MALE', label: 'RBN', color: '#3b82f6' }
+            ],
+            drawings: []
+          }
+        ]
+      },
+      {
+        id: 'default_2',
+        name: '3-1 Setup (Post)',
+        date: Date.now(),
+        frames: [
+          {
+            id: 'f2', duration: 1000,
+            tokens: [
+              { id: 'p1', x: 83.3, y: 50, type: 'ATTACK', gender: 'MALE', label: 'PST', color: '#3b82f6' },
+              { id: 'a1', x: 65, y: 50, type: 'ATTACK', gender: 'FEMALE', label: 'F', color: '#3b82f6' },
+              { id: 'a2', x: 65, y: 75, type: 'ATTACK', gender: 'MALE', label: 'S1', color: '#3b82f6' },
+              { id: 'a3', x: 65, y: 25, type: 'ATTACK', gender: 'FEMALE', label: 'S2', color: '#3b82f6' }
+            ],
+            drawings: []
+          }
+        ]
+      }
+    ];
+
+    setSavedPlays(defaultPlays);
+    localStorage.setItem('korfstat_strategies', JSON.stringify(defaultPlays));
   };
 
-  const savePlay = () => {
-    const name = prompt("Enter a name for this play:");
+  const savePlay = async () => {
+    const name = await prompt("Enter a name for this play:");
     if (!name) return;
 
     // Ensure current state is saved to frame
@@ -132,8 +180,8 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
     localStorage.setItem('korfstat_strategies', JSON.stringify(newSaved));
   };
 
-  const loadPlay = (play: SavedPlay) => {
-    if (window.confirm(`Load play "${play.name}"? Unsaved changes will be lost.`)) {
+  const loadPlay = async (play: SavedPlay) => {
+    if (await confirm(`Load play "${play.name}"? Unsaved changes will be lost.`)) {
       // Optional backwards-compatibility migration for older play formats
       if (!play.frames && (play as any).tokens) {
         // Migration for legacy
@@ -158,9 +206,9 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
     }
   };
 
-  const deletePlay = (e: React.MouseEvent, id: string) => {
+  const deletePlay = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this play?")) {
+    if (await confirm("Are you sure you want to delete this play?")) {
       const newSaved = savedPlays.filter(p => p.id !== id);
       setSavedPlays(newSaved);
       localStorage.setItem('korfstat_strategies', JSON.stringify(newSaved));
@@ -171,21 +219,22 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
     // Initial Setup: 4 Attackers (Home), 4 Defenders (Away)
     const initialTokens: Token[] = [
       // Home Attack (Left Zone)
-      { id: 'h1', x: 20, y: 30, type: 'ATTACK', gender: 'FEMALE', label: 'H1', color: '#3b82f6' },
-      { id: 'h2', x: 20, y: 70, type: 'ATTACK', gender: 'FEMALE', label: 'H2', color: '#3b82f6' },
-      { id: 'h3', x: 35, y: 40, type: 'ATTACK', gender: 'MALE', label: 'H3', color: '#3b82f6' },
-      { id: 'h4', x: 35, y: 60, type: 'ATTACK', gender: 'MALE', label: 'H4', color: '#3b82f6' },
+      // Home Attack (Left Zone - Centered around post at 16.7)
+      { id: 'h1', x: 10, y: 40, type: 'ATTACK', gender: 'FEMALE', label: 'H1', color: '#3b82f6' },
+      { id: 'h2', x: 10, y: 60, type: 'ATTACK', gender: 'FEMALE', label: 'H2', color: '#3b82f6' },
+      { id: 'h3', x: 25, y: 40, type: 'ATTACK', gender: 'MALE', label: 'H3', color: '#3b82f6' },
+      { id: 'h4', x: 25, y: 60, type: 'ATTACK', gender: 'MALE', label: 'H4', color: '#3b82f6' },
 
-      // Away Defense (Left Zone)
-      { id: 'a1', x: 25, y: 35, type: 'DEFENSE', gender: 'FEMALE', label: 'A1', color: '#ef4444' },
-      { id: 'a2', x: 25, y: 65, type: 'DEFENSE', gender: 'FEMALE', label: 'A2', color: '#ef4444' },
-      { id: 'a3', x: 30, y: 45, type: 'DEFENSE', gender: 'MALE', label: 'A3', color: '#ef4444' },
-      { id: 'a4', x: 30, y: 55, type: 'DEFENSE', gender: 'MALE', label: 'A4', color: '#ef4444' },
+      // Away Defense (Left Zone - Guarding attackers)
+      { id: 'a1', x: 15, y: 45, type: 'DEFENSE', gender: 'FEMALE', label: 'A1', color: '#ef4444' },
+      { id: 'a2', x: 15, y: 55, type: 'DEFENSE', gender: 'FEMALE', label: 'A2', color: '#ef4444' },
+      { id: 'a3', x: 20, y: 45, type: 'DEFENSE', gender: 'MALE', label: 'A3', color: '#ef4444' },
+      { id: 'a4', x: 20, y: 55, type: 'DEFENSE', gender: 'MALE', label: 'A4', color: '#ef4444' },
     ];
 
     // Create initial frame
     const startFrame: Frame = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       tokens: initialTokens,
       drawings: [],
       duration: 1000
@@ -202,7 +251,7 @@ const StrategyPlanner: React.FC<StrategyPlannerProps> = ({ matches, onBack }) =>
   const addFrame = () => {
     // Duplicate current state
     const newFrame: Frame = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       tokens: JSON.parse(JSON.stringify(tokens)), // Deep copy positions
       drawings: JSON.parse(JSON.stringify(drawings)), // Persist drawings sequentially across frames
       duration: 1000

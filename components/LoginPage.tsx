@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useDialog } from '../hooks/useDialog';
 import { LogIn, UserPlus, Mail, Lock, Loader2, Trophy } from 'lucide-react';
 
 interface LoginPageProps {
@@ -8,6 +9,7 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({ onLoginSuccess, onBack }: LoginPageProps) {
+  const { alert } = useDialog();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,7 @@ export default function LoginPage({ onLoginSuccess, onBack }: LoginPageProps) {
           password,
         });
         if (signUpError) throw signUpError;
-        alert('Verification email sent! Check your inbox.');
+        await alert('Verification email sent! Check your inbox.');
       } else {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,

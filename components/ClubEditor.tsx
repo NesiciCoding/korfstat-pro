@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Save, Trash2, User, Users } from 'lucide-react';
 import { MatchState } from '../types';
 import { calculateCareerStats } from '../utils/statsCalculator';
 import PlayerProfile from './PlayerProfile';
+import { generateUUID } from '../utils/uuid';
 
 interface ClubEditorProps {
     club: Club;
@@ -57,7 +58,7 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
     //Add player modal and data structure
     const addPlayer = () => {
         const newPlayer: ClubPlayer = {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             firstName: t('settings.new'),
             lastName: t('matchTracker.substitution'), //Agent -> Would this be the correct call? Seems like the var name and the t() don't match up
             gender: 'M',

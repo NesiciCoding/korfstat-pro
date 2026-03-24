@@ -8,9 +8,10 @@ import AssetUploader from './AssetUploader';
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onNavigate?: (view: any) => void;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onNavigate }) => {
     const { settings, updateSettings, clearAllData } = useSettings();
     const { t } = useTranslation();
     const [showCompanion, setShowCompanion] = useState(false);
@@ -291,7 +292,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                 </button>
                                 {showCompanion && (
                                     <div className="mt-2 p-3 bg-gray-900 rounded-xl border border-gray-700">
-                                        <CompanionSetup />
+                                        <CompanionSetup onNavigate={(v) => {
+                                            onNavigate?.(v);
+                                            onClose(); // Close modal when navigating
+                                        }} />
                                     </div>
                                 )}
                             </div>

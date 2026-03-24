@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSettings } from '../contexts/SettingsContext';
 import { Team, type TeamId, Player, Gender, Position, SavedTeam } from '../types';
 import { MatchProfile, DEFAULT_PROFILES } from '../types/profile';
 import { Club } from '../types/club';
@@ -8,7 +9,9 @@ import { Plus, Trash2, PlayCircle, Play, User, Users, Shield, Sword, Paintbrush,
 import AssetUploader from './AssetUploader';
 import { generateMatchDayProgram } from '../services/reportGenerator';
 import { TemplateService } from '../services/templateService';
+import { generateUUID } from '../utils/uuid';
 import { MatchTemplate } from '../types';
+import { useDialog } from '../hooks/useDialog';
 
 interface MatchSetupProps {
   onStartMatch: (home: Team, away: Team, profile?: MatchProfile, seasonId?: string) => void;
@@ -95,7 +98,13 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ p, toggleStarter, updatePlayer, r
         </button>
       </div>
 
-      <button onClick={() => removePlayer(p.id)} className="text-gray-400 hover:text-red-600 p-1" aria-label={t('matchSetup.removePlayer')} title={t('matchSetup.removePlayer')}>
+      <button 
+        onClick={() => removePlayer(p.id)} 
+        className="text-gray-400 hover:text-red-600 p-1" 
+        aria-label={t('matchSetup.removePlayer')} 
+        title={t('matchSetup.removePlayer')}
+        data-testid="remove-player-btn"
+      >
         <Trash2 size={16} />
       </button>
     </div>
@@ -379,6 +388,8 @@ const TeamSetup: React.FC<TeamSetupProps> = ({
 
 const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, savedMatches = [] }) => {
   const { t } = useTranslation();
+  const { alert, confirm } = useDialog();
+  const { notifyAutoSave } = useSettings();
   console.log('[MatchSetup] Rendering. SavedMatches length:', savedMatches?.length);
   const [homeName, setHomeName] = useState(t('matchSetup.homeTeam'));
   const [homeColor, setHomeColor] = useState('#2563eb'); // Blue-600
@@ -448,6 +459,57 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
   const [templateName, setTemplateName] = useState('');
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
 
+  // Load Draft on Mount
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem('korfstat_match_setup_draft');
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        if (draft.homeName) setHomeName(draft.homeName);
+        if (draft.homeColor) setHomeColor(draft.homeColor);
+        if (draft.homeSecondaryColor) setHomeSecondaryColor(draft.homeSecondaryColor);
+        if (draft.homeLogoUrl) setHomeLogoUrl(draft.homeLogoUrl);
+        if (draft.homePlayers) setHomePlayers(draft.homePlayers);
+        if (draft.awayName) setAwayName(draft.awayName);
+        if (draft.awayColor) setAwayColor(draft.awayColor);
+        if (draft.awaySecondaryColor) setAwaySecondaryColor(draft.awaySecondaryColor);
+        if (draft.awayLogoUrl) setAwayLogoUrl(draft.awayLogoUrl);
+        if (draft.awayPlayers) setAwayPlayers(draft.awayPlayers);
+        if (draft.profileId) {
+          const profile = DEFAULT_PROFILES.find(p => p.id === draft.profileId);
+          if (profile) setSelectedProfile(profile);
+        }
+        if (draft.seasonId) setSelectedSeasonId(draft.seasonId);
+        console.log('[MatchSetup] Draft restored');
+      }
+    } catch (e) {
+      console.error("Failed to load match setup draft", e);
+    }
+  }, []);
+
+  // Periodic Auto-Save
+  useEffect(() => {
+    const saveInterval = setInterval(() => {
+      const draft = {
+        homeName, homeColor, homeSecondaryColor, homeLogoUrl, homePlayers,
+        awayName, awayColor, awaySecondaryColor, awayLogoUrl, awayPlayers,
+        profileId: selectedProfile.id,
+        seasonId: selectedSeasonId
+      };
+      localStorage.setItem('korfstat_match_setup_draft', JSON.stringify(draft));
+      notifyAutoSave();
+    }, 10000); // Every 10 seconds
+
+    return () => clearInterval(saveInterval);
+  }, [homeName, homeColor, homeSecondaryColor, homeLogoUrl, homePlayers, awayName, awayColor, awaySecondaryColor, awayLogoUrl, awayPlayers, selectedProfile, selectedSeasonId]);
+
+  const handleClearDraft = async () => {
+    if (await confirm(t('common.confirmClearAll'))) {
+        localStorage.removeItem('korfstat_match_setup_draft');
+        window.location.reload();
+    }
+  };
+
   React.useEffect(() => {
     const fetchTemplates = async () => {
       const data = await TemplateService.getAllTemplates();
@@ -467,9 +529,9 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
     }
   });
 
-  const handleSaveTeam = (name: string, color: string, secondaryColor: string, players: Player[]) => {
+  const handleSaveTeam = async (name: string, color: string, secondaryColor: string, players: Player[]) => {
     const newTeam: SavedTeam = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name,
       color,
       secondaryColor,
@@ -481,7 +543,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
     let newSavedTeams;
 
     if (existingIndex >= 0) {
-      if (!confirm(t('matchSetup.overwriteConfirm', { name }))) return;
+      if (!await confirm(t('matchSetup.overwriteConfirm', { name }))) return;
       newSavedTeams = [...savedTeams];
       newSavedTeams[existingIndex] = { ...newSavedTeams[existingIndex], color, secondaryColor, players };
     } else {
@@ -490,7 +552,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
 
     setSavedTeams(newSavedTeams);
     localStorage.setItem('korfstat_saved_teams', JSON.stringify(newSavedTeams));
-    alert(t('matchSetup.teamSaved', { name }));
+    await alert(t('matchSetup.teamSaved', { name }));
   };
 
   const handleLoadTeam = (team: SavedTeam, setTeamName: (s: string) => void, setTeamColor: (s: string) => void, setTeamSecondaryColor: (s: string) => void, setTeamPlayers: (p: Player[]) => void, prefix: string) => {
@@ -542,8 +604,8 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
     generateMatchDayProgram(home, away, selectedProfile, season?.name);
   };
 
-  const handleDeleteTeam = (teamToDelete: SavedTeam) => {
-    if (!confirm(t('matchSetup.deleteConfirm', { name: teamToDelete.name }))) return;
+  const handleDeleteTeam = async (teamToDelete: SavedTeam) => {
+    if (!await confirm(t('matchSetup.deleteConfirm', { name: teamToDelete.name }))) return;
 
     const newSavedTeams = savedTeams.filter(t => t.id !== teamToDelete.id);
     setSavedTeams(newSavedTeams);
@@ -580,12 +642,12 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
 
   const handleSaveTemplate = async () => {
     if (!templateName.trim()) {
-      alert(t('matchSetup.templateNameRequired')); // I should add this key or just use templateName
+      await alert(t('matchSetup.templateNameRequired'));
       return;
     }
 
     const template: MatchTemplate = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: templateName,
       homeTeam: {
         name: homeName,
@@ -610,7 +672,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
       const updated = await TemplateService.getAllTemplates();
       setTemplates(updated);
       setTemplateName('');
-      alert(t('matchSetup.templateSaved', { name: template.name }));
+      await alert(t('matchSetup.templateSaved', { name: template.name }));
     }
   };
 
@@ -637,7 +699,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
   };
 
   const handleDeleteTemplate = async (id: string, name: string) => {
-    if (!confirm(t('matchSetup.deleteConfirm', { name }))) return;
+    if (!await confirm(t('matchSetup.deleteConfirm', { name }))) return;
     const success = await TemplateService.deleteTemplate(id);
     if (success) {
       setTemplates(templates.filter(t => t.id !== id));
@@ -674,6 +736,13 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
           >
             <Save size={16} />
             {t('common.save')}
+          </button>
+          <button
+            onClick={handleClearDraft}
+            className="flex items-center gap-2 px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg text-xs font-bold transition-all transition-colors"
+            title={t('common.clearDraft')}
+          >
+            <Trash2 size={16} />
           </button>
         </div>
 
@@ -756,6 +825,60 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
               </button>
             ))}
           </div>
+
+          {/* Custom Settings Override */}
+          {selectedProfile && (
+            <div className="mt-4 p-4 border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl flex flex-wrap gap-6 items-center shadow-sm">
+              <div className="w-full flex items-center justify-between">
+                <h3 className="text-sm font-bold text-indigo-800 dark:text-indigo-300">{t('matchSetup.customSettings', 'Adjust Preset Rules')}</h3>
+                <span className="text-xs text-gray-500">{t('matchSetup.customSettingsDesc', 'Modify the values below to customize the selected profile for this match.')}</span>
+              </div>
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">{t('matchSetup.periods', 'Periods')}</label>
+                  <input 
+                    type="number" 
+                    aria-label="Periods"
+                    className="w-20 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-2 py-1text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
+                    value={selectedProfile.periods} 
+                    onChange={(e) => setSelectedProfile({...selectedProfile, periods: parseInt(e.target.value) || 1})} 
+                    min={1} 
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">{t('matchSetup.periodDuration', 'Min / Period')}</label>
+                  <input 
+                    type="number" 
+                    aria-label="Minutes per Period"
+                    className="w-24 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-2 py-1text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
+                    value={Math.floor(selectedProfile.periodDurationSeconds / 60)} 
+                    onChange={(e) => setSelectedProfile({...selectedProfile, periodDurationSeconds: (parseInt(e.target.value) || 1) * 60})} 
+                    min={1} 
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                    <input 
+                      type="checkbox" 
+                      className="rounded text-indigo-600"
+                      checked={selectedProfile.hasShotClock} 
+                      onChange={(e) => setSelectedProfile({...selectedProfile, hasShotClock: e.target.checked})} 
+                    />
+                    {t('matchSetup.hasShotClock', 'Shot Clock')}
+                  </label>
+                  <input 
+                    type="number" 
+                    aria-label="Shot Clock Seconds"
+                    className="w-24 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-2 py-1text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-colors disabled:opacity-50"
+                    disabled={!selectedProfile.hasShotClock} 
+                    value={selectedProfile.shotClockDurationSeconds} 
+                    onChange={(e) => setSelectedProfile({...selectedProfile, shotClockDurationSeconds: parseInt(e.target.value) || 0})} 
+                    min={0} 
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {seasons.length > 0 && (
@@ -829,6 +952,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
         <button
           onClick={handleStart}
           className="flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-1 transition-all text-xl font-bold"
+          data-testid="start-match-btn"
         >
           <Play size={24} fill="currentColor" />
           {t('matchSetup.startMatch')}

@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { MatchState } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 import { Download, X } from 'lucide-react';
+import { useDialog } from '../hooks/useDialog';
 import { toPng } from 'html-to-image';
 import { getScore } from '../utils/matchUtils';
 
@@ -12,6 +13,7 @@ interface SocialGraphicGeneratorProps {
 
 const SocialGraphicGenerator: React.FC<SocialGraphicGeneratorProps> = ({ matchState, onClose }) => {
     const { settings } = useSettings();
+    const { alert } = useDialog();
     const [format, setFormat] = useState<'square' | 'story'>('square');
     const [status, setStatus] = useState<'preview' | 'generating' | 'done'>('preview');
     const previewRef = useRef<HTMLDivElement>(null);
@@ -47,13 +49,13 @@ const SocialGraphicGenerator: React.FC<SocialGraphicGeneratorProps> = ({ matchSt
             setTimeout(() => setStatus('preview'), 2000);
         } catch (err) {
             console.error('Failed to generate image', err);
-            alert('Failed to generate image. See console for details.');
+            await alert('Failed to generate image. See console for details.');
             setStatus('preview');
         }
     };
 
-    const isMatchOver = matchState.period === 'FINISHED';
-    const isHalftime = matchState.period === 'HALFTIME';
+    const isMatchOver = (matchState as any).period === 'FINISHED';
+    const isHalftime = (matchState as any).period === 'HALFTIME';
     const matchStatusText = isMatchOver ? 'FINAL SCORE' : isHalftime ? 'HALFTIME' : 'MATCH UPDATE';
 
     // The scale factor allows us to preview a 1080p image inside a smaller modal window

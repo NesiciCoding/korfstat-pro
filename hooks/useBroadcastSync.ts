@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { MatchState } from '../types';
+import { generateUUID } from '../utils/uuid';
 import { useSettings } from '../contexts/SettingsContext';
 
 export const useBroadcastSync = (
@@ -30,33 +31,21 @@ export const useBroadcastSync = (
 
     const [activeSessions, setActiveSessions] = useState<any[]>([]);
 
-    // Initialize Socket Once
+    // BroadcastChannel for true peer-to-peer local cross-tab sync
+    const bcRef = useRef<BroadcastChannel | null>(null);
+
     useEffect(() => {
-        const protocol = window.location.protocol;
-        const hostname = window.location.hostname;
-        const SOCKET_SERVER_URL = `${protocol}//${hostname}:3002`;
+        bcRef.current = new BroadcastChannel('korfstat_sync');
 
-        const newSocket = io(SOCKET_SERVER_URL);
-        setSocket(newSocket);
+        bcRef.current.onmessage = (event) => {
+            const newState = event.data as MatchState;
+            if (matchId && newState.id !== matchId) return;
 
-        newSocket.on('connect', () => {
-            console.log('[Sync] Connected to WebSocket Server');
-            newSocket.emit('request-active-sessions');
-            if (viewNameRef.current) {
-                newSocket.emit('register-view', viewNameRef.current);
-            }
-            if (matchId) {
-                newSocket.emit('join-match', matchId);
-                console.log(`[Sync] Joined match room: ${matchId}`);
-            }
-        });
-
-        newSocket.on('match-update', (newState: MatchState) => {
             const newStateStr = JSON.stringify(newState);
             if (newStateStr === lastBroadcastStateStr.current) return;
             if (newStateStr === lastReceivedStateStr.current) return;
 
-            console.log('[Sync] Received Update via WebSocket');
+            console.log('[Sync] Received Update via BroadcastChannel');
             lastReceivedStateStr.current = newStateStr;
             isProcessingUpdate.current = true;
 
@@ -67,49 +56,126 @@ export const useBroadcastSync = (
             setTimeout(() => {
                 isProcessingUpdate.current = false;
             }, 50);
-        });
-
-        newSocket.on('active-sessions', (sessions: any[]) => {
-            setActiveSessions(sessions);
-        });
-
-        newSocket.on('disconnect', () => {
-            console.log('[Sync] Disconnected from WebSocket Server');
-        });
-
-        newSocket.on('spotter-action', (action: any) => {
-            if (onSpotterActionRef.current) {
-                onSpotterActionRef.current(action);
-            }
-        });
-
-        newSocket.on('companion-action', (action: any) => {
-            if (onCompanionActionRef.current) {
-                onCompanionActionRef.current(action);
-            } else if (onSpotterActionRef.current) {
-                onSpotterActionRef.current(action);
-            }
-        });
-
-        newSocket.on('watch-action', (payload: { action: string }) => {
-            if (onSpotterActionRef.current) {
-                const actionMap: Record<string, string> = {
-                    'TOGGLE_GAME_TIME':  'TOGGLE_TIMER',
-                    'RESET_SHOT_CLOCK':  'RESET_SHOT_CLOCK',
-                };
-                const mappedAction = actionMap[payload?.action];
-                if (mappedAction) {
-                    onSpotterActionRef.current({ action: mappedAction });
-                }
-            }
-        });
+        };
 
         return () => {
-            if (matchId) {
-                newSocket.emit('leave-match', matchId);
+            bcRef.current?.close();
+        };
+    }, [matchId]);
+
+    // Initialize Socket Once
+    useEffect(() => {
+        let newSocket: Socket | null = null;
+        let isMounted = true;
+
+        const initSocket = async () => {
+            let protocol = window.location.protocol;
+            let hostname = window.location.hostname;
+
+            // If running in Tauri (or localhost browser), try to resolve Network IP from local backend
+            // This ensures cross-device tracking uses the correct IP address instead of failing on tauri://
+            if (protocol === 'tauri:' || hostname === 'tauri.localhost' || hostname === 'localhost' || hostname === '127.0.0.1') {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 1000);
+                    const response = await fetch('http://localhost:3002/api/companion/setup-info', { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        protocol = 'http:';
+                        hostname = data.localIp || 'localhost';
+                    } else {
+                        protocol = 'http:';
+                        hostname = 'localhost';
+                    }
+                } catch (e) {
+                    protocol = 'http:';
+                    hostname = 'localhost';
+                }
             }
-            newSocket.disconnect();
-            setSocket(null);
+
+            if (!isMounted) return;
+
+            const SOCKET_SERVER_URL = `${protocol}//${hostname}:3002`;
+            newSocket = io(SOCKET_SERVER_URL);
+            setSocket(newSocket);
+
+            newSocket.on('connect', () => {
+                console.log(`[Sync] Connected to WebSocket Server at ${SOCKET_SERVER_URL}`);
+                newSocket?.emit('request-active-sessions');
+                if (viewNameRef.current) {
+                    newSocket?.emit('register-view', viewNameRef.current);
+                }
+                if (matchId) {
+                    newSocket?.emit('join-match', matchId);
+                    console.log(`[Sync] Joined match room: ${matchId}`);
+                }
+            });
+
+            newSocket.on('match-update', (newState: MatchState) => {
+                const newStateStr = JSON.stringify(newState);
+                if (newStateStr === lastBroadcastStateStr.current) return;
+                if (newStateStr === lastReceivedStateStr.current) return;
+
+                console.log('[Sync] Received Update via WebSocket');
+                lastReceivedStateStr.current = newStateStr;
+                isProcessingUpdate.current = true;
+
+                if (onUpdateRef.current) {
+                    onUpdateRef.current(newState);
+                }
+
+                setTimeout(() => {
+                    isProcessingUpdate.current = false;
+                }, 50);
+            });
+
+            newSocket.on('active-sessions', (sessions: any[]) => {
+                setActiveSessions(sessions);
+            });
+
+            newSocket.on('disconnect', () => {
+                console.log('[Sync] Disconnected from WebSocket Server');
+            });
+
+            newSocket.on('spotter-action', (action: any) => {
+                if (onSpotterActionRef.current) {
+                    onSpotterActionRef.current(action);
+                }
+            });
+
+            newSocket.on('companion-action', (action: any) => {
+                if (onCompanionActionRef.current) {
+                    onCompanionActionRef.current(action);
+                } else if (onSpotterActionRef.current) {
+                    onSpotterActionRef.current(action);
+                }
+            });
+
+            newSocket.on('watch-action', (payload: { action: string }) => {
+                if (onSpotterActionRef.current) {
+                    const actionMap: Record<string, string> = {
+                        'TOGGLE_GAME_TIME':  'TOGGLE_TIMER',
+                        'RESET_SHOT_CLOCK':  'RESET_SHOT_CLOCK',
+                    };
+                    const mappedAction = actionMap[payload?.action];
+                    if (mappedAction) {
+                        onSpotterActionRef.current({ action: mappedAction });
+                    }
+                }
+            });
+        };
+
+        initSocket();
+
+        return () => {
+            isMounted = false;
+            if (newSocket) {
+                if (matchId) newSocket.emit('leave-match', matchId);
+                newSocket.disconnect();
+                setSocket(null);
+            }
         };
     }, [matchId]);
 
@@ -121,6 +187,10 @@ export const useBroadcastSync = (
         if (stateStr === lastBroadcastStateStr.current) return;
         if (stateStr === lastReceivedStateStr.current) return;
 
+        // Broadcast to pure local tabs instantly via BroadcastChannel
+        bcRef.current?.postMessage({ ...state, id: matchId || state.id });
+
+        // Broadcast to cross-device sessions via Socket.io
         socket.emit('match-update', { ...state, id: matchId || state.id });
         lastBroadcastStateStr.current = stateStr;
 
@@ -185,13 +255,13 @@ export const useBroadcastSync = (
              socket.emit('haptic-signal', {
                  matchId,
                  hapticSignal: signalType,
-                 hapticSignalId: crypto.randomUUID()
+                 hapticSignalId: generateUUID()
              });
         }
         fetch('http://localhost:3000/api/sync-watch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ hapticSignal: signalType, hapticSignalId: crypto.randomUUID() })
+            body: JSON.stringify({ hapticSignal: signalType, hapticSignalId: generateUUID() })
         }).catch(() => {});
     }, [socket]);
 

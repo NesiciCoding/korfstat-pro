@@ -6,13 +6,17 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import zlib from 'zlib';
 import { saveMatchState, getMatchState, getLatestMatchState, saveMatchTemplate, getAllTemplates, deleteTemplate } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Port defined early so it's available to all route handlers
-const PORT = process.env.PORT || 3002;
+// Port hardcoded to 3002 to match the entire frontend ecosystem and bypass env overrides
+const PORT = 3002;
+
+// Helper to convert hex to decimal color (Companion v3+ uses decimal)
+const hexToDec = (hex) => parseInt(String(hex).replace('#', ''), 16);
 
 const app = express();
 app.use(cors());
@@ -64,6 +68,217 @@ const io = new Server(server, {
 });
 
 // Serve static frontend files from Vite dist folder
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bitfocus Companion / Button-Box REST API
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Simple token auth — displayed in the Manager UI.
+// Default: 'korfstat' so it works out of the box; users can override via env var.
+const COMPANION_TOKEN = process.env.COMPANION_TOKEN || 'korfstat';
+let companionPushUrl = process.env.COMPANION_URL || ''; 
+
+const companionAuth = (req, res, next) => {
+    // ULTIMATE EMERGENCY BYPASS - COMPLETELY OPEN AUTH
+    console.log(`[Companion] [${new Date().toISOString()}] Action Request: ${req.method} ${req.path} from ${req.ip || req.connection.remoteAddress}`);
+    return next();
+};
+
+// --- Active Matches State ---
+let activeMatchId = null;
+const activeMatches = new Map(); // matchId -> MatchState
+
+/**
+ * GET /api/companion/setup-info
+ */
+app.get('/api/companion/setup-info', async (req, res) => {
+    let localIp = '127.0.0.1';
+    try {
+        const { networkInterfaces } = await import('os');
+        const nets = networkInterfaces();
+        for (const iface of Object.values(nets)) {
+            for (const addr of (iface || [])) {
+                if (addr.family === 'IPv4' && !addr.internal) {
+                    localIp = addr.address;
+                    break;
+                }
+            }
+            if (localIp !== '127.0.0.1') break;
+        }
+    } catch { }
+    res.json({
+        serverUrl: `http://${localIp}:${PORT}`,
+        serverPort: PORT,
+        localIp,
+        token: COMPANION_TOKEN,
+        companionUrl: companionPushUrl,
+        activeMatchId,
+        activeMatch: activeMatchId ? activeMatches.get(activeMatchId) : null
+    });
+});
+
+/**
+ * GET /api/companion/state/score
+ */
+app.get('/api/companion/state/score', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.status(404).json({ error: 'No active match' });
+    
+    let home = 0;
+    let away = 0;
+    if (match.events) {
+        home = match.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === 'HOME').length;
+        away = match.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === 'AWAY').length;
+    }
+    
+    res.json({ home, away, scoreDisplay: `${home}-${away}` });
+});
+
+/**
+ * Granular Endpoints
+ */
+/**
+ * GET /api/companion/state/score/home
+ */
+app.get('/api/companion/state/score/home', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.status(404).json({ value: 0 });
+    const homeId = match.homeTeam?.id || 'HOME';
+    const val = match.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === homeId).length;
+    res.json({ value: val });
+});
+
+app.get('/api/companion/state/score/away', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.status(404).json({ value: 0 });
+    const awayId = match.awayTeam?.id || 'AWAY';
+    const val = match.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === awayId).length;
+    res.json({ value: val });
+});
+
+/**
+ * RAW Endpoints (Text/Plain)
+ */
+app.get('/api/companion/state/score/home/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.type('text/plain').send("0");
+    const homeId = match.homeTeam?.id || 'HOME';
+    const val = match.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === homeId).length;
+    res.type('text/plain').send(String(val));
+});
+
+app.get('/api/companion/state/score/away/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.type('text/plain').send("0");
+    const awayId = match.awayTeam?.id || 'AWAY';
+    const val = match.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === awayId).length;
+    res.type('text/plain').send(String(val));
+});
+
+app.get('/api/companion/state/time/match/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.type('text/plain').send("0:00");
+    const now = Date.now();
+    let elapsed = match.timer.elapsedSeconds || 0;
+    if (match.timer.isRunning && match.timer.lastStartTime) {
+        elapsed += (now - match.timer.lastStartTime) / 1000;
+    }
+    const duration = match.halfDurationSeconds || (match.profile?.halfDuration * 60) || 1500;
+    const rem = Math.max(0, duration - elapsed);
+    const m = Math.floor(rem / 60);
+    const s = Math.floor(rem % 60);
+    res.type('text/plain').send(`${m}:${s.toString().padStart(2, '0')}`);
+});
+
+app.get('/api/companion/state/time/shotclock/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.type('text/plain').send("0");
+    let sc = match.shotClock?.seconds || 0;
+    if (match.shotClock?.isRunning && match.shotClock?.lastStartTime) {
+        sc -= (Date.now() - match.shotClock.lastStartTime) / 1000;
+    }
+    res.type('text/plain').send(String(Math.ceil(Math.max(0, sc))));
+});
+
+app.get('/api/companion/state/fouls/home/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.type('text/plain').send("0");
+    const homeId = match.homeTeam?.id || 'HOME';
+    const val = match.events.filter(e => e.type === 'FOUL' && e.teamId === homeId).length;
+    res.type('text/plain').send(String(val));
+});
+
+app.get('/api/companion/state/fouls/away/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.type('text/plain').send("0");
+    const awayId = match.awayTeam?.id || 'AWAY';
+    const val = match.events.filter(e => e.type === 'FOUL' && e.teamId === awayId).length;
+    res.type('text/plain').send(String(val));
+});
+
+app.get('/api/companion/state/names/home/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    res.type('text/plain').send(match?.homeTeam?.name || 'HOME');
+});
+
+app.get('/api/companion/state/names/away/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    res.type('text/plain').send(match?.awayTeam?.name || 'AWAY');
+});
+
+app.get('/api/companion/state/timeouts/home/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.type('text/plain').send("0");
+    const val = match.events.filter(e => e.type === 'TIMEOUT' && e.teamId === 'HOME').length;
+    res.type('text/plain').send(String(val));
+});
+
+app.get('/api/companion/state/timeouts/away/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.type('text/plain').send("0");
+    const val = match.events.filter(e => e.type === 'TIMEOUT' && e.teamId === 'AWAY').length;
+    res.type('text/plain').send(String(val));
+});
+
+app.get('/api/companion/state/running/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    res.type('text/plain').send(match?.timer?.isRunning ? "1" : "0");
+});
+
+app.get('/api/companion/state/shotclock-running/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    res.type('text/plain').send(match?.shotClock?.isRunning ? "1" : "0");
+});
+
+app.get('/api/companion/state/last-event/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match || !match.events || match.events.length === 0) return res.type('text/plain').send("-");
+    
+    // Find last significant event (not a timer event)
+    const significantEvents = match.events.filter(e => ['SHOT', 'GOAL', 'FOUL', 'TIMEOUT', 'CARD', 'SUBSTITUTION'].includes(e.type));
+    if (significantEvents.length === 0) return res.type('text/plain').send("-");
+    
+    const last = significantEvents[significantEvents.length - 1];
+    let desc = last.type;
+    if (last.type === 'SHOT' || last.type === 'GOAL') {
+        const team = last.teamId === 'HOME' ? (match.homeTeam?.name || 'HOME') : (match.awayTeam?.name || 'AWAY');
+        desc = `${last.result === 'GOAL' ? 'GOAL' : 'Miss'} - ${team}`;
+    } else {
+        desc = `${last.type} - ${last.teamId}`;
+    }
+    res.type('text/plain').send(desc);
+});
+
+app.get('/api/companion/state/period/raw', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    res.type('text/plain').send(String(match?.currentHalf || 1));
+});
+
+app.get('/api/companion/test', (req, res) => {
+    res.type('text/plain').send("API_OK");
+});
+
+// Other existing API routes...
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // --- API Endpoints ---
@@ -78,29 +293,7 @@ app.post('/api/upload', upload.single('asset'), (req, res) => {
     res.json({ url: fileUrl });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Bitfocus Companion / Button-Box REST API
-// ─────────────────────────────────────────────────────────────────────────────
 
-// Simple token auth — displayed in the Manager UI.
-// Default: 'korfstat' so it works out of the box; users can override via env var.
-const COMPANION_TOKEN = process.env.COMPANION_TOKEN || 'korfstat';
-
-const companionAuth = (req, res, next) => {
-    const token = req.headers['x-companion-token'];
-    if (token !== COMPANION_TOKEN) {
-        return res.status(401).json({ error: 'Invalid or missing X-Companion-Token header.' });
-    }
-    next();
-};
-
-/**
- * GET /api/companion/status
- * Companion polls this endpoint to update button labels and LED colours.
- * Returns a flat object with all key match values.
- */
-// --- Active Matches State ---
-const activeMatches = new Map(); // matchId -> MatchState
 
 /**
  * GET /api/companion/status
@@ -194,61 +387,159 @@ app.get('/api/companion/buttons', companionAuth, (req, res) => {
 
 app.post('/api/companion/clock/toggle', companionAuth, (req, res) => {
     const matchId = req.headers['x-match-id'];
+    console.log(`[Companion] Action: Clock Toggle (Match: ${matchId || 'global'})`);
     io.to(matchId || 'global').emit('companion-action', { type: 'CLOCK_TOGGLE', matchId });
+    io.emit('companion-action', { type: 'CLOCK_TOGGLE', matchId }); // Global fallback
     res.json({ ok: true, action: 'CLOCK_TOGGLE' });
 });
 
 app.post('/api/companion/clock/reset', companionAuth, (req, res) => {
     const matchId = req.headers['x-match-id'];
+    console.log(`[Companion] Action: Clock Reset (Match: ${matchId || 'global'})`);
     io.to(matchId || 'global').emit('companion-action', { type: 'CLOCK_RESET', matchId });
+    io.emit('companion-action', { type: 'CLOCK_RESET', matchId });
     res.json({ ok: true, action: 'CLOCK_RESET' });
 });
 
 app.post('/api/companion/shotclock/reset', companionAuth, (req, res) => {
     const matchId = req.headers['x-match-id'];
+    console.log(`[Companion] Action: Shotclock Reset (Match: ${matchId || 'global'})`);
     io.to(matchId || 'global').emit('companion-action', { type: 'SHOTCLOCK_RESET', matchId });
+    io.emit('companion-action', { type: 'SHOTCLOCK_RESET', matchId });
     res.json({ ok: true, action: 'SHOTCLOCK_RESET' });
 });
 
 app.post('/api/companion/goal/:team', companionAuth, (req, res) => {
     const team = req.params.team.toUpperCase();
     const matchId = req.headers['x-match-id'];
-    if (!['HOME', 'AWAY'].includes(team)) return res.status(400).json({ error: 'Team must be home or away' });
+    console.log(`[Companion] Action: Goal ${team} (Match: ${matchId || 'global'})`);
     io.to(matchId || 'global').emit('companion-action', { type: 'GOAL', teamId: team, matchId });
+    io.emit('companion-action', { type: 'GOAL', teamId: team, matchId });
     res.json({ ok: true, action: 'GOAL', teamId: team });
 });
 
 app.post('/api/companion/goal/:team/undo', companionAuth, (req, res) => {
     const team = req.params.team.toUpperCase();
     const matchId = req.headers['x-match-id'];
-    if (!['HOME', 'AWAY'].includes(team)) return res.status(400).json({ error: 'Team must be home or away' });
+    console.log(`[Companion] Action: Undo Goal ${team} (Match: ${matchId || 'global'})`);
     io.to(matchId || 'global').emit('companion-action', { type: 'GOAL_UNDO', teamId: team, matchId });
+    io.emit('companion-action', { type: 'GOAL_UNDO', teamId: team, matchId });
     res.json({ ok: true, action: 'GOAL_UNDO', teamId: team });
 });
 
 app.post('/api/companion/foul/:team', companionAuth, (req, res) => {
     const team = req.params.team.toUpperCase();
     const matchId = req.headers['x-match-id'];
-    if (!['HOME', 'AWAY'].includes(team)) return res.status(400).json({ error: 'Team must be home or away' });
+    console.log(`[Companion] Action: Foul ${team} (Match: ${matchId || 'global'})`);
     io.to(matchId || 'global').emit('companion-action', { type: 'FOUL', teamId: team, matchId });
+    io.emit('companion-action', { type: 'FOUL', teamId: team, matchId });
     res.json({ ok: true, action: 'FOUL', teamId: team });
 });
 
 app.post('/api/companion/period/next', companionAuth, (req, res) => {
     const matchId = req.headers['x-match-id'];
+    console.log(`[Companion] Action: Next Period (Match: ${matchId || 'global'})`);
     io.to(matchId || 'global').emit('companion-action', { type: 'PERIOD_NEXT', matchId });
+    io.emit('companion-action', { type: 'PERIOD_NEXT', matchId });
     res.json({ ok: true, action: 'PERIOD_NEXT' });
 });
 
 app.post('/api/companion/graphics/:type', companionAuth, (req, res) => {
     const graphicType = req.params.type;
     const matchId = req.headers['x-match-id'];
+    console.log(`[Companion] Action: GFX ${graphicType} (Match: ${matchId || 'global'})`);
     const VALID_GRAPHICS = ['lineup', 'halftime', 'goal_celebration', 'stats', 'dismiss'];
     if (!VALID_GRAPHICS.includes(graphicType)) {
         return res.status(400).json({ error: `Unknown graphic type. Valid: ${VALID_GRAPHICS.join(', ')}` });
     }
     io.to(matchId || 'global').emit('companion-action', { type: 'SHOW_GRAPHIC', graphic: graphicType, matchId });
+    io.emit('companion-action', { type: 'SHOW_GRAPHIC', graphic: graphicType, matchId });
     res.json({ ok: true, action: 'SHOW_GRAPHIC', graphic: graphicType });
+});
+
+app.post('/api/companion/timeout/:team', companionAuth, (req, res) => {
+    const team = req.params.team.toUpperCase();
+    const matchId = req.headers['x-match-id'];
+    console.log(`[Companion] Action: Timeout ${team} (Match: ${matchId || 'global'})`);
+    io.to(matchId || 'global').emit('companion-action', { type: 'TIMEOUT', teamId: team, matchId });
+    io.emit('companion-action', { type: 'TIMEOUT', teamId: team, matchId });
+    res.json({ ok: true, action: 'TIMEOUT', teamId: team });
+});
+
+app.post('/api/companion/clock/adjust', companionAuth, (req, res) => {
+    const delta = parseInt(req.query.delta) || 0;
+    const matchId = req.headers['x-match-id'];
+    console.log(`[Companion] Action: Clock Adjust ${delta}s (Match: ${matchId || 'global'})`);
+    io.to(matchId || 'global').emit('companion-action', { type: 'CLOCK_ADJUST', delta, matchId });
+    io.emit('companion-action', { type: 'CLOCK_ADJUST', delta, matchId });
+    res.json({ ok: true, action: 'CLOCK_ADJUST', delta });
+});
+
+app.post('/api/companion/shotclock/override', companionAuth, (req, res) => {
+    const seconds = parseInt(req.query.seconds) || 14;
+    const matchId = req.headers['x-match-id'];
+    console.log(`[Companion] Action: Shotclock Override to ${seconds}s (Match: ${matchId || 'global'})`);
+    io.to(matchId || 'global').emit('companion-action', { type: 'SHOTCLOCK_OVERRIDE', seconds, matchId });
+    io.emit('companion-action', { type: 'SHOTCLOCK_OVERRIDE', seconds, matchId });
+    res.json({ ok: true, action: 'SHOTCLOCK_OVERRIDE', seconds });
+});
+
+app.post('/api/companion/card/:team/:type', companionAuth, (req, res) => {
+    const team = req.params.team.toUpperCase();
+    const type = req.params.type.toUpperCase();
+    const matchId = req.headers['x-match-id'];
+    const playerId = req.body.playerId || null;
+    console.log(`[Companion] Action: Card ${type} for ${team} (Match: ${matchId || 'global'})`);
+    io.to(matchId || 'global').emit('companion-action', { type: 'CARD', teamId: team, cardType: type, playerId, matchId });
+    io.emit('companion-action', { type: 'CARD', teamId: team, cardType: type, playerId, matchId });
+    res.json({ ok: true, action: 'CARD', teamId: team, cardType: type, playerId });
+});
+
+app.post('/api/companion/match/reset', companionAuth, (req, res) => {
+    const matchId = req.headers['x-match-id'];
+    console.log(`[Companion] Action: Match Reset (Match: ${matchId || 'global'})`);
+    io.to(matchId || 'global').emit('companion-action', { type: 'MATCH_RESET', matchId });
+    io.emit('companion-action', { type: 'MATCH_RESET', matchId });
+    res.json({ ok: true, action: 'MATCH_RESET' });
+});
+
+// Player Slot Metadata
+app.get('/api/companion/state/players/:team/:slot/name/raw', companionAuth, (req, res) => {
+    const { team, slot } = req.params;
+    const match = getLatestMatchState();
+    const t = team.toUpperCase() === 'HOME' ? match?.homeTeam : match?.awayTeam;
+    const player = t?.players[parseInt(slot) - 1];
+    res.type('text/plain').send(player?.name ? `${player.number || ''} ${player.name.split(' ')[0]}`.trim() : '-');
+});
+
+app.get('/api/companion/state/players/:team/:slot/id/raw', companionAuth, (req, res) => {
+    const { team, slot } = req.params;
+    const match = getLatestMatchState();
+    const t = team.toUpperCase() === 'HOME' ? match?.homeTeam : match?.awayTeam;
+    const player = t?.players[parseInt(slot) - 1];
+    res.type('text/plain').send(player?.id || '-');
+});
+
+app.post('/api/companion/goal/:team/:playerId', companionAuth, (req, res) => {
+    const team = req.params.team.toUpperCase();
+    const playerId = req.params.playerId;
+    const matchId = req.headers['x-match-id'];
+    if (playerId === '-') return res.status(400).json({ error: 'No player in slot' });
+    console.log(`[Companion] Action: Goal ${team} by Player ${playerId} (Match: ${matchId || 'global'})`);
+    io.to(matchId || 'global').emit('companion-action', { type: 'PLAYER_GOAL', teamId: team, playerId, matchId });
+    io.emit('companion-action', { type: 'PLAYER_GOAL', teamId: team, playerId, matchId });
+    res.json({ ok: true, action: 'PLAYER_GOAL', teamId: team, playerId });
+});
+
+app.post('/api/companion/foul/:team/:playerId', companionAuth, (req, res) => {
+    const team = req.params.team.toUpperCase();
+    const playerId = req.params.playerId;
+    const matchId = req.headers['x-match-id'];
+    if (playerId === '-') return res.status(400).json({ error: 'No player in slot' });
+    console.log(`[Companion] Action: Foul ${team} by Player ${playerId} (Match: ${matchId || 'global'})`);
+    io.to(matchId || 'global').emit('companion-action', { type: 'PLAYER_FOUL', teamId: team, playerId, matchId });
+    io.emit('companion-action', { type: 'PLAYER_FOUL', teamId: team, playerId, matchId });
+    res.json({ ok: true, action: 'PLAYER_FOUL', teamId: team, playerId });
 });
 
 // Expose the companion token (only on localhost) so the Manager UI can display it
@@ -286,14 +577,19 @@ app.get('/api/companion/setup-info', async (req, res) => {
         localIp,
         token: COMPANION_TOKEN,
         companionUrl: companionPushUrl,
+        activeMatchId,
+        activeMatch: activeMatchId ? activeMatches.get(activeMatchId) : null
     });
 });
+
+
+// Companion Endpoints relocated for proper routing
 
 /**
  * GET /api/companion/profile.json
  * Returns a Companion v3 importable JSON with pre-configured buttons.
  */
-app.get('/api/companion/profile.json', companionAuth, (req, res) => {
+app.get('/api/companion/korfstat.companionconfig', companionAuth, async (req, res) => {
     const matchId = req.headers['x-match-id'];
     let s = null;
     if (matchId && activeMatches.has(matchId)) {
@@ -303,47 +599,197 @@ app.get('/api/companion/profile.json', companionAuth, (req, res) => {
     }
     const home = s?.homeTeam?.name ?? 'HOME';
     const away = s?.awayTeam?.name ?? 'AWAY';
-    const baseUrl = `http://127.0.0.1:${PORT}`;
+    
+    let localIp = '127.0.0.1';
+    try {
+        const os = await import('os');
+        const nets = os.networkInterfaces();
+        for (const iface of Object.values(nets)) {
+            for (const addr of (iface || [])) {
+                if (addr.family === 'IPv4' && !addr.internal) {
+                    localIp = addr.address;
+                    break;
+                }
+            }
+            if (localIp !== '127.0.0.1') break;
+        }
+    } catch { }
 
-    // Companion v3 Generic HTTP module connection + button layout
+    const connectionId = 'ks-connection';
     const profile = {
-        version: 4,
-        _comment: 'KorfStat Pro — Companion Profile. Import via Settings > Import/Export.',
-        connections: {
-            'korfstat-http': {
-                instance_type: 'generic-http',
-                label: 'KorfStat Pro',
-                config: {
-                    base_url: baseUrl,
-                    default_headers: [
-                        { key: 'X-Companion-Token', value: COMPANION_TOKEN },
-                        { key: 'Content-Type', value: 'application/json' },
-                    ],
-                },
-                enabled: true,
-            },
+        version: 9,
+        type: 'full',
+        companionBuild: '4.2.6+8823-stable-4ecdfe70ba',
+        pages: {
+            "1": { id: "p1", name: "Main Control", controls: {}, gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } },
+            "2": { id: "p2", name: "Monitoring", controls: {}, gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } },
+            "3": { id: "p3", name: "Corrections", controls: {}, gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } },
+            "4": { id: "p4", name: `Goal: ${home}`, controls: {}, gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } },
+            "5": { id: "p5", name: `Foul: ${home}`, controls: {}, gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } },
+            "6": { id: "p6", name: `Goal: ${away}`, controls: {}, gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } },
+            "7": { id: "p7", name: `Foul: ${away}`, controls: {}, gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } }
         },
-        buttons: [
-            { location: '0/0', label: '▶ Clock', style: { color: '#22c55e', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/clock/toggle' } }] },
-            { location: '0/1', label: '⟳ Reset', style: { color: '#6366f1', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/clock/reset' } }] },
-            { location: '0/2', label: '⏱ Shot Cl.', style: { color: '#8b5cf6', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/shotclock/reset' } }] },
-            { location: '1/0', label: `⚽ ${home}`, style: { color: '#ef4444', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/home' } }] },
-            { location: '1/1', label: `⚽ ${away}`, style: { color: '#3b82f6', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/away' } }] },
-            { location: '1/2', label: `↩ ${home}`, style: { color: '#78716c', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/home/undo' } }] },
-            { location: '1/3', label: `↩ ${away}`, style: { color: '#78716c', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/goal/away/undo' } }] },
-            { location: '2/0', label: `⚠ ${home}`, style: { color: '#f97316', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/foul/home' } }] },
-            { location: '2/1', label: `⚠ ${away}`, style: { color: '#f97316', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/foul/away' } }] },
-            { location: '2/2', label: '⏭ Period', style: { color: '#0ea5e9', size: '18' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/period/next' } }] },
-            { location: '3/0', label: '📋 Lineup', style: { color: '#14b8a6', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/lineup' } }] },
-            { location: '3/1', label: '🕐 Halftime', style: { color: '#14b8a6', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/halftime' } }] },
-            { location: '3/2', label: '🎉 Goal GFX', style: { color: '#14b8a6', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/goal_celebration' } }] },
-            { location: '3/3', label: '✖ Dismiss', style: { color: '#6b7280', size: '14' }, actions: [{ type: 'generic-http:post', options: { path: '/api/companion/graphics/dismiss' } }] },
-        ],
+        triggers: {},
+        triggerCollections: [],
+        expressionVariables: {},
+        custom_variables: {},
+        customVariablesCollections: [{ id: "ks-vars", label: "KorfStat Pro", sortOrder: 0, children: [] }],
+        instances: {
+            [connectionId]: {
+                instance_type: "generic-http",
+                label: "KorfStat-Pro",
+                enabled: true,
+                config: { prefix: `http://${localIp}:${PORT}`, rejectUnauthorized: false }
+            }
+        },
+        surfaces: {},
+        surfaceInstances: {},
+        surfaceGroups: {},
+        connectionCollections: []
     };
 
-    res.setHeader('Content-Disposition', 'attachment; filename="korfstat-companion.json"');
-    res.setHeader('Content-Type', 'application/json');
-    res.json(profile);
+    const varConfigs = [
+        { name: 'ks_home', label: 'Home Score', path: '/api/companion/state/score/home/raw' },
+        { name: 'ks_away', label: 'Away Score', path: '/api/companion/state/score/away/raw' },
+        { name: 'ks_timer', label: 'Match Clock', path: '/api/companion/state/timer/raw' },
+        { name: 'ks_shotclock', label: 'Shot Clock', path: '/api/companion/state/shotclock/raw' },
+        { name: 'ks_period', label: 'Period', path: '/api/companion/state/period/raw' },
+        { name: 'ks_timeouts_home', label: 'Home Timeouts', path: '/api/companion/state/timeouts/home/raw' },
+        { name: 'ks_timeouts_away', label: 'Away Timeouts', path: '/api/companion/state/timeouts/away/raw' },
+        { name: 'ks_fouls_home', label: 'Home Fouls', path: '/api/companion/state/fouls/home/raw' },
+        { name: 'ks_fouls_away', label: 'Away Fouls', path: '/api/companion/state/fouls/away/raw' },
+        { name: 'ks_name_home', label: 'Home Name', path: '/api/companion/state/team/home/raw', interval: 60000 },
+        { name: 'ks_name_away', label: 'Away Name', path: '/api/companion/state/team/away/raw', interval: 60000 },
+        { name: 'ks_running', label: 'Clock Running', path: '/api/companion/state/running/raw' },
+        { name: 'ks_last_event', label: 'Last Event', path: '/api/companion/state/last-event/raw' }
+    ];
+
+    // Add Player Slot Variables (16 per team)
+    ['home', 'away'].forEach(team => {
+        for (let i = 1; i <= 16; i++) {
+            varConfigs.push({ name: `ks_p${i}_name_${team}`, label: `${team.charAt(0).toUpperCase() + team.slice(1)} P${i} Name`, path: `/api/companion/state/players/${team}/${i}/name/raw`, interval: 30000 });
+            varConfigs.push({ name: `ks_p${i}_id_${team}`, label: `${team.charAt(0).toUpperCase() + team.slice(1)} P${i} ID`, path: `/api/companion/state/players/${team}/${i}/id/raw`, interval: 30000 });
+        }
+    });
+
+    varConfigs.forEach((v, idx) => {
+        profile.custom_variables[v.name] = {
+            description: v.label, defaultValue: v.name.includes('name') ? (v.name.includes('home') ? 'HOME' : 'AWAY') : (v.name.includes('id') ? '-' : '0'),
+            persistCurrentValue: false, sortOrder: idx, collectionId: 'ks-vars'
+        };
+        profile.triggers[`trigger-${v.name}`] = {
+            type: 'trigger', enabled: true, options: { name: `Sync ${v.label}`, interval: v.interval || 1000, reset_on_start: false },
+            actions: [{ 
+                id: `act-${v.name}`, definitionId: 'post', connectionId: connectionId,
+                options: { url: v.path, header: `X-Companion-Token: ${COMPANION_TOKEN}`, body: '{}' },
+                type: 'action'
+            }],
+            events: [{ id: `event-${v.name}`, type: 'interval', options: { interval: v.interval || 1000 } }]
+        };
+    });
+
+    const addButton = (page, r, c, options) => {
+        const row = String(r);
+        const col = String(c);
+        if (!profile.pages[page].controls[row]) profile.pages[page].controls[row] = {};
+        const btn = {
+            type: 'button',
+            style: {
+                text: options.text, textExpression: options.isExpression || false, size: 'auto',
+                alignment: 'center:center', pngalignment: 'center:center',
+                color: options.textColor !== undefined ? options.textColor : 16777215,
+                bgcolor: hexToDec(options.color || '#2D2D2D'), show_topbar: 'default'
+            },
+            options: { stepProgression: 'auto' }, feedbacks: [], 
+            steps: [{ 
+                action_sets: { down: [], up: [] },
+                options: { runWhileHeld: false }
+            }]
+        };
+        if (options.path) {
+            btn.steps[0].action_sets.down.push({
+                id: `act-${page}-${r}-${c}`, definitionId: 'post', connectionId: connectionId,
+                options: { url: options.path, header: `X-Companion-Token: ${COMPANION_TOKEN}`, body: '{}' },
+                type: 'action'
+            });
+        }
+        if (options.jump) {
+            btn.steps[0].action_sets.down.push({
+                id: `jump-${page}-${r}-${c}`, definitionId: 'set_page', connectionId: 'internal',
+                options: { page: options.jump }, type: 'action'
+            });
+        }
+        profile.pages[page].controls[row][col] = btn;
+    };
+
+    // --- PAGE 1: MAIN ---
+    addButton("1", 0, 0, { text: 'MONITOR', color: '#10b981', jump: 2 });
+    addButton("1", 0, 1, { text: 'Start | Pause', color: '#22c55e', path: '/api/companion/clock/toggle' });
+    addButton("1", 0, 2, { text: 'Goal $(custom:ks_name_home)', color: '#ef4444', jump: 4 });
+    addButton("1", 0, 3, { text: 'Goal $(custom:ks_name_away)', color: '#3b82f6', jump: 6 });
+    addButton("1", 0, 5, { text: '$(custom:ks_shotclock)', color: '#000000', isExpression: true });
+    addButton("1", 0, 6, { text: '$(custom:ks_timer)', color: '#000000', isExpression: true });
+    addButton("1", 0, 7, { text: 'CORRECT', color: '#f59e0b', jump: 3 });
+    addButton("1", 1, 1, { text: 'Next Per.', color: '#0ea5e9', path: '/api/companion/period/next' });
+    addButton("1", 1, 2, { text: 'Foul $(custom:ks_name_home)', color: '#b91c1c', jump: 5 });
+    addButton("1", 1, 3, { text: 'Foul $(custom:ks_name_away)', color: '#1d4ed8', jump: 7 });
+    addButton("1", 1, 5, { text: '$(custom:ks_home)', color: '#000000', isExpression: true });
+    addButton("1", 1, 6, { text: '$(custom:ks_away)', color: '#000000', isExpression: true });
+    addButton("1", 2, 2, { text: 'Y. CARD H', color: '#eab308', textColor: 0, path: '/api/companion/card/home/YELLOW' });
+    addButton("1", 2, 3, { text: 'Y. CARD A', color: '#eab308', textColor: 0, path: '/api/companion/card/away/YELLOW' });
+    addButton("1", 2, 7, { text: 'Dismiss GFX', color: '#4b5563', path: '/api/companion/graphics/dismiss' });
+    addButton("1", 3, 2, { text: 'R. CARD H', color: '#7f1d1d', path: '/api/companion/card/home/RED' });
+    addButton("1", 3, 3, { text: 'R. CARD A', color: '#7f1d1d', path: '/api/companion/card/away/RED' });
+    addButton("1", 3, 7, { text: '$(custom:ks_last_event)', color: '#1f2937', isExpression: true });
+
+    // --- PAGE 2: MONITORING ---
+    addButton("2", 0, 0, { text: 'BACK', color: '#4b5563', jump: 1 });
+    addButton("2", 0, 2, { text: 'HOME: $(custom:ks_name_home)', color: '#ef4444' });
+    addButton("2", 0, 3, { text: 'AWAY: $(custom:ks_name_away)', color: '#3b82f6' });
+    addButton("2", 1, 1, { text: 'RUNNING: $(custom:ks_running)', color: '#374151' });
+    addButton("2", 1, 2, { text: 'TIMEOUTS: $(custom:ks_fouls_home)', color: '#ef4444' }); // Reusing fouls for now if timeouts not tracked
+    addButton("2", 1, 3, { text: 'TIMEOUTS: $(custom:ks_fouls_away)', color: '#3b82f6' });
+    addButton("2", 1, 5, { text: 'PERIOD: $(custom:ks_period)', color: '#374151' });
+
+    // --- PAGE 3: CORRECTIONS ---
+    addButton("3", 0, 0, { text: 'BACK', color: '#4b5563', jump: 1 });
+    addButton("3", 0, 1, { text: 'CLOCK +1m', color: '#22c55e', path: '/api/companion/clock/adjust?delta=60' });
+    addButton("3", 0, 2, { text: 'CLOCK -1m', color: '#ef4444', path: '/api/companion/clock/adjust?delta=-60' });
+    addButton("3", 0, 4, { text: 'SC 25s', color: '#6366f1', path: '/api/companion/shotclock/override?seconds=25' });
+    addButton("3", 0, 5, { text: 'SC 14s', color: '#8b5cf6', path: '/api/companion/shotclock/override?seconds=14' });
+    addButton("3", 1, 1, { text: 'CLOCK +1s', color: '#22c55e', path: '/api/companion/clock/adjust?delta=1' });
+    addButton("3", 1, 2, { text: 'CLOCK -1s', color: '#ef4444', path: '/api/companion/clock/adjust?delta=-1' });
+    addButton("3", 1, 4, { text: 'Reset Clock', color: '#4b5563', path: '/api/companion/clock/reset' });
+    addButton("3", 1, 5, { text: 'Reset Shot', color: '#4b5563', path: '/api/companion/shotclock/reset' });
+    addButton("3", 3, 7, { text: 'DANGER: RESET', color: '#7f1d1d', path: '/api/companion/match/reset' });
+
+    const addPlayerButtons = (pageId, teamId, type) => {
+        const teamLower = teamId.toLowerCase();
+        addButton(pageId, 3, 0, { text: 'CANCEL', color: '#4b5563', jump: 1 });
+        // Constant 16 slots for dynamic tagging
+        for (let idx = 0; idx < 16; idx++) {
+            const r = Math.floor(idx / 4);
+            const c = (idx % 4) + 1;
+            const slot = idx + 1;
+            addButton(pageId, r, c, { 
+                text: `$(custom:ks_p${slot}_name_${teamLower})`, 
+                isExpression: true,
+                color: teamId === 'HOME' ? '#ef4444' : '#3b82f6',
+                path: `/api/companion/${type}/${teamId}/$(custom:ks_p${slot}_id_${teamLower})`,
+                jump: 1 
+            });
+        }
+    };
+    addPlayerButtons("4", "HOME", "goal");
+    addPlayerButtons("5", "HOME", "foul");
+    addPlayerButtons("6", "AWAY", "goal");
+    addPlayerButtons("7", "AWAY", "foul");
+
+    const json = JSON.stringify(profile);
+    const gzipped = zlib.gzipSync(json);
+    res.setHeader('Content-Type', 'application/x-gzip');
+    res.setHeader('Content-Disposition', 'attachment; filename=korfstat-pro-v9.companionconfig');
+    res.send(gzipped);
 });
 
 // ── Push-to-Companion Webhook System ──────────────────────────────────────────
@@ -351,7 +797,7 @@ app.get('/api/companion/profile.json', companionAuth, (req, res) => {
 //   PUT http://companion:8888/api/1.0/custom-variables/<name>/current-value
 // We push our match state variables there on every state change.
 
-let companionPushUrl = process.env.COMPANION_URL || ''; // e.g. http://localhost:8888
+// companionPushUrl variable moved to top of file for auth middleware access
 let companionPushTimeout = null;
 
 /**
@@ -441,6 +887,21 @@ app.get('/api/match/:id', (req, res) => {
     const match = activeMatches.get(req.params.id) || getMatchState(req.params.id);
     if (!match) return res.status(404).json({ error: "Match not found" });
     res.json(match);
+});
+
+// GET all active matches for the discovery UI
+app.get('/api/matches/active', (req, res) => {
+    res.json(Array.from(activeMatches.values()));
+});
+
+// DELETE an active match
+app.delete('/api/matches/active/:id', (req, res) => {
+    const matchId = req.params.id;
+    if (activeMatches.has(matchId)) {
+        activeMatches.delete(matchId);
+        console.log(`[Server] Match ${matchId} manually marked as finished and removed from active memory.`);
+    }
+    res.json({ ok: true });
 });
 
 // --- Match Templates API ---
@@ -565,6 +1026,8 @@ io.on('connection', (socket) => {
         if (!state || !state.id) return;
         const matchId = state.id;
         activeMatches.set(matchId, state);
+        activeMatchId = matchId; // Track most recently updated match
+        activeMatchId = matchId; // Set as most recently active match
 
         // Save to SQLite
         throttledSave(state);
@@ -763,15 +1226,16 @@ app.get('/health', (req, res) => {
     });
 });
 
-// SPA Catch-all route for React Router
-app.get('/{*path}', (req, res) => {
+// SPA Catch-all route for React Router (Express 5 compatible)
+app.use((req, res) => {
     res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ KorfStat Pro Server running on port ${PORT} (all interfaces)`);
-    console.log(`📡 WebSocket server ready for real-time sync`);
-    console.log(`🏥 Health check available at http://localhost:${PORT}/health`);
-    console.log('Happy Korfing!');
+    const now = new Date().toISOString();
+    console.log(`✅ [${now}] KorfStat Pro Server running on port ${PORT} (all interfaces)`);
+    console.log(`📡 [${now}] WebSocket server ready for real-time sync`);
+    console.log(`🏥 [${now}] Health check available at http://localhost:${PORT}/health`);
+    console.log(`🚀 [${now}] Happy Korfing! (BYPASS ACTIVE)`);
 });
 

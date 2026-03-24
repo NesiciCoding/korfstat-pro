@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDialog } from '../hooks/useDialog';
 import { ArrowLeft, Plus, Trophy, Calendar, ChevronRight, Table, GitMerge } from 'lucide-react';
 import { Season, Standing } from '../types/season';
 import { MatchState, Team } from '../types';
@@ -7,6 +8,7 @@ import TournamentBracket from './TournamentBracket';
 import { generateEmptyBracket, updateBracketProgression } from '../utils/tournamentLogic';
 import { exportBracketToPDF } from '../services/bracketExport';
 import GroupStage from './GroupStage';
+import { generateUUID } from '../utils/uuid';
 
 interface SeasonManagerProps {
     onBack: () => void;
@@ -15,6 +17,7 @@ interface SeasonManagerProps {
 
 const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
     const { t } = useTranslation();
+    const { alert } = useDialog();
     const [seasons, setSeasons] = useState<Season[]>(() => {
         const saved = localStorage.getItem('korfstat_seasons');
         return saved ? JSON.parse(saved) : [];
@@ -43,7 +46,7 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
         }
 
         const newSeason: Season = {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             name: newSeasonName,
             format: newSeasonFormat,
             startDate: Date.now(),
@@ -239,7 +242,7 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
                                                     <GitMerge size={18} /> {t('season.bracket')}
                                                 </h3>
                                                 <button
-                                                    onClick={() => exportBracketToPDF('bracket-export-region', activeSeason.name)}
+                                                    onClick={() => exportBracketToPDF('bracket-export-region', activeSeason.name, alert)}
                                                     className="px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-lg transition-colors"
                                                 >
                                                     {t('season.exportBracket')}
@@ -261,9 +264,9 @@ const SeasonManager: React.FC<SeasonManagerProps> = ({ onBack, matches }) => {
                                                             nodes={progressedNodes}
                                                             matches={matches}
                                                             teams={Array.from(allTeams.values())}
-                                                            onMatchClick={(node, match) => {
+                                                            onMatchClick={async (node, match) => {
                                                                 console.log('Clicked node', node.id, match?.id);
-                                                                alert(t('season.matchClickAlert', { id: node.id }));
+                                                                await alert(t('season.matchClickAlert', { id: node.id }));
                                                             }}
                                                         />
                                                     );
