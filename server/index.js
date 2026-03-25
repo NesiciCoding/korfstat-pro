@@ -78,10 +78,48 @@ const io = new Server(server, {
 const COMPANION_TOKEN = process.env.COMPANION_TOKEN || 'korfstat';
 let companionPushUrl = process.env.COMPANION_URL || ''; 
 
+// --- Path-Based Authentication Middleware ---
+// Allows Base URL to be http://(ip):3002/korfstat
+// This handles cases where Companion modules don't support headers
+app.use((req, res, next) => {
+    const parts = req.path.split('/').filter(Boolean);
+    if (parts.length >= 2 && parts[0] === COMPANION_TOKEN && parts[1] === 'api') {
+        const newPath = '/' + parts.slice(1).join('/');
+        console.log(`[Companion] [Auth] Rewriting path from ${req.path} to ${newPath}`);
+        req.url = newPath;
+        req.tokenVerified = true;
+    }
+    next();
+});
+
 const companionAuth = (req, res, next) => {
-    // ULTIMATE EMERGENCY BYPASS - COMPLETELY OPEN AUTH
-    console.log(`[Companion] [${new Date().toISOString()}] Action Request: ${req.method} ${req.path} from ${req.ip || req.connection.remoteAddress}`);
-    return next();
+    // 1. Check if already verified by path-based middleware
+    if (req.tokenVerified) return next();
+
+    // 2. Check Authorization: Bearer <token>
+    let token = '';
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+    }
+    
+    // 3. Check X-Companion-Token header (legacy/wiki consistency)
+    if (!token && req.headers['x-companion-token']) {
+        token = req.headers['x-companion-token'];
+    }
+    
+    // 4. Check token query parameter (e.g. ?token=korfstat)
+    // Handle cases where Companion appends the path directly to the token (?token=korfstat/api/...)
+    if (!token && req.query.token) {
+        token = req.query.token.split('/')[0];
+    }
+
+    if (token === COMPANION_TOKEN) {
+        return next();
+    }
+
+    console.warn(`[Companion] [${new Date().toISOString()}] Unauthorized attempt: ${req.method} ${req.path} from ${req.ip || req.connection.remoteAddress}`);
+    return res.status(401).json({ error: 'Unauthorized. Please provide a valid Companion token.' });
 };
 
 // --- Active Matches State ---
@@ -161,23 +199,23 @@ app.get('/api/companion/state/score/away', (req, res) => {
  */
 app.get('/api/companion/state/score/home/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    if (!match) return res.type('text/plain').send("0");
+    if (!match) return res.json(0);
     const homeId = match.homeTeam?.id || 'HOME';
     const val = match.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === homeId).length;
-    res.type('text/plain').send(String(val));
+    res.json(val);
 });
 
 app.get('/api/companion/state/score/away/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    if (!match) return res.type('text/plain').send("0");
+    if (!match) return res.json(0);
     const awayId = match.awayTeam?.id || 'AWAY';
     const val = match.events.filter(e => (e.type === 'SHOT' || e.type === 'GOAL') && e.result === 'GOAL' && e.teamId === awayId).length;
-    res.type('text/plain').send(String(val));
+    res.json(val);
 });
 
 app.get('/api/companion/state/time/match/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    if (!match) return res.type('text/plain').send("0:00");
+    if (!match) return res.json("0:00");
     const now = Date.now();
     let elapsed = match.timer.elapsedSeconds || 0;
     if (match.timer.isRunning && match.timer.lastStartTime) {
@@ -187,76 +225,76 @@ app.get('/api/companion/state/time/match/raw', (req, res) => {
     const rem = Math.max(0, duration - elapsed);
     const m = Math.floor(rem / 60);
     const s = Math.floor(rem % 60);
-    res.type('text/plain').send(`${m}:${s.toString().padStart(2, '0')}`);
+    res.json(`${m}:${s.toString().padStart(2, '0')}`);
 });
 
 app.get('/api/companion/state/time/shotclock/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    if (!match) return res.type('text/plain').send("0");
+    if (!match) return res.json(0);
     let sc = match.shotClock?.seconds || 0;
     if (match.shotClock?.isRunning && match.shotClock?.lastStartTime) {
         sc -= (Date.now() - match.shotClock.lastStartTime) / 1000;
     }
-    res.type('text/plain').send(String(Math.ceil(Math.max(0, sc))));
+    res.json(Math.ceil(Math.max(0, sc)));
 });
 
 app.get('/api/companion/state/fouls/home/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    if (!match) return res.type('text/plain').send("0");
+    if (!match) return res.json(0);
     const homeId = match.homeTeam?.id || 'HOME';
     const val = match.events.filter(e => e.type === 'FOUL' && e.teamId === homeId).length;
-    res.type('text/plain').send(String(val));
+    res.json(val);
 });
 
 app.get('/api/companion/state/fouls/away/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    if (!match) return res.type('text/plain').send("0");
+    if (!match) return res.json(0);
     const awayId = match.awayTeam?.id || 'AWAY';
     const val = match.events.filter(e => e.type === 'FOUL' && e.teamId === awayId).length;
-    res.type('text/plain').send(String(val));
+    res.json(val);
 });
 
 app.get('/api/companion/state/names/home/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    res.type('text/plain').send(match?.homeTeam?.name || 'HOME');
+    res.json(match?.homeTeam?.name || 'HOME');
 });
 
 app.get('/api/companion/state/names/away/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    res.type('text/plain').send(match?.awayTeam?.name || 'AWAY');
+    res.json(match?.awayTeam?.name || 'AWAY');
 });
 
 app.get('/api/companion/state/timeouts/home/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    if (!match) return res.type('text/plain').send("0");
+    if (!match) return res.json(0);
     const val = match.events.filter(e => e.type === 'TIMEOUT' && e.teamId === 'HOME').length;
-    res.type('text/plain').send(String(val));
+    res.json(val);
 });
 
 app.get('/api/companion/state/timeouts/away/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    if (!match) return res.type('text/plain').send("0");
+    if (!match) return res.json(0);
     const val = match.events.filter(e => e.type === 'TIMEOUT' && e.teamId === 'AWAY').length;
-    res.type('text/plain').send(String(val));
+    res.json(val);
 });
 
 app.get('/api/companion/state/running/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    res.type('text/plain').send(match?.timer?.isRunning ? "1" : "0");
+    res.json(match?.timer?.isRunning ? 1 : 0);
 });
 
 app.get('/api/companion/state/shotclock-running/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    res.type('text/plain').send(match?.shotClock?.isRunning ? "1" : "0");
+    res.json(match?.shotClock?.isRunning ? 1 : 0);
 });
 
 app.get('/api/companion/state/last-event/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    if (!match || !match.events || match.events.length === 0) return res.type('text/plain').send("-");
+    if (!match || !match.events || match.events.length === 0) return res.json("-");
     
     // Find last significant event (not a timer event)
     const significantEvents = match.events.filter(e => ['SHOT', 'GOAL', 'FOUL', 'TIMEOUT', 'CARD', 'SUBSTITUTION'].includes(e.type));
-    if (significantEvents.length === 0) return res.type('text/plain').send("-");
+    if (significantEvents.length === 0) return res.json("-");
     
     const last = significantEvents[significantEvents.length - 1];
     let desc = last.type;
@@ -266,15 +304,15 @@ app.get('/api/companion/state/last-event/raw', (req, res) => {
     } else {
         desc = `${last.type} - ${last.teamId}`;
     }
-    res.type('text/plain').send(desc);
+    res.json(desc);
 });
 
 app.get('/api/companion/state/period/raw', (req, res) => {
     const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
-    res.type('text/plain').send(String(match?.currentHalf || 1));
+    res.json(match?.currentHalf || 1);
 });
 
-app.get('/api/companion/test', (req, res) => {
+app.get('/api/companion/test', companionAuth, (req, res) => {
     res.type('text/plain').send("API_OK");
 });
 
@@ -484,6 +522,15 @@ app.post('/api/companion/shotclock/override', companionAuth, (req, res) => {
     res.json({ ok: true, action: 'SHOTCLOCK_OVERRIDE', seconds });
 });
 
+app.post('/api/companion/shotclock/adjust', companionAuth, (req, res) => {
+    const delta = parseInt(req.query.delta) || 0;
+    const matchId = req.headers['x-match-id'];
+    console.log(`[Companion] Action: Shotclock Adjust ${delta}s (Match: ${matchId || 'global'})`);
+    io.to(matchId || 'global').emit('companion-action', { type: 'SHOTCLOCK_ADJUST', delta, matchId });
+    io.emit('companion-action', { type: 'SHOTCLOCK_ADJUST', delta, matchId });
+    res.json({ ok: true, action: 'SHOTCLOCK_ADJUST', delta });
+});
+
 app.post('/api/companion/card/:team/:type', companionAuth, (req, res) => {
     const team = req.params.team.toUpperCase();
     const type = req.params.type.toUpperCase();
@@ -509,7 +556,7 @@ app.get('/api/companion/state/players/:team/:slot/name/raw', companionAuth, (req
     const match = getLatestMatchState();
     const t = team.toUpperCase() === 'HOME' ? match?.homeTeam : match?.awayTeam;
     const player = t?.players[parseInt(slot) - 1];
-    res.type('text/plain').send(player?.name ? `${player.number || ''} ${player.name.split(' ')[0]}`.trim() : '-');
+    res.json(player?.name ? `${player.number || ''} ${player.name.split(' ')[0]}`.trim() : '-');
 });
 
 app.get('/api/companion/state/players/:team/:slot/id/raw', companionAuth, (req, res) => {
@@ -517,7 +564,7 @@ app.get('/api/companion/state/players/:team/:slot/id/raw', companionAuth, (req, 
     const match = getLatestMatchState();
     const t = team.toUpperCase() === 'HOME' ? match?.homeTeam : match?.awayTeam;
     const player = t?.players[parseInt(slot) - 1];
-    res.type('text/plain').send(player?.id || '-');
+    res.json(player?.id || '-');
 });
 
 app.post('/api/companion/goal/:team/:playerId', companionAuth, (req, res) => {
@@ -617,9 +664,25 @@ app.get('/api/companion/korfstat.companionconfig', companionAuth, async (req, re
 
     const connectionId = 'ks-connection';
     const profile = {
-        version: 9,
-        type: 'full',
+        version: 9, 
+        type: 'full', 
         companionBuild: '4.2.6+8823-stable-4ecdfe70ba',
+        custom_variables: {},
+        customVariables: {},
+        customVariablesCollections: [{ id: "ks-vars", label: "KorfStat Pro", sortOrder: 0, children: [], metaData: { enabled: true } }],
+        custom_variable_collections: [{ id: "ks-vars", label: "KorfStat Pro", sortOrder: 0, children: [], metaData: { enabled: true } }],
+        trigger_collections: [
+            { id: 'match-data', label: 'Match Data', sortOrder: 0, children: [], metaData: { enabled: true } },
+            { id: 'team-names', label: 'Team Names', sortOrder: 1, children: [], metaData: { enabled: true } },
+            { id: 'player-rosters', label: 'Player Rosters', sortOrder: 2, children: [], metaData: { enabled: true } },
+            { id: 'match-state', label: 'Match State', sortOrder: 3, children: [], metaData: { enabled: true } }
+        ],
+        triggerCollections: [
+            { id: 'match-data', label: 'Match Data', sortOrder: 0, children: [], metaData: { enabled: true } },
+            { id: 'team-names', label: 'Team Names', sortOrder: 1, children: [], metaData: { enabled: true } },
+            { id: 'player-rosters', label: 'Player Rosters', sortOrder: 2, children: [], metaData: { enabled: true } },
+            { id: 'match-state', label: 'Match State', sortOrder: 3, children: [], metaData: { enabled: true } }
+        ],
         pages: {
             "1": { id: "p1", name: "Main Control", controls: {}, gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } },
             "2": { id: "p2", name: "Monitoring", controls: {}, gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } },
@@ -630,12 +693,11 @@ app.get('/api/companion/korfstat.companionconfig', companionAuth, async (req, re
             "7": { id: "p7", name: `Foul: ${away}`, controls: {}, gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } }
         },
         triggers: {},
-        triggerCollections: [],
+        pageCollections: [],
         expressionVariables: {},
-        custom_variables: {},
-        customVariablesCollections: [{ id: "ks-vars", label: "KorfStat Pro", sortOrder: 0, children: [] }],
         instances: {
             [connectionId]: {
+                moduleInstanceType: "connection",
                 instance_type: "generic-http",
                 label: "KorfStat-Pro",
                 enabled: true,
@@ -649,74 +711,136 @@ app.get('/api/companion/korfstat.companionconfig', companionAuth, async (req, re
     };
 
     const varConfigs = [
-        { name: 'ks_home', label: 'Home Score', path: '/api/companion/state/score/home/raw' },
-        { name: 'ks_away', label: 'Away Score', path: '/api/companion/state/score/away/raw' },
-        { name: 'ks_timer', label: 'Match Clock', path: '/api/companion/state/timer/raw' },
-        { name: 'ks_shotclock', label: 'Shot Clock', path: '/api/companion/state/shotclock/raw' },
-        { name: 'ks_period', label: 'Period', path: '/api/companion/state/period/raw' },
-        { name: 'ks_timeouts_home', label: 'Home Timeouts', path: '/api/companion/state/timeouts/home/raw' },
-        { name: 'ks_timeouts_away', label: 'Away Timeouts', path: '/api/companion/state/timeouts/away/raw' },
-        { name: 'ks_fouls_home', label: 'Home Fouls', path: '/api/companion/state/fouls/home/raw' },
-        { name: 'ks_fouls_away', label: 'Away Fouls', path: '/api/companion/state/fouls/away/raw' },
-        { name: 'ks_name_home', label: 'Home Name', path: '/api/companion/state/team/home/raw', interval: 60000 },
-        { name: 'ks_name_away', label: 'Away Name', path: '/api/companion/state/team/away/raw', interval: 60000 },
-        { name: 'ks_running', label: 'Clock Running', path: '/api/companion/state/running/raw' },
-        { name: 'ks_last_event', label: 'Last Event', path: '/api/companion/state/last-event/raw' }
+        { name: 'ks_home', label: 'Home Score', path: '/api/companion/state/score/home/raw', collectionId: 'match-data' },
+        { name: 'ks_away', label: 'Away Score', path: '/api/companion/state/score/away/raw', collectionId: 'match-data' },
+        { name: 'ks_timer', label: 'Match Clock', path: '/api/companion/state/time/match/raw', collectionId: 'match-data' },
+        { name: 'ks_shotclock', label: 'Shot Clock', path: '/api/companion/state/time/shotclock/raw', collectionId: 'match-data' },
+        { name: 'ks_period', label: 'Period', path: '/api/companion/state/period/raw', collectionId: 'match-data' },
+        { name: 'ks_timeouts_home', label: 'Home Timeouts', path: '/api/companion/state/timeouts/home/raw', collectionId: 'match-data' },
+        { name: 'ks_timeouts_away', label: 'Away Timeouts', path: '/api/companion/state/timeouts/away/raw', collectionId: 'match-data' },
+        { name: 'ks_fouls_home', label: 'Home Fouls', path: '/api/companion/state/fouls/home/raw', collectionId: 'match-data' },
+        { name: 'ks_fouls_away', label: 'Away Fouls', path: '/api/companion/state/fouls/away/raw', collectionId: 'match-data' },
+        { name: 'ks_name_home', label: 'Home Name', path: '/api/companion/state/names/home/raw', interval: 60000, collectionId: 'team-names' },
+        { name: 'ks_name_away', label: 'Away Name', path: '/api/companion/state/names/away/raw', interval: 60000, collectionId: 'team-names' },
+        { name: 'ks_running', label: 'Clock Running', path: '/api/companion/state/running/raw', collectionId: 'match-state' },
+        { name: 'ks_last_event', label: 'Last Event', path: '/api/companion/state/last-event/raw', collectionId: 'match-state' }
     ];
 
     // Add Player Slot Variables (16 per team)
     ['home', 'away'].forEach(team => {
         for (let i = 1; i <= 16; i++) {
-            varConfigs.push({ name: `ks_p${i}_name_${team}`, label: `${team.charAt(0).toUpperCase() + team.slice(1)} P${i} Name`, path: `/api/companion/state/players/${team}/${i}/name/raw`, interval: 30000 });
-            varConfigs.push({ name: `ks_p${i}_id_${team}`, label: `${team.charAt(0).toUpperCase() + team.slice(1)} P${i} ID`, path: `/api/companion/state/players/${team}/${i}/id/raw`, interval: 30000 });
+            varConfigs.push({ name: `ks_p${i}_name_${team}`, label: `${team.charAt(0).toUpperCase() + team.slice(1)} P${i} Name`, path: `/api/companion/state/players/${team}/${i}/name/raw`, interval: 30000, collectionId: 'player-rosters' });
+            varConfigs.push({ name: `ks_p${i}_id_${team}`, label: `${team.charAt(0).toUpperCase() + team.slice(1)} P${i} ID`, path: `/api/companion/state/players/${team}/${i}/id/raw`, interval: 30000, collectionId: 'player-rosters' });
         }
     });
 
     varConfigs.forEach((v, idx) => {
-        profile.custom_variables[v.name] = {
-            description: v.label, defaultValue: v.name.includes('name') ? (v.name.includes('home') ? 'HOME' : 'AWAY') : (v.name.includes('id') ? '-' : '0'),
+        const varDef = {
+            description: v.label, 
+            defaultValue: v.name.includes('name') ? (v.name.includes('home') ? 'HOME' : 'AWAY') : (v.name.includes('id') ? '-' : '0'),
             persistCurrentValue: false, sortOrder: idx, collectionId: 'ks-vars'
         };
+        profile.custom_variables[v.name] = varDef;
+        profile.customVariables[v.name] = varDef;
+        const interval = v.interval || 1000;
         profile.triggers[`trigger-${v.name}`] = {
-            type: 'trigger', enabled: true, options: { name: `Sync ${v.label}`, interval: v.interval || 1000, reset_on_start: false },
+            id: `trigger-${v.name}`,
+            type: 'trigger',
+            collectionId: v.collectionId || 'match-data',
+            options: { 
+                name: `Sync ${v.label}`, 
+                interval: interval / 1000, 
+                reset_on_start: false,
+                enabled: true,
+                sortOrder: idx
+            },
             actions: [{ 
-                id: `act-${v.name}`, definitionId: 'post', connectionId: connectionId,
-                options: { url: v.path, header: `X-Companion-Token: ${COMPANION_TOKEN}`, body: '{}' },
-                type: 'action'
+                id: `act-sync-${v.name}`, 
+                definitionId: 'get', 
+                connectionId: connectionId,
+                enabled: true,
+                options: { 
+                    url: v.path, 
+                    header: "",
+                    body: "",
+                    contenttype: "application/json"
+                },
+                type: 'action',
+                upgradeIndex: -1
             }],
-            events: [{ id: `event-${v.name}`, type: 'interval', options: { interval: v.interval || 1000 } }]
+            condition: [],
+            events: [{ 
+                id: `event-${v.name}`, 
+                type: 'interval', 
+                enabled: true,
+                options: { 
+                    interval: interval / 1000
+                } 
+            }],
+            localVariables: []
         };
     });
 
-    const addButton = (page, r, c, options) => {
+    const addButton = (pageId, r, c, options) => {
         const row = String(r);
         const col = String(c);
+        const page = String(pageId);
+        
+        if (!profile.pages[page]) {
+            profile.pages[page] = { 
+                id: `p${page}`, 
+                name: `Page ${page}`, 
+                controls: {}, 
+                gridSize: { minColumn: 0, maxColumn: 7, minRow: 0, maxRow: 3 } 
+            };
+        }
+        if (!profile.pages[page].controls) profile.pages[page].controls = {};
         if (!profile.pages[page].controls[row]) profile.pages[page].controls[row] = {};
         const btn = {
             type: 'button',
             style: {
-                text: options.text, textExpression: options.isExpression || false, size: 'auto',
-                alignment: 'center:center', pngalignment: 'center:center',
+                text: options.text, 
+                textExpression: options.isExpression || options.text.includes('$('), 
+                size: 'auto',
+                png64: null, alignment: 'center:center', pngalignment: 'center:center',
                 color: options.textColor !== undefined ? options.textColor : 16777215,
                 bgcolor: hexToDec(options.color || '#2D2D2D'), show_topbar: 'default'
             },
-            options: { stepProgression: 'auto' }, feedbacks: [], 
-            steps: [{ 
-                action_sets: { down: [], up: [] },
-                options: { runWhileHeld: false }
-            }]
+            options: { 
+                stepProgression: 'auto',
+                stepExpression: '',
+                rotaryActions: false
+            }, 
+            feedbacks: [], 
+            steps: {
+                "0": {
+                    action_sets: { down: [], up: [] },
+                    options: { runWhileHeld: false }
+                }
+            },
+            localVariables: []
         };
         if (options.path) {
-            btn.steps[0].action_sets.down.push({
+            btn.steps["0"].action_sets.down.push({
                 id: `act-${page}-${r}-${c}`, definitionId: 'post', connectionId: connectionId,
-                options: { url: options.path, header: `X-Companion-Token: ${COMPANION_TOKEN}`, body: '{}' },
-                type: 'action'
+                enabled: true,
+                options: { 
+                    url: options.path, 
+                    header: "", 
+                    body: '{}',
+                    contenttype: 'application/json'
+                },
+                type: 'action',
+                upgradeIndex: -1
             });
         }
         if (options.jump) {
-            btn.steps[0].action_sets.down.push({
+            btn.steps["0"].action_sets.down.push({
                 id: `jump-${page}-${r}-${c}`, definitionId: 'set_page', connectionId: 'internal',
-                options: { page: options.jump }, type: 'action'
+                enabled: true,
+                options: { page: options.jump }, 
+                type: 'action', 
+                upgradeIndex: -1
             });
         }
         profile.pages[page].controls[row][col] = btn;
@@ -727,20 +851,20 @@ app.get('/api/companion/korfstat.companionconfig', companionAuth, async (req, re
     addButton("1", 0, 1, { text: 'Start | Pause', color: '#22c55e', path: '/api/companion/clock/toggle' });
     addButton("1", 0, 2, { text: 'Goal $(custom:ks_name_home)', color: '#ef4444', jump: 4 });
     addButton("1", 0, 3, { text: 'Goal $(custom:ks_name_away)', color: '#3b82f6', jump: 6 });
-    addButton("1", 0, 5, { text: '$(custom:ks_shotclock)', color: '#000000', isExpression: true });
-    addButton("1", 0, 6, { text: '$(custom:ks_timer)', color: '#000000', isExpression: true });
+    addButton("1", 0, 5, { text: '$(custom:ks_shotclock)', color: '#000000' });
+    addButton("1", 0, 6, { text: '$(custom:ks_timer)', color: '#000000' });
     addButton("1", 0, 7, { text: 'CORRECT', color: '#f59e0b', jump: 3 });
     addButton("1", 1, 1, { text: 'Next Per.', color: '#0ea5e9', path: '/api/companion/period/next' });
     addButton("1", 1, 2, { text: 'Foul $(custom:ks_name_home)', color: '#b91c1c', jump: 5 });
     addButton("1", 1, 3, { text: 'Foul $(custom:ks_name_away)', color: '#1d4ed8', jump: 7 });
-    addButton("1", 1, 5, { text: '$(custom:ks_home)', color: '#000000', isExpression: true });
-    addButton("1", 1, 6, { text: '$(custom:ks_away)', color: '#000000', isExpression: true });
+    addButton("1", 1, 5, { text: '$(custom:ks_home)', color: '#000000' });
+    addButton("1", 1, 6, { text: '$(custom:ks_away)', color: '#000000' });
     addButton("1", 2, 2, { text: 'Y. CARD H', color: '#eab308', textColor: 0, path: '/api/companion/card/home/YELLOW' });
     addButton("1", 2, 3, { text: 'Y. CARD A', color: '#eab308', textColor: 0, path: '/api/companion/card/away/YELLOW' });
     addButton("1", 2, 7, { text: 'Dismiss GFX', color: '#4b5563', path: '/api/companion/graphics/dismiss' });
     addButton("1", 3, 2, { text: 'R. CARD H', color: '#7f1d1d', path: '/api/companion/card/home/RED' });
     addButton("1", 3, 3, { text: 'R. CARD A', color: '#7f1d1d', path: '/api/companion/card/away/RED' });
-    addButton("1", 3, 7, { text: '$(custom:ks_last_event)', color: '#1f2937', isExpression: true });
+    addButton("1", 3, 7, { text: '$(custom:ks_last_event)', color: '#1f2937' });
 
     // --- PAGE 2: MONITORING ---
     addButton("2", 0, 0, { text: 'BACK', color: '#4b5563', jump: 1 });
@@ -773,7 +897,6 @@ app.get('/api/companion/korfstat.companionconfig', companionAuth, async (req, re
             const slot = idx + 1;
             addButton(pageId, r, c, { 
                 text: `$(custom:ks_p${slot}_name_${teamLower})`, 
-                isExpression: true,
                 color: teamId === 'HOME' ? '#ef4444' : '#3b82f6',
                 path: `/api/companion/${type}/${teamId}/$(custom:ks_p${slot}_id_${teamLower})`,
                 jump: 1 
@@ -818,34 +941,46 @@ async function pushToCompanion(state) {
     }
 
     const pad = n => String(Math.floor(n)).padStart(2, '0');
-    const clockSec = state.clock?.elapsed ?? 0;
+    const clockSec = state.timer?.elapsedSeconds ?? 0;
     const clockDisplay = `${pad(clockSec / 60)}:${pad(clockSec % 60)}`;
-    const shotSec = state.shotClock?.elapsed ?? 0;
-    const shotClockDisplay = `${pad(shotSec / 60)}:${pad(shotSec % 60)}`;
+    const shotSec = state.shotClock?.seconds ?? 0;
+    const shotClockDisplay = String(Math.floor(shotSec));
+
+    const lastEvent = state.events && state.events.length > 0 ? state.events[state.events.length - 1] : null;
+    let lastEventStr = "No events yet";
+    if (lastEvent) {
+        const team = lastEvent.teamId === 'HOME' ? (state.homeTeam?.name || 'Home') : (state.awayTeam?.name || 'Away');
+        if (lastEvent.type === 'SHOT' || lastEvent.result === 'GOAL') lastEventStr = `GOAL ${team}`;
+        else if (lastEvent.type === 'FOUL') lastEventStr = `FOUL ${team}`;
+        else if (lastEvent.type === 'TIMEOUT') lastEventStr = `TIMEOUT ${team}`;
+        else if (lastEvent.type === 'SUBSTITUTION') lastEventStr = `SUB ${team}`;
+    }
 
     const variables = {
-        scoreHome: homeScore,
-        scoreAway: awayScore,
-        scoreDisplay: `${homeScore} - ${awayScore}`,
-        homeTeamName: state.homeTeam?.name ?? 'Home',
-        awayTeamName: state.awayTeam?.name ?? 'Away',
-        clockDisplay,
-        shotClockDisplay,
-        period: state.currentPeriod ?? 1,
-        isRunning: state.clock?.isRunning ? '1' : '0',
+        ks_home: homeScore,
+        ks_away: awayScore,
+        ks_match: clockDisplay,
+        ks_shotclock: shotClockDisplay,
+        ks_period: state.currentHalf ?? 1,
+        ks_name_home: state.homeTeam?.name ?? 'Home',
+        ks_name_away: state.awayTeam?.name ?? 'Away',
+        ks_fouls_home: state.events?.filter(e => e.type === 'FOUL' && e.teamId === 'HOME').length || 0,
+        ks_fouls_away: state.events?.filter(e => e.type === 'FOUL' && e.teamId === 'AWAY').length || 0,
+        ks_running: state.timer?.isRunning ? '1' : '0',
+        ks_last_event: lastEventStr
     };
 
     const base = `${companionPushUrl}/api/1.0/custom-variables`;
     await Promise.allSettled(
         Object.entries(variables).map(([name, value]) =>
-            fetch(`${base}/korfstat_${name}/current-value`, {
+            fetch(`${base}/custom_${name}/current-value`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(String(value)),
-            }).catch(() => { }) // silently absorb network errors
+            }).catch(() => { }) 
         )
     );
-    console.log(`[Companion Push] Variables pushed to ${companionPushUrl}`);
+    console.log(`[Companion Push] ${Object.keys(variables).length} variables pushed to ${companionPushUrl}`);
 }
 
 const debouncedPushToCompanion = (state) => {

@@ -50,7 +50,20 @@
     "shortcuts": "Keyboard Sneltoetsen",
     "enableChorded": "Chorded Sneltoetsen Inschakelen (Shift + 1-8)",
     "enableSequence": "Sneltoets Buffering Inschakelen (G, 1, Enter)",
-    "shortcutWarning": "Chorded sneltoetsen voeren acties onmiddellijk uit. Fouten moeten worden gecorrigeerd met Ongedaan Maken (Z)."
+    "shortcutWarning": "Chorded sneltoetsen voeren acties onmiddellijk uit. Fouten moeten worden gecorrigeerd met Ongedaan Maken (Z).",
+    "companion_vars": {
+      "ks_home": "Homescore",
+      "ks_away": "Uitscore",
+      "ks_match": "Wedstrijdklok (MM:SS)",
+      "ks_shotclock": "Schotklok (Seconden)",
+      "ks_period": "Huidige periode",
+      "ks_fouls_home": "Overtredingen thuis",
+      "ks_fouls_away": "Overtredingen uit",
+      "ks_name_home": "Naam thuisteam",
+      "ks_name_away": "Naam uitteam",
+      "ks_last_event": "Laatste actie",
+      "ks_running": "Klok loopt (1/0)"
+    }
   },
   "common": {
     "cancel": "Annuleren",

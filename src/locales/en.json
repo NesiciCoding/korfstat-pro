@@ -50,7 +50,20 @@
     "shortcuts": "Keyboard Shortcuts",
     "enableChorded": "Enable Chorded Shortcuts (Shift + 1-8)",
     "enableSequence": "Enable Sequence Buffering (G, 1, Enter)",
-    "shortcutWarning": "Chorded shortcuts execute actions immediately. Errors must be corrected with Undo (Z)."
+    "shortcutWarning": "Chorded shortcuts execute actions immediately. Errors must be corrected with Undo (Z).",
+    "companion_vars": {
+      "ks_home": "Home score",
+      "ks_away": "Away score",
+      "ks_match": "Game clock (MM:SS)",
+      "ks_shotclock": "Shot clock (Seconds)",
+      "ks_period": "Current period",
+      "ks_fouls_home": "Home fouls",
+      "ks_fouls_away": "Away fouls",
+      "ks_name_home": "Home team name",
+      "ks_name_away": "Away team name",
+      "ks_last_event": "Last match event",
+      "ks_running": "Clock running (1/0)"
+    }
   },
   "common": {
     "cancel": "Cancel",

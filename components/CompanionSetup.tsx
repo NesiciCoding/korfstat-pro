@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDialog } from '../hooks/useDialog';
 import { Copy, Download, CheckCircle, XCircle, RefreshCw, Wifi, Zap, ChevronDown, ChevronUp, ExternalLink, ShieldCheck } from 'lucide-react';
 
@@ -24,6 +25,7 @@ interface CompanionSetupProps {
 }
 
 const CompanionSetup: React.FC<CompanionSetupProps> = ({ onNavigate }) => {
+  const { t } = useTranslation();
   const { alert } = useDialog();
   const [setupInfo, setSetupInfo] = useState<SetupInfo | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>({ connected: false, active: false, checking: true });
@@ -344,17 +346,21 @@ const CompanionSetup: React.FC<CompanionSetupProps> = ({ onNavigate }) => {
             </p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               {[
-                ['ks_home', 'Home score (integer)'],
-                ['ks_away', 'Away score (integer)'],
-                ['ks_match', 'MM:SS game clock'],
-                ['ks_shotclock', 'Seconds remaining'],
-                ['ks_period', 'Current period'],
-                ['ks_fouls_home', 'Home fouls count'],
-                ['ks_fouls_away', 'Away fouls count'],
-              ].map(([varName, desc]) => (
+                'ks_home',
+                'ks_away',
+                'ks_match',
+                'ks_shotclock',
+                'ks_period',
+                'ks_fouls_home',
+                'ks_fouls_away',
+                'ks_name_home',
+                'ks_name_away',
+                'ks_last_event',
+                'ks_running'
+              ].map((varName) => (
                 <div key={varName} className="flex items-baseline gap-1 text-[11px]">
-                  <code className="text-emerald-400 font-mono shrink-0">$(custom:{varName})</code>
-                  <span className="text-gray-500">— {desc}</span>
+                  <code className="text-emerald-400 font-mono shrink-0">$(internal:custom_{varName})</code>
+                  <span className="text-gray-500">— {t(`settings.companion_vars.${varName}`)}</span>
                 </div>
               ))}
             </div>

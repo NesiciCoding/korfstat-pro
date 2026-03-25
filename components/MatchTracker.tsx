@@ -645,63 +645,11 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     // Other types can be added as needed or wanted
   };
 
-  React.useEffect(() => {
-    if (!socket) return;
+  // Use a stable ref so the socket listener never needs to be torn down/re-added
+  // on every matchState change, which previously stripped ALL companion-action listeners.
+  // Companion actions are now handled centrally in App.tsx via useBroadcastSync's 
+  // handleSpotterAction to ensure all views (Jury, Tracker, Overlay) stay in sync.
 
-    socket.on('companion-action', (payload: any) => {
-      console.log('[MatchTracker] Received Companion Action:', payload);
-      const { type, teamId, playerId, delta, seconds, cardType } = payload;
-      
-      const team = teamId === 'HOME' ? matchState.homeTeam : matchState.awayTeam;
-      
-      if (type === 'CLOCK_TOGGLE') onSpotterAction({ action: 'TOGGLE_TIMER' });
-      else if (type === 'CLOCK_RESET') onSpotterAction({ action: 'RESET_TIMER' });
-      else if (type === 'SHOTCLOCK_RESET') onSpotterAction({ action: 'RESET_SHOT_CLOCK' });
-      else if (type === 'CLOCK_ADJUST') onSpotterAction({ action: 'ADJUST_TIMER', delta });
-      else if (type === 'SHOTCLOCK_OVERRIDE') onSpotterAction({ action: 'OVERRIDE_SHOT_CLOCK', seconds });
-      else if (type === 'PLAYER_GOAL') {
-        if (playerId) {
-          addEvent({ teamId: teamId as TeamId, playerId, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location: { x: 50, y: 50 } });
-        }
-      }
-      else if (type === 'GOAL') { // Legacy/Generic
-        const firstActivePlayer = team.players.find(p => p.onField);
-        if (firstActivePlayer) {
-          addEvent({ teamId: teamId as TeamId, playerId: firstActivePlayer.id, type: 'SHOT', result: 'GOAL', shotType: 'RUNNING_IN', location: { x: 50, y: 50 } });
-        }
-      }
-      else if (type === 'GOAL_UNDO') handleUndo();
-      else if (type === 'PLAYER_FOUL') {
-        if (playerId) addEvent({ teamId: teamId as TeamId, playerId, type: 'FOUL', location: { x: 50, y: 50 } });
-      }
-      else if (type === 'FOUL') { // Legacy/Generic
-        const firstActivePlayer = team.players.find(p => p.onField);
-        if (firstActivePlayer) {
-          addEvent({ teamId: teamId as TeamId, playerId: firstActivePlayer.id, type: 'FOUL', location: { x: 50, y: 50 } });
-        }
-      }
-      else if (type === 'CARD') {
-        const firstActivePlayer = team.players.find(p => p.onField);
-        if (firstActivePlayer) {
-          addEvent({ teamId: teamId as TeamId, playerId: firstActivePlayer.id, type: 'CARD', cardType: cardType as CardType });
-        }
-      }
-      else if (type === 'PERIOD_NEXT') handlePhaseEnd();
-      else if (type === 'TIMEOUT') startTimeout();
-      else if (type === 'MATCH_RESET') {
-          // Confirm or just do it? Usually Companion means "do it"
-          onFinishMatch(); // Reuse finish logic or maybe we need a dedicated reset that doesn't save?
-          // The user requested "Match reset" in Companion. 
-          // If we want a clean reset, we should maybe call onViewChange('HOME') or similar.
-          // But onFinishMatch saves to history. 
-          if (onViewChange) onViewChange('HOME'); 
-      }
-    });
-
-    return () => {
-      socket.off('companion-action');
-    };
-  }, [socket, matchState, addEvent, handleUndo, handlePhaseEnd, startTimeout, onSpotterAction]);
 
   const { isListening, toggleListening, transcript } = useVoiceCommands({
     onCommand: handleVoiceCommand,
