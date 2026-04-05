@@ -215,7 +215,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
     });
 
     // --- Broadcaster Trigger ---
-    if (settings.broadcaster.enabled) {
+    if (settings.broadcaster?.enabled) {
       const isGoal = newEvent.result === 'GOAL';
       const isCard = newEvent.type === 'CARD' || (newEvent.type === 'SHOT' && newEvent.cardType);
       
@@ -1295,9 +1295,9 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ matchState, onUpdateMatch, 
             <button
               data-testid="manual-clip-btn"
               onClick={() => broadcasterService.triggerHighlight('Manual Clip')}
-              className={`p-2 rounded text-xs font-bold transition-all ${settings.broadcaster.enabled ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20' : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'}`}
+              className={`p-2 rounded text-xs font-bold transition-all ${settings.broadcaster?.enabled ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20' : 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'}`}
               title={t('broadcaster.manualClip', 'Manual Highlight Clip')}
-              disabled={!settings.broadcaster.enabled}
+              disabled={!settings.broadcaster?.enabled}
             >
               <Video size={20} />
             </button>

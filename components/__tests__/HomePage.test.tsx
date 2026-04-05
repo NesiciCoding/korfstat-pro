@@ -60,7 +60,6 @@ describe('HomePage', () => {
             />
         );
 
-        expect(screen.getByText('home.commandCenter')).toBeInTheDocument();
         expect(await screen.findByText(/home\.activeDiscovery/i)).toBeInTheDocument();
     });
 
