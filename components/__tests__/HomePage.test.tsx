@@ -13,7 +13,7 @@ describe('HomePage', () => {
         global.fetch = vi.fn().mockImplementation((url: string) => {
             if (url.includes('/api/matches/active')) {
                 return Promise.resolve({
-                    json: () => Promise.resolve([])
+                    json: () => Promise.resolve([{ id: 'match-1', homeTeam: { name: 'Home' }, awayTeam: { name: 'Away' } }])
                 });
             }
             if (url.includes('/api/companion/setup-info')) {
@@ -60,8 +60,8 @@ describe('HomePage', () => {
             />
         );
 
-        expect(await screen.findByText('home.activeDiscovery')).toBeInTheDocument();
-        expect(screen.getByText('home.startNewMatch')).toBeInTheDocument();
+        expect(screen.getByText('home.commandCenter')).toBeInTheDocument();
+        expect(await screen.findByText(/home\.activeDiscovery/i)).toBeInTheDocument();
     });
 
     it('displays active sessions count', async () => {

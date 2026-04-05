@@ -1,0 +1,622 @@
+[
+  {
+    "name": "Fortuna/Ruitenheer",
+    "color": "#ff0000",
+    "players": [
+      {
+        "id": "chelseamooiFortuna",
+        "name": "Chelsea Mooi",
+        "number": 1,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "roosvangroenFortuna",
+        "name": "Roos van Groen",
+        "number": 2,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "renéevanginkelFortuna",
+        "name": "Renée van Ginkel",
+        "number": 6,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "fleurhoekFortuna",
+        "name": "Fleur Hoek",
+        "number": 12,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "daanpreuningerFortuna",
+        "name": "Daan Preuninger",
+        "number": 7,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "timvanoostenFortuna",
+        "name": "Tim van Oosten",
+        "number": 9,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "kayvanvlietFortuna",
+        "name": "Kay van Vliet",
+        "number": 10,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "jimmyswikkerFortuna",
+        "name": "Jimmy Swikker",
+        "number": 11,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      }
+    ]
+  },
+  {
+    "name": "DVO/Transus",
+    "color": "#008000",
+    "players": [
+      {
+        "id": "deborahvosDVO",
+        "name": "Deborah Vos",
+        "number": 1,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "laravangolberdingeDVO",
+        "name": "Lara van Golberdinge",
+        "number": 2,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "daniëlleboadiDVO",
+        "name": "Daniëlle Boadi",
+        "number": 13,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "lindavanderklisDVO",
+        "name": "Linda van der Klis",
+        "number": 4,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "noahkoersDVO",
+        "name": "Noah Koers",
+        "number": 7,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "robbedewitDVO",
+        "name": "Robbe de Wit",
+        "number": 8,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "jeffreyvanhuenenDVO",
+        "name": "Jeffrey van Huenen",
+        "number": 9,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "jorisbuitenhuisDVO",
+        "name": "Joris Buitenhuis",
+        "number": 12,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      }
+    ]
+  },
+  {
+    "name": "PKC/Vertom",
+    "color": "#006400",
+    "players": [
+      {
+        "id": "nienkehintzbergenPKC",
+        "name": "Nienke Hintzbergen",
+        "number": 4,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "janadriesprongPKC",
+        "name": "Jana Driesprong",
+        "number": 12,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "jenskesimonsPKC",
+        "name": "Jenske Simons",
+        "number": 13,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "zitaschröderPKC",
+        "name": "Zita Schröder",
+        "number": 5,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "randyoostingPKC",
+        "name": "Randy Oosting",
+        "number": 6,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "shayntimsPKC",
+        "name": "Shayn Tims",
+        "number": 10,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "olavvanwijngaardenPKC",
+        "name": "Olav van Wijngaarden",
+        "number": 11,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "jelmerjonkerPKC",
+        "name": "Jelmer Jonker",
+        "number": 14,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      }
+    ]
+  },
+  {
+    "name": "LDODK/Rinsma Modeplein",
+    "color": "#32cd32",
+    "players": [
+      {
+        "id": "marijevisserLDODK",
+        "name": "Marije Visser",
+        "number": 1,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "esmeevanveenLDODK",
+        "name": "Esmee van Veen",
+        "number": 2,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "marloukuiperLDODK",
+        "name": "Marlou Kuiper",
+        "number": 4,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "rixtboumaLDODK",
+        "name": "Rixt Bouma",
+        "number": 9,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "tiemeeppingaLDODK",
+        "name": "Tieme Eppinga",
+        "number": 12,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "ranfaberLDODK",
+        "name": "Ran Faber",
+        "number": 13,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "terpstradegrootLDODK",
+        "name": "Terpstra de Groot",
+        "number": 15,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "jandevriesLDODK",
+        "name": "Jan de Vries",
+        "number": 16,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      }
+    ]
+  },
+  {
+    "name": "KZ/Keukensale.com",
+    "color": "#ffd700",
+    "players": [
+      {
+        "id": "nikkiboerhoutKZ",
+        "name": "Nikki Boerhout",
+        "number": 1,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "esthercordusKZ",
+        "name": "Esther Cordus",
+        "number": 4,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "anoukhaarsKZ",
+        "name": "Anouk Haars",
+        "number": 5,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "tessavanrhijnKZ",
+        "name": "Tessa van Rhijn",
+        "number": 3,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "jarileemhuisKZ",
+        "name": "Jari Leemhuis",
+        "number": 10,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "olivierwoudtKZ",
+        "name": "Olivier Woudt",
+        "number": 11,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "kevindikKZ",
+        "name": "Kevin Dik",
+        "number": 16,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "carlodevriesKZ",
+        "name": "Carlo de Vries",
+        "number": 14,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      }
+    ]
+  },
+  {
+    "name": "Blauw-Wit (A)",
+    "color": "#0000ff",
+    "players": [
+      {
+        "id": "mandykoelmanBW",
+        "name": "Mandy Koelman",
+        "number": 1,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "lottevanmontfortBW",
+        "name": "Lotte van Montfort",
+        "number": 2,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "nathaliederooijBW",
+        "name": "Nathalie de Rooij",
+        "number": 3,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "roosverheulBW",
+        "name": "Roos Verheul",
+        "number": 4,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "marcverhaegenBW",
+        "name": "Marc Verhaegen",
+        "number": 5,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "momostavenuiterBW",
+        "name": "Momo Stavenuiter",
+        "number": 10,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "nielsvanderwallenBW",
+        "name": "Niels van der Wallen",
+        "number": 11,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "jochemdebruinBW",
+        "name": "Jochem de Bruin",
+        "number": 12,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      }
+    ]
+  },
+  {
+    "name": "DOS '46/VDK Groep",
+    "color": "#ff4500",
+    "players": [
+      {
+        "id": "elinevanveldhuisenDOS",
+        "name": "Eline van Veldhuisen",
+        "number": 5,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "tessalapDOS",
+        "name": "Tessa Lap",
+        "number": 2,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "sannevantolDOS",
+        "name": "Sanne van Tol",
+        "number": 3,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "kimberlyvanderhorstDOS",
+        "name": "Kimberly van der Horst",
+        "number": 4,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "fonsvanginkelDOS",
+        "name": "Fons van Ginkel",
+        "number": 6,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "jessedejongDOS",
+        "name": "Jesse de Jong",
+        "number": 7,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "leanderzwolleDOS",
+        "name": "Leander Zwolle",
+        "number": 8,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "sanderdekkerDOS",
+        "name": "Sander Dekker",
+        "number": 9,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      }
+    ]
+  },
+  {
+    "name": "KCC/CK Kozijnen",
+    "color": "#000000",
+    "players": [
+      {
+        "id": "sannealsemKCC",
+        "name": "Sanne Alsem",
+        "number": 3,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "demivanoostenKCC",
+        "name": "Demi van Oosten",
+        "number": 4,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "lauravantolKCC",
+        "name": "Laura van Tol",
+        "number": 5,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "michellevanduijlKCC",
+        "name": "Michelle van Duijl",
+        "number": 2,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "booppeKCC",
+        "name": "Bo Oppe",
+        "number": 12,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "koenvanginkelKCC",
+        "name": "Koen van Ginkel",
+        "number": 7,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "julianmiddelkoopKCC",
+        "name": "Julian Middelkoop",
+        "number": 8,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "randyvandenbrinkKCC",
+        "name": "Randy van den Brink",
+        "number": 9,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      }
+    ]
+  },
+  {
+    "name": "HKC/Unique",
+    "color": "#000000",
+    "players": [
+      {
+        "id": "fenodinevanvugtHKC",
+        "name": "Fenodine van Vugt",
+        "number": 2,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "lienekepippingHKC",
+        "name": "Lieneke Pipping",
+        "number": 3,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "mabelhavelaarHKC",
+        "name": "Mabel Havelaar",
+        "number": 4,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "annelieskoomenHKC",
+        "name": "Annelies Koomen",
+        "number": 5,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "dannydendunnenHKC",
+        "name": "Danny den Dunnen",
+        "number": 7,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "markklopHKC",
+        "name": "Mark Klop",
+        "number": 8,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "jitsedejongHKC",
+        "name": "Jitse de Jong",
+        "number": 9,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "cornétroostHKC",
+        "name": "Corné Troost",
+        "number": 10,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      }
+    ]
+  },
+  {
+    "name": "GG/IJskoud de Beste",
+    "color": "#000000",
+    "players": [
+      {
+        "id": "eliseheijkoopGG",
+        "name": "Elise Heijkoop",
+        "number": 1,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "sannevanderwerffGG",
+        "name": "Sanne van der Werff",
+        "number": 2,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "lottevanveenGG",
+        "name": "Lotte van Veen",
+        "number": 3,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "noordjevanvugtGG",
+        "name": "Noordje van Vugt",
+        "number": 4,
+        "gender": "F",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "terrencevangriekenGG",
+        "name": "Terrence van Grieken",
+        "number": 7,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "thijsvanderwerffGG",
+        "name": "Thijs van der Werff",
+        "number": 8,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "stijnvanderwerffGG",
+        "name": "Stijn van der Werff",
+        "number": 9,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      },
+      {
+        "id": "kevindik(proxy)GG",
+        "name": "Kevin Dik (Proxy)",
+        "number": 10,
+        "gender": "M",
+        "initialPosition": "ATTACK"
+      }
+    ]
+  }
+]

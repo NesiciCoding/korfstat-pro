@@ -131,6 +131,7 @@ interface TeamSetupProps {
   onLoadClub: (club: Club) => void;
   onDeleteTeam?: (team: SavedTeam) => void;
   onNavigate: (view: any) => void;
+  testIdPrefix?: string;
 }
 
 // Component for configuring a single team
@@ -153,7 +154,8 @@ const TeamSetup: React.FC<TeamSetupProps> = ({
   onLoadTeam,
   onLoadClub,
   onDeleteTeam,
-  onNavigate
+  onNavigate,
+  testIdPrefix
 }) => {
   const { t } = useTranslation();
   const [showLoadMenu, setShowLoadMenu] = useState(false);
@@ -238,6 +240,7 @@ const TeamSetup: React.FC<TeamSetupProps> = ({
               onClick={() => setShowClubMenu(!showClubMenu)}
               className="p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
               title={t('matchSetup.loadClub')}
+              data-testid={testIdPrefix ? `${testIdPrefix}-load-club` : undefined}
             >
               <Database size={18} />
             </button>
@@ -260,6 +263,7 @@ const TeamSetup: React.FC<TeamSetupProps> = ({
                       <button
                         onClick={() => { onLoadClub(club); setShowClubMenu(false); }}
                         className="flex-1 text-left text-sm text-gray-700 dark:text-gray-200 font-medium"
+                        data-testid={`club-selection-item-${club.id}`}
                       >
                         {club.name}
                       </button>
@@ -920,6 +924,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
           onLoadClub={(club) => handleLoadClub(club, setHomeName, setHomeColor, setHomeSecondaryColor, setHomeLogoUrl, setHomePlayers)}
           onDeleteTeam={handleDeleteTeam}
           onNavigate={onNavigate}
+          testIdPrefix="home"
         />
 
         <TeamSetup
@@ -937,6 +942,7 @@ const MatchSetup: React.FC<MatchSetupProps> = ({ onStartMatch, onNavigate, saved
           onLoadClub={(club) => handleLoadClub(club, setAwayName, setAwayColor, setAwaySecondaryColor, setAwayLogoUrl, setAwayPlayers)}
           onDeleteTeam={handleDeleteTeam}
           onNavigate={onNavigate}
+          testIdPrefix="away"
         />
       </div>
 

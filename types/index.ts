@@ -31,9 +31,10 @@ export interface Team {
 }
 
 export type ShotType = 'FREE_THROW' | 'PENALTY' | 'NEAR' | 'MEDIUM' | 'FAR' | 'RUNNING_IN';
-export type ActionType = 'SHOT' | 'REBOUND' | 'FOUL' | 'TURNOVER' | 'SHOT_CLOCK' | 'SUBSTITUTION' | 'CARD' | 'TIMEOUT';
+export type ActionType = 'SHOT' | 'REBOUND' | 'FOUL' | 'TURNOVER' | 'SHOT_CLOCK' | 'SUBSTITUTION' | 'CARD' | 'TIMEOUT' | 'OFFICIATING';
 export type ShotResult = 'GOAL' | 'MISS';
 export type CardType = 'YELLOW' | 'RED';
+export type RefereeDecision = 'CORRECT' | 'DEBATABLE' | 'INCORRECT' | 'MISSED';
 
 export type Role = 'ATTACK' | 'DEFENSE';
 
@@ -66,6 +67,11 @@ export interface MatchEvent {
   currentZone?: Role;
   lineupIds?: string[]; // IDs of the 4 players on the field for this team at this time
 
+  // Officiating / Ref-Watch specific
+  refereeDecision?: RefereeDecision;
+  foulType?: string;
+  refereeName?: string;
+
   // Undo tracking
   previousPossession?: TeamId | null;
 }
@@ -81,6 +87,7 @@ export interface MatchState {
   profile?: MatchProfile; // The rules engine profile driving the timers
   homeTeam: Team;
   awayTeam: Team;
+  referees?: string[]; // Names of the officiating crew
   events: MatchEvent[];
   currentHalf: number;
   possession: TeamId | null;

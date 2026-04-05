@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import i18n from '../i18n';
 import { useDialog } from '../hooks/useDialog';
+import { BroadcasterSettings, DEFAULT_BROADCASTER_SETTINGS } from '../types/broadcaster';
+import { Player } from '../types';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -23,6 +25,8 @@ export interface Settings {
     defaultAwayName: string;
     defaultHomeColor: string;
     defaultAwayColor: string;
+    defaultHomePlayers?: Player[];
+    defaultAwayPlayers?: Player[];
 
     // Wear OS Sync
     watchControlMode: 'read-only' | 'write';
@@ -37,6 +41,7 @@ export interface Settings {
     sponsorRotationInterval: number; // Seconds
     enableChordedShortcuts: boolean;
     enableSequenceBuffering: boolean;
+    broadcaster: BroadcasterSettings;
 }
 
 interface SettingsContextType {
@@ -60,6 +65,14 @@ const defaultSettings: Settings = {
     defaultAwayName: 'Away',
     defaultHomeColor: '#EF4444', // Red-500
     defaultAwayColor: '#3B82F6', // Blue-500
+    defaultHomePlayers: [
+        { id: 'h1', number: 1, name: 'Player 1', gender: 'M', initialPosition: 'ATTACK', isStarter: true },
+        { id: 'h2', number: 2, name: 'Player 2', gender: 'F', initialPosition: 'ATTACK', isStarter: true },
+        { id: 'h3', number: 3, name: 'Player 3', gender: 'M', initialPosition: 'DEFENSE', isStarter: true },
+        { id: 'h4', number: 4, name: 'Player 4', gender: 'F', initialPosition: 'DEFENSE', isStarter: true },
+        { id: 'h5', number: 5, name: 'Player 5', gender: 'M', initialPosition: 'ATTACK', isStarter: false }
+    ],
+    defaultAwayPlayers: [],
     watchControlMode: 'read-only',
     socialGraphicConfig: {
         style: 'modern'
@@ -67,7 +80,8 @@ const defaultSettings: Settings = {
     sponsorLogos: [],
     sponsorRotationInterval: 10,
     enableChordedShortcuts: true,
-    enableSequenceBuffering: true
+    enableSequenceBuffering: true,
+    broadcaster: DEFAULT_BROADCASTER_SETTINGS
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

@@ -105,6 +105,28 @@ vi.mock('i18next', () => {
     };
 });
 
+// Mock Recharts
+vi.mock('recharts', async () => {
+    const React = await import('react');
+    const OriginalModule = await vi.importActual('recharts') as any;
+    
+    return {
+        ...OriginalModule,
+        ResponsiveContainer: ({ children }: any) => React.createElement('div', { className: 'responsive-container' }, children),
+        LineChart: ({ children }: any) => React.createElement('div', { className: 'line-chart' }, children),
+        BarChart: ({ children }: any) => React.createElement('div', { className: 'bar-chart' }, children),
+        PieChart: ({ children }: any) => React.createElement('div', { className: 'pie-chart' }, children),
+        XAxis: () => React.createElement('div', { className: 'x-axis' }),
+        YAxis: () => React.createElement('div', { className: 'y-axis' }),
+        CartesianGrid: () => React.createElement('div', { className: 'cartesian-grid' }),
+        Tooltip: () => React.createElement('div', { className: 'tooltip' }),
+        Legend: () => React.createElement('div', { className: 'legend' }),
+        Line: () => React.createElement('div', { className: 'line' }),
+        Bar: () => React.createElement('div', { className: 'bar' }),
+        Cell: () => React.createElement('div', { className: 'cell' }),
+    };
+});
+
 afterEach(() => {
     cleanup();
     vi.clearAllMocks();

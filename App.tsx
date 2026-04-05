@@ -25,9 +25,12 @@ import ScoutingReportView from './components/ScoutingReportView';
 import ErrorBoundary from './components/ErrorBoundary';
 import ShortcutsModal from './components/ShortcutsModal';
 import PhysicalTesting from './components/PhysicalTesting';
+const TrainingManager = lazy(() => import('./components/TrainingManager'));
 const LiveTicker = lazy(() => import('./components/LiveTicker'));
 const SpectatorVoting = lazy(() => import('./components/SpectatorVoting'));
 const CompanionDashboard = lazy(() => import('./components/CompanionDashboard'));
+const TickerOverlay = lazy(() => import('./components/TickerOverlay'));
+const TickerCustomizer = lazy(() => import('./components/TickerCustomizer'));
 import LoginPage from './components/LoginPage';
 import AutoSaveIndicator from './components/AutoSaveIndicator';
 import { supabase } from './lib/supabase';
@@ -46,10 +49,10 @@ import { calculateDerivedMatchState } from './utils/matchLogic';
 import { generateUUID } from './utils/uuid';
 
 function AppContent() {
-  const [view, setView] = useState<'LANDING' | 'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS' | 'TICKER' | 'VOTING' | 'SCOUTING_REPORT' | 'PHYSICAL_TESTING' | 'ABOUT' | 'PRIVACY' | 'SUPPORT' | 'API_DOCS' | 'COMPANION_DASHBOARD'>(() => {
+  const [view, setView] = useState<'LANDING' | 'HOME' | 'SETUP' | 'TRACK' | 'STATS' | 'JURY' | 'LIVE' | 'MATCH_HISTORY' | 'OVERALL_STATS' | 'STRATEGY' | 'LIVESTREAM_STATS' | 'STREAM_OVERLAY' | 'DIRECTOR' | 'SHOT_CLOCK' | 'SEASON_MANAGER' | 'CLUB_MANAGER' | 'SPOTTER' | 'ANALYSIS' | 'TICKER' | 'TICKER_OVERLAY' | 'TICKER_CUSTOMIZER' | 'VOTING' | 'SCOUTING_REPORT' | 'PHYSICAL_TESTING' | 'ABOUT' | 'PRIVACY' | 'SUPPORT' | 'API_DOCS' | 'COMPANION_DASHBOARD' | 'TRAINING'>(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
-    const validViews = ['LANDING', 'HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'TICKER', 'VOTING', 'SCOUTING_REPORT', 'PHYSICAL_TESTING', 'ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS', 'COMPANION_DASHBOARD'];
+    const validViews = ['LANDING', 'HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'TICKER', 'TICKER_OVERLAY', 'TICKER_CUSTOMIZER', 'VOTING', 'SCOUTING_REPORT', 'PHYSICAL_TESTING', 'ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS', 'COMPANION_DASHBOARD', 'TRAINING'];
     if (viewParam && validViews.includes(viewParam)) return viewParam as any;
     return 'LANDING';
   });
@@ -367,7 +370,14 @@ function AppContent() {
       )}
       <button onClick={() => setIsSettingsOpen(true)} className="fixed bottom-4 left-4 z-[90] p-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all" title="Settings"><Settings size={20} /></button>
       {view !== 'HOME' && view !== 'TICKER' && (
-        <button onClick={() => setView('HOME')} className="fixed bottom-4 right-4 z-[90] flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all text-sm font-medium" title="Go to Home"><HomeIcon size={16} /><span>Home</span></button>
+        <button 
+          onClick={() => setView('HOME')} 
+          className="fixed bottom-4 right-4 z-[90] flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all text-sm font-medium" 
+          title="Go to Home"
+          data-testid="home-nav-btn"
+        >
+          <HomeIcon size={16} /><span>Home</span>
+        </button>
       )}
       {view !== 'TICKER' && (
         <><SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onNavigate={setView} /><ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} /><AutoSaveIndicator lastSaved={lastSaved} className="fixed bottom-4 left-64 z-[90]" /></>
@@ -377,7 +387,7 @@ function AppContent() {
       {view === 'HOME' && <HomePage onNavigate={setView} activeSessions={activeSessions} matchState={derivedMatchState} onJoinMatch={(match) => { setMatchState(match); }} />}
       {view === 'SETUP' && <MatchSetup onStartMatch={handleStartMatch} onNavigate={setView} savedMatches={savedMatches} />}
       {view === 'TRACK' && <Suspense fallback={<div>Loading Match Tracker...</div>}><MatchTracker matchState={derivedMatchState} onUpdateMatch={handleUpdateMatch} onFinishMatch={handleFinishMatch} onViewChange={setView} socket={socket} onSpotterAction={handleSpotterAction} /></Suspense>}
-      {view === 'STATS' && <Suspense fallback={<div>Loading Statistics...</div>}><StatsView matchState={derivedMatchState} onBack={handleBackNavigation} onHome={handleExitToHome} onAnalyze={() => setView('ANALYSIS')} /></Suspense>}
+      {view === 'STATS' && <Suspense fallback={<div>Loading Statistics...</div>}><StatsView matchState={derivedMatchState} savedMatches={savedMatches} onBack={handleBackNavigation} onHome={handleExitToHome} onAnalyze={() => setView('ANALYSIS')} /></Suspense>}
       {view === 'JURY' && <Suspense fallback={<div>Loading Jury View...</div>}><JuryView matchState={derivedMatchState} onUpdateMatch={handleUpdateMatch} onBack={handleBackNavigation} sendHapticSignal={sendHapticSignal} /></Suspense>}
       {view === 'LIVE' && <Suspense fallback={<div>Loading Live Stats...</div>}><LiveStatsView matchState={derivedMatchState} /></Suspense>}
       {view === 'MATCH_HISTORY' && <Suspense fallback={<div>Loading History...</div>}><MatchHistory matches={savedMatches} onSelectMatch={(match) => { setMatchState(match); setView('STATS'); }} onAnalyzeMatch={(match) => { setMatchState(match); setView('ANALYSIS'); }} onScoutTeam={(team) => { setScoutingTeam(team); setView('SCOUTING_REPORT'); }} onDeleteMatch={handleDeleteMatch} onBack={() => setView('HOME')} /></Suspense>}
@@ -392,10 +402,13 @@ function AppContent() {
       {view === 'SPOTTER' && <SpotterView matchState={derivedMatchState} onBack={() => setView('HOME')} />}
       {view === 'ANALYSIS' && <MatchAnalysis match={matchState} onBack={() => setView('MATCH_HISTORY')} />}
       {view === 'TICKER' && <Suspense fallback={<div>Loading Ticker...</div>}><LiveTicker /></Suspense>}
+      {view === 'TICKER_OVERLAY' && <Suspense fallback={<div>Loading Overlay...</div>}><TickerOverlay /></Suspense>}
+      {view === 'TICKER_CUSTOMIZER' && <Suspense fallback={<div>Loading Customizer...</div>}><TickerCustomizer /></Suspense>}
       {view === 'VOTING' && <Suspense fallback={<div>Loading Voting...</div>}><SpectatorVoting /></Suspense>}
       {view === 'SCOUTING_REPORT' && <ScoutingReportView teamName={scoutingTeam} allMatches={savedMatches} onBack={() => setView('MATCH_HISTORY')} />}
       {view === 'PHYSICAL_TESTING' && <PhysicalTesting onBack={() => setView('HOME')} />}
       {view === 'COMPANION_DASHBOARD' && <Suspense fallback={<div>Loading Dashboard...</div>}><CompanionDashboard socket={socket} onBack={() => setView('HOME')} /></Suspense>}
+      {view === 'TRAINING' && <Suspense fallback={<div>Loading Training Tracker...</div>}><TrainingManager onBack={() => setView('HOME')} /></Suspense>}
       {['ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS'].includes(view) && <StaticPages view={view as any} onBack={() => setView('LANDING')} />}
     </div>
   );

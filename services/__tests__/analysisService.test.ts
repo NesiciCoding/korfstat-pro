@@ -236,5 +236,38 @@ describe('analysisService', () => {
             expect(insights.some(i => i.title === 'stats.scoringRun')).toBe(true);
             expect(insights.some(i => i.title === 'stats.reboundDominance')).toBe(true);
         });
+
+        it('should detect mid-match scoring runs', () => {
+             const matchState: MatchState = {
+                isConfigured: true,
+                homeTeam: { id: 'HOME', name: 'Home', players: [], color: '', substitutionCount: 0 },
+                awayTeam: { id: 'AWAY', name: 'Away', players: [], color: '', substitutionCount: 0 },
+                events: [
+                    { id: '1', timestamp: 10, type: 'SHOT', result: 'GOAL', teamId: 'HOME', half: 1 },
+                    { id: '2', timestamp: 20, type: 'SHOT', result: 'GOAL', teamId: 'HOME', half: 1 },
+                    { id: '3', timestamp: 30, type: 'SHOT', result: 'GOAL', teamId: 'HOME', half: 1 },
+                    { id: '4', timestamp: 40, type: 'SHOT', result: 'GOAL', teamId: 'AWAY', half: 1 }, // Breaks Home run
+                ],
+                timer: { elapsedSeconds: 60, isRunning: false },
+            } as any;
+            const insights = generateMatchInsights(matchState);
+            expect(insights.some(i => i.description.includes('momentum swing'))).toBe(true);
+        });
+
+        it('should detect away rebound dominance', () => {
+             const matchState: MatchState = {
+                isConfigured: true,
+                homeTeam: { id: 'HOME', name: 'Home', players: [], color: '', substitutionCount: 0 },
+                awayTeam: { id: 'AWAY', name: 'Away', players: [], color: '', substitutionCount: 0 },
+                events: [
+                    ...Array.from({ length: 2 }, (_, i) => ({ id: `h${i}`, type: 'REBOUND', teamId: 'HOME', half: 1 })),
+                    ...Array.from({ length: 10 }, (_, i) => ({ id: `a${i}`, type: 'REBOUND', teamId: 'AWAY', half: 1 })),
+                ],
+                timer: { elapsedSeconds: 60, isRunning: false },
+            } as any;
+            const insights = generateMatchInsights(matchState);
+            const insight = insights.find(i => i.title === 'stats.reboundDominance');
+            expect(insight?.teamId).toBe('AWAY');
+        });
     });
 });

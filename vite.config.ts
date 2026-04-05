@@ -1,11 +1,15 @@
+/// <reference types="vitest" />
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { loadEnv } from 'vite';
+import { defineConfig, configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 
-export default defineConfig(async ({ command, mode }) => {
+import { watchSyncPlugin } from './config/vite-plugins/watch-sync';
+
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   const plugins = [
@@ -43,7 +47,6 @@ export default defineConfig(async ({ command, mode }) => {
   ];
 
   if (command === 'serve') {
-    const { watchSyncPlugin } = await import('./config/vite-plugins/watch-sync');
     plugins.push(watchSyncPlugin);
   }
 
@@ -52,6 +55,16 @@ export default defineConfig(async ({ command, mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3002',
+          changeOrigin: true,
+        },
+        '/socket.io': {
+            target: 'http://localhost:3002',
+            ws: true,
+        },
+      },
     },
     plugins,
     build: {
@@ -79,12 +92,14 @@ export default defineConfig(async ({ command, mode }) => {
       globals: true,
       environment: 'jsdom',
       setupFiles: './test/setup.ts',
+      exclude: [...configDefaults.exclude, 'tests/**'],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html', 'lcov'],
         exclude: [
-          'node_modules/',
+          ...configDefaults.coverage.exclude || [],
           'test/',
+          'tests/**',
           '**/*.test.ts',
           '**/*.test.tsx',
           '**/types.ts',

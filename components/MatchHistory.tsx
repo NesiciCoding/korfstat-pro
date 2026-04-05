@@ -34,9 +34,10 @@ const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onA
           </div>
         ) : (
           <div className="space-y-4">
-            {matches.sort((a, b) => (b.date || 0) - (a.date || 0)).map((match) => (
+            {[...matches].sort((a, b) => (b.date || 0) - (a.date || 0)).map((match) => (
               <div
                 key={match.id}
+                data-testid={`match-card-${match.id}`}
                 className="group bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-indigo-500 dark:hover:border-indigo-500 transition-all cursor-pointer flex items-center justify-between"
                 onClick={() => onSelectMatch(match)}
               >
@@ -50,6 +51,7 @@ const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onA
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); onScoutTeam(match.homeTeam.name); }}
+                          data-testid={`scout-home-${match.id}`}
                           className="opacity-0 group-hover/team:opacity-100 p-1 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-500 rounded transition-all"
                           title="Scout Team"
                         >
@@ -78,6 +80,15 @@ const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onA
 
                 <div className="flex items-center gap-2 ml-6 pl-6 border-l border-gray-100 dark:border-gray-700">
                   <button
+                    data-testid="view-stats-btn"
+                    onClick={(e) => { e.stopPropagation(); onSelectMatch(match); }}
+                    className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors flex items-center gap-1 font-bold text-xs"
+                    title="View Statistics"
+                  >
+                    <span className="hidden sm:inline">View Stats</span>
+                    <ChevronRight size={18} />
+                  </button>
+                  <button
                     onClick={(e) => { e.stopPropagation(); onAnalyzeMatch(match); }}
                     className="p-2 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
                     title="Video Analysis"
@@ -101,6 +112,7 @@ const MatchHistory: React.FC<MatchHistoryProps> = ({ matches, onSelectMatch, onA
                   <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
                   <button
                     onClick={(e) => { e.stopPropagation(); if (match.id) onDeleteMatch(match.id); }}
+                    data-testid={`delete-match-${match.id}`}
                     className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                     title="Delete Match"
                   >

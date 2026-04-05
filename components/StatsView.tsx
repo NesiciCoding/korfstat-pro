@@ -4,7 +4,7 @@ import { MatchState, TeamId, Player, ShotType } from '../types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import KorfballField from './KorfballField';
 import PlayerProfileModal from './PlayerProfileModal';
-import { Download, ArrowLeft, Home, FileSpreadsheet, ChevronDown, Video } from 'lucide-react';
+import { Download, ArrowLeft, Home, FileSpreadsheet, ChevronDown, Video, EyeOff } from 'lucide-react';
 import { generatePDF, generateJSON } from '../services/reportGenerator';
 import { generateExcel } from '../services/excelGenerator';
 import { generateMatchInsights } from '../services/analysisService';
@@ -16,12 +16,13 @@ import { Users, Clock } from 'lucide-react';
 
 interface StatsViewProps {
   matchState: MatchState;
+  savedMatches?: MatchState[];
   onBack: () => void;
   onHome?: () => void;
   onAnalyze?: () => void;
 }
 
-const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAnalyze }) => {
+const StatsView: React.FC<StatsViewProps> = ({ matchState, savedMatches = [], onBack, onHome, onAnalyze }) => {
   const { t } = useTranslation();
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
@@ -35,6 +36,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
   const [showZoneStats, setShowZoneStats] = useState(false);
   const [showLineupStats, setShowLineupStats] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
+  const [showOfficiating, setShowOfficiating] = useState(false);
   const [timeRange, setTimeRange] = useState({ start: 0, end: matchState.timer.elapsedSeconds });
 
   // Guard clause for missing data
@@ -286,11 +288,24 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
                   <Clock size={14} />
                   {t('stats.timeline')}
                 </button>
+                <button
+                  onClick={() => { setShowOfficiating(!showOfficiating); if (!showOfficiating) { setHeatmapMode(false); setShowZoneStats(false); } }}
+                  className={`px-3 py-1.5 rounded-md transition-colors flex items-center gap-2 ${showOfficiating ? 'bg-indigo-600 text-white font-bold' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300'}`}
+                >
+                   <EyeOff size={14} /> Ref-Watch
+                </button>
               </div>
             </div>
 
             <div className="flex-1 flex flex-col items-center">
-              <KorfballField mode="view" events={filteredEvents} heatmapMode={heatmapMode} showZoneEfficiency={showZoneStats} totalGoals={getTotalGoals(matchState)} />
+              <KorfballField 
+                mode="view" 
+                events={showOfficiating ? events : filteredEvents} 
+                heatmapMode={heatmapMode} 
+                showZoneEfficiency={showZoneStats} 
+                showOfficiating={showOfficiating}
+                totalGoals={getTotalGoals(matchState)} 
+              />
               
               {showTimeline && (
                 <div className="w-full">
@@ -304,8 +319,19 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
               )}
             </div>
             <div className="mt-4 flex justify-center gap-4 text-sm dark:text-gray-300">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500 opacity-50"></div> {t('stats.goal')}</div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-500 opacity-50"></div> {t('stats.miss')}</div>
+              {showOfficiating ? (
+                <>
+                  <div className="flex items-center gap-1"><span className="text-green-500 font-bold">✓</span> Correct</div>
+                  <div className="flex items-center gap-1"><span className="text-orange-500 font-bold">!</span> Debatable</div>
+                  <div className="flex items-center gap-1"><span className="text-red-500 font-bold">✕</span> Incorrect</div>
+                  <div className="flex items-center gap-1"><span className="text-gray-400 font-bold">○</span> Missed</div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500 opacity-50"></div> {t('stats.goal')}</div>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-500 opacity-50"></div> {t('stats.miss')}</div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -463,8 +489,10 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, onBack, onHome, onAna
         {selectedPlayer && (
           <PlayerProfileModal
             player={selectedPlayer.player}
-            teamId={selectedPlayer.teamId}
-            matchState={matchState}
+            teamName={selectedPlayer.teamId === 'HOME' ? matchState.homeTeam.name : matchState.awayTeam.name}
+            teamColor={selectedPlayer.teamId === 'HOME' ? matchState.homeTeam.color : matchState.awayTeam.color}
+            events={matchState.events}
+            savedMatches={savedMatches} 
             onClose={() => setSelectedPlayer(null)}
           />
         )}

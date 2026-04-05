@@ -313,7 +313,13 @@
     "statsCalcDesc": "Stats zijn berekend op basis van opgeslagen historie.",
     "male": "Man",
     "female": "Vrouw",
-    "careerMatches": "{{count}} Carrière Wedstrijden"
+    "careerMatches": "{{count}} Carrière Wedstrijden",
+    "generateAiBio": "Genereer AI Carrière Overzicht",
+    "performanceOverview": "Prestatieoverzicht",
+    "totalGoals": "Totaal Doelpunten",
+    "accuracyRating": "Nauwkeurigheidsscore",
+    "careerWins": "Carrière Overwinningen",
+    "penaltyRate": "Strafworp Percentage"
   },
   "season": {
     "title": "Seizoensbeheer",

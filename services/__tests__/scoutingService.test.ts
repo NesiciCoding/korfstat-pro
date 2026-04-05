@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { aggregateTeamData } from '../scoutingService';
-import { MatchState } from '../types';
+import { MatchState } from '../../types';
 
 describe('scoutingService', () => {
     const mockPlayers = [
@@ -10,14 +10,17 @@ describe('scoutingService', () => {
 
     const createMockMatch = (homeName: string, awayName: string, events: any[]): MatchState => ({
         id: Math.random().toString(),
+        isConfigured: true,
+        halfDurationSeconds: 1500,
         homeTeam: { id: 'HOME', name: homeName, color: 'blue', players: mockPlayers as any, substitutionCount: 0 },
         awayTeam: { id: 'AWAY', name: awayName, color: 'red', players: mockPlayers as any, substitutionCount: 0 },
-        clock: { period: 1, timeRemaining: 0, timerRunning: false, currentMinute: 50 },
         events,
-        status: 'FINISHED',
-        startTime: Date.now(),
-        history: []
-    });
+        currentHalf: 1,
+        possession: 'HOME',
+        timer: { elapsedSeconds: 0, isRunning: false },
+        shotClock: { seconds: 25, isRunning: false },
+        timeout: { isActive: false, startTime: 0, remainingSeconds: 60 },
+    } as unknown as MatchState);
 
     it('aggregates data correctly for a team across multiple matches', () => {
         const matches: MatchState[] = [
@@ -64,5 +67,16 @@ describe('scoutingService', () => {
 
         const data = aggregateTeamData('Team A', matches);
         expect(data.matchCount).toBe(5);
+    });
+
+    it('handles zero shots for specific types', () => {
+        const matches: MatchState[] = [
+            createMockMatch('Team A', 'Other', [
+                { type: 'REBOUND', teamId: 'HOME', playerId: 'h1' }
+            ])
+        ];
+        const data = aggregateTeamData('Team A', matches);
+        expect(data.shootingEfficiency.total).toBe(0);
+        expect(data.shootingEfficiency.near).toBe(0);
     });
 });

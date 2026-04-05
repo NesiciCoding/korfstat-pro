@@ -7,7 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import zlib from 'zlib';
-import { saveMatchState, getMatchState, getLatestMatchState, saveMatchTemplate, getAllTemplates, deleteTemplate } from './db.js';
+import { saveMatchState, getMatchState, getLatestMatchState, getAllMatches, saveMatchTemplate, getAllTemplates, deleteTemplate } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -317,9 +317,43 @@ app.get('/api/companion/test', companionAuth, (req, res) => {
 });
 
 // Other existing API routes...
-app.use(express.static(path.join(__dirname, '..', 'dist')));
+// --- Ticker API ---
+/**
+ * GET /api/ticker
+ * Returns simplified match state for live broadcast tickers.
+ */
+app.get('/api/ticker', (req, res) => {
+    const match = activeMatchId ? activeMatches.get(activeMatchId) : null;
+    if (!match) return res.status(404).json({ error: 'No active match' });
 
-// --- API Endpoints ---
+    let homeScore = 0;
+    let awayScore = 0;
+    if (match.events) {
+        homeScore = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'HOME').length;
+        awayScore = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'AWAY').length;
+    }
+
+    const now = Date.now();
+    let elapsed = match.timer.elapsedSeconds || 0;
+    if (match.timer.isRunning && match.timer.lastStartTime) {
+        elapsed += (now - match.timer.lastStartTime) / 1000;
+    }
+    const duration = match.halfDurationSeconds || 1500;
+    const remaining = Math.max(0, duration - elapsed);
+
+    res.json({
+        id: match.id,
+        homeTeam: { name: match.homeTeam.name, color: match.homeTeam.color, score: homeScore },
+        awayTeam: { name: match.awayTeam.name, color: match.awayTeam.color, score: awayScore },
+        timer: { 
+            remaining, 
+            isRunning: match.timer.isRunning,
+            display: `${Math.floor(remaining / 60)}:${Math.floor(remaining % 60).toString().padStart(2, '0')}`
+        },
+        period: match.currentHalf || 1,
+        shotClock: match.shotClock ? Math.ceil(match.shotClock.seconds) : null
+    });
+});
 
 // Handle file uploads (Logos & Photos)
 app.post('/api/upload', upload.single('asset'), (req, res) => {
@@ -627,6 +661,19 @@ app.get('/api/companion/setup-info', async (req, res) => {
         activeMatchId,
         activeMatch: activeMatchId ? activeMatches.get(activeMatchId) : null
     });
+});
+
+/**
+ * GET /api/matches/history
+ * Returns all historical matches from the SQLite database.
+ */
+app.get('/api/matches/history', (req, res) => {
+    try {
+        const matches = getAllMatches();
+        res.json(matches);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to retrieve match history.' });
+    }
 });
 
 
@@ -1259,7 +1306,7 @@ io.on('connection', (socket) => {
 });
 
 // Helper to extract simplified ticker data
-function getTickerData(state) {
+export function getTickerData(state) {
     if (!state) return null;
 
     // Calculate simple score from event log if running sum not explicitly stored, 

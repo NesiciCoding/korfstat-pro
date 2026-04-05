@@ -320,7 +320,13 @@
     "statsCalcDesc": "Stats are calculated from saved match history.",
     "male": "Male",
     "female": "Female",
-    "careerMatches": "{{count}} Career Matches"
+    "careerMatches": "{{count}} Career Matches",
+    "generateAiBio": "Generate AI Career Summary",
+    "performanceOverview": "Performance Overview",
+    "totalGoals": "Total Goals",
+    "accuracyRating": "Accuracy Rating",
+    "careerWins": "Career Wins",
+    "penaltyRate": "Penalty Rate"
   },
   "season": {
     "title": "Season Manager",

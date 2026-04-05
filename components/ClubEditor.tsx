@@ -213,6 +213,7 @@ const ClubEditor: React.FC<ClubEditorProps> = ({ club, onBack, savedMatches = []
                     {viewingPlayer && (
                         <PlayerProfile
                             player={viewingPlayer}
+                            players={players}
                             matches={savedMatches}
                             onClose={() => setViewingPlayer(null)}
                         />

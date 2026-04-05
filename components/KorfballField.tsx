@@ -7,6 +7,7 @@ interface KorfballFieldProps {
   events?: MatchEvent[]; // For view mode
   heatmapMode?: boolean;
   showZoneEfficiency?: boolean;
+  showOfficiating?: boolean;
   homeColor?: string;
   awayColor?: string;
   totalGoals?: number;
@@ -42,7 +43,8 @@ const KorfballField: React.FC<KorfballFieldProps> = ({
   onFieldClick,
   events = [],
   heatmapMode = false,
-  showZoneEfficiency = false, // New Prop
+  showZoneEfficiency = false,
+  showOfficiating = false,
   homeColor = '#3b82f6',
   awayColor = '#ef4444',
   totalGoals = 0
@@ -222,7 +224,7 @@ const KorfballField: React.FC<KorfballFieldProps> = ({
         <circle cx="166.7" cy="50" r="0.8" fill="#f59e0b" />
 
         {/* Dynamic Events Rendering (View Mode) */}
-        {mode === 'view' && !showZoneEfficiency && shotEvents.map((event) => (
+        {mode === 'view' && !showZoneEfficiency && !showOfficiating && shotEvents.map((event) => (
           <g key={event.id}>
             {heatmapMode ? (
               // DOT Heatmap Style
@@ -248,6 +250,35 @@ const KorfballField: React.FC<KorfballFieldProps> = ({
             )}
           </g>
         ))}
+
+        {mode === 'view' && showOfficiating && events.filter(e => e.type === 'OFFICIATING' && e.location).map((event) => {
+          const x = event.location!.x * 2;
+          const y = event.location!.y;
+          const decision = event.refereeDecision;
+          
+          let color = '#94a3b8'; // Default gray
+          let icon = '?';
+          
+          if (decision === 'CORRECT') { color = '#22c55e'; icon = '✓'; }
+          else if (decision === 'DEBATABLE') { color = '#f59e0b'; icon = '!'; }
+          else if (decision === 'INCORRECT') { color = '#ef4444'; icon = '✕'; }
+          else if (decision === 'MISSED') { color = '#64748b'; icon = '○'; }
+
+          return (
+            <g key={event.id}>
+               <circle cx={x} cy={y} r={3.5} fill={color} opacity="0.2" />
+               <circle cx={x} cy={y} r={2.5} fill="white" stroke={color} strokeWidth="0.5" />
+               <text x={x} y={y} fontSize="3" textAnchor="middle" dy="1.1" fill={color} fontWeight="black">
+                 {icon}
+               </text>
+               {event.foulType && (
+                 <text x={x} y={y+5} fontSize="1.5" textAnchor="middle" fill="#475569" fontWeight="bold">
+                   {event.foulType}
+                 </text>
+               )}
+            </g>
+          );
+        })}
 
         {mode === 'input' && (
           <text x="5" y="5" fontSize="3" fill="#000" opacity="0.4" fontWeight="bold">

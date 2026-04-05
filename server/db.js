@@ -117,4 +117,14 @@ export const getLatestMatchState = () => {
     return null;
 };
 
+export const getAllMatches = () => {
+    try {
+        const rows = db.prepare('SELECT data_json FROM match_states ORDER BY updatedAt DESC').all();
+        return rows.map(r => JSON.parse(r.data_json));
+    } catch (err) {
+        console.error('Error loading all matches from DB:', err);
+        return [];
+    }
+};
+
 export default db;

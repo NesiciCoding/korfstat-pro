@@ -107,7 +107,7 @@ export const ClubService = {
                     shortName: team.name.substring(0, 3).toUpperCase(),
                     primaryColor: team.color,
                     players: team.players.map(p => ({
-                        id: generateUUID(), // Generate persistent ID
+                        id: (p as any).id || generateUUID(), // Honor existing ID for stats sync
                         firstName: p.name.split(' ')[0] || 'Unknown',
                         lastName: p.name.split(' ').slice(1).join(' ') || '',
                         gender: p.gender,

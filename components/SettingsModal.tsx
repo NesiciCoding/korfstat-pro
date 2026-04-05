@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { X, Moon, Sun, Monitor, Volume2, VolumeX, Trash2, Radio, Languages } from 'lucide-react';
+import { X, Moon, Sun, Monitor, Volume2, VolumeX, Trash2, Radio, Languages, Video } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings, Settings } from '../contexts/SettingsContext';
 import CompanionSetup from './CompanionSetup';
 import AssetUploader from './AssetUploader';
+import BroadcasterSettingsView from './BroadcasterSettingsView';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onNaviga
     const { settings, updateSettings, clearAllData } = useSettings();
     const { t } = useTranslation();
     const [showCompanion, setShowCompanion] = useState(false);
+    const [showBroadcaster, setShowBroadcaster] = useState(false);
 
 
     if (!isOpen) return null;
@@ -296,6 +298,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onNaviga
                                             onNavigate?.(v);
                                             onClose(); // Close modal when navigating
                                         }} />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Broadcaster Integration */}
+                            <div>
+                                <button
+                                    onClick={() => setShowBroadcaster(b => !b)}
+                                    className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${
+                                        showBroadcaster
+                                            ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-400 text-indigo-700 dark:text-indigo-300'
+                                            : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Video size={16} className={showBroadcaster ? 'text-indigo-500' : 'text-gray-500'} />
+                                        <span className="font-medium text-sm">{t('broadcaster.title', 'Broadcaster Integration')}</span>
+                                    </div>
+                                    <span className="text-xs text-gray-400">{showBroadcaster ? t('settings.hide') : t('settings.configure')}</span>
+                                </button>
+                                {showBroadcaster && (
+                                    <div className="mt-2 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+                                        <BroadcasterSettingsView />
                                     </div>
                                 )}
                             </div>

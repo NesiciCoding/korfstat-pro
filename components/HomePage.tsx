@@ -332,6 +332,20 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                     onClick={() => handleAddWidget('MATCH_CONTROL')}
                   />
                   <GalleryItem 
+                    title="Training Tracker"
+                    desc="Track athlete attendance and drill performance"
+                    icon={<Activity />}
+                    color="purple"
+                    onClick={() => handleAddWidget('QUICK_LINK', 'TRAINING')}
+                  />
+                  <GalleryItem 
+                    title="Broadcast Ticker"
+                    desc="Professional score overlays for OBS & vMix"
+                    icon={<Monitor />}
+                    color="indigo"
+                    onClick={() => handleAddWidget('QUICK_LINK', 'TICKER_CUSTOMIZER')}
+                  />
+                  <GalleryItem 
                     title={t('home.activeSessions')}
                     desc="Monitor connected devices"
                     icon={<Wifi />}

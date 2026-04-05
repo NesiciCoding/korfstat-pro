@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { MatchState, SHOT_TYPES } from "../types";
+import { PlayerStats, TrendPoint } from "../types/stats";
 import { getScore, formatTime } from "../utils/matchUtils";
 
 const getClient = () => {
@@ -229,5 +230,43 @@ export const generateScoutingReport = async (data: any): Promise<string> => {
     } catch (error) {
         console.error("Error generating scouting report:", error);
         return "The scouting drone encountered technical interference. Check your API key or data availability.";
+    }
+};
+
+export const generatePlayerCareerBio = async (player: any, stats: PlayerStats, trend: TrendPoint[]): Promise<string> => {
+    try {
+        const ai = getClient();
+
+        const prompt = `
+            You are a professional sports biographer and korfball scout. Create a compelling, 2-paragraph career biography for the following player based on their statistics.
+
+            Player: ${player.firstName} ${player.lastName} (Shirt #${player.shirtNumber})
+            
+            Career Totals:
+            - Matches Played: ${stats.matchesPlayed}
+            - Total Goals: ${stats.goals}
+            - Shooting Accuracy: ${stats.shootingPercentage}%
+            - Match Record: ${stats.wins}W - ${stats.draws}D - ${stats.losses}L
+            - Milestones: ${stats.milestones.map(m => `${m.tier} ${m.type} (Value: ${m.value})`).join(', ')}
+
+            Recent Performance Trend (Last 5 matches):
+            ${trend.slice(-5).map(t => `- vs ${t.opponent}: ${t.goals} goals, ${t.accuracy}% accuracy (${t.result})`).join('\n')}
+
+            Requirements:
+            1. Paragraph 1: Focus on their overall career impact and consistency. Mention their primary milestones.
+            2. Paragraph 2: Analyze their recent form and tactical profile (e.g., "clutch finisher," "efficient shooter"). 
+            3. Tone: Inspiring and professional. Suitable for a club website or a scouting portal.
+            4. Format: Plain text with two clear paragraphs.
+        `;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: prompt,
+        });
+
+        return response.text || "No biography could be generated at this time.";
+    } catch (error) {
+        console.error("Error generating player bio:", error);
+        return "The AI biographer is currently unavailable. Please check your API key in Settings.";
     }
 };
