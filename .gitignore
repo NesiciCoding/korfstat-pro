@@ -54,3 +54,6 @@ AGENTS.md
 playwright-report/
 test-results/
 
+# Wiki (separate git repo, managed independently)
+korfstat-pro.wiki/
+
