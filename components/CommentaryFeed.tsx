@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MatchState } from '../types';
-import { generateLiveCommentary } from '../services/geminiService';
+import { generateLiveCommentary } from '../services/insightService';
 import { MessageSquare, Sparkles, AlertCircle } from 'lucide-react';
 
 interface CommentaryFeedProps {
@@ -96,9 +96,9 @@ const CommentaryFeed: React.FC<CommentaryFeedProps> = ({ matchState, compact = f
                         onClick={triggerAiCommentary}
                         disabled={isGenerating}
                         className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors"
-                        title="Generate AI Insight now"
+                        title="Generate match insight"
                     >
-                        <Sparkles size={14} /> {isGenerating ? 'Thinking...' : 'AI Insight'}
+                        <Sparkles size={14} /> {isGenerating ? 'Generating...' : 'Insight'}
                     </button>
                 </div>
             </div>
@@ -120,7 +120,7 @@ const CommentaryFeed: React.FC<CommentaryFeedProps> = ({ matchState, compact = f
                             <div className={`text-sm ${item.isAi ? 'text-indigo-700 dark:text-indigo-300 font-medium italic' : 'text-gray-600 dark:text-gray-400'}`}>
                                 {item.text}
                             </div>
-                            <div className="text-[10px] text-gray-400 mt-1">{item.timestamp} {item.isAi && '• AI Analysis'}</div>
+                            <div className="text-[10px] text-gray-400 mt-1">{item.timestamp} {item.isAi && '• Auto'}</div>
                         </div>
                     </div>
                 ))}

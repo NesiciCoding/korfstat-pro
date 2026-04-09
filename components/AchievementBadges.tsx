@@ -1,6 +1,6 @@
 import React from 'react';
 import { Milestone, MilestoneTier } from '../types/stats';
-import { Trophy, Target, Shield, Star, Award } from 'lucide-react';
+import { Trophy, Target, Shield, Star, Award, Activity } from 'lucide-react';
 
 interface AchievementBadgesProps {
     milestones: Milestone[];
@@ -20,6 +20,9 @@ const MilestoneIcon = ({ type, size = 20 }: { type: Milestone['type'], size?: nu
         case 'ACCURACY': return <Trophy size={size} />;
         case 'CLUTCH': return <Star size={size} />;
         case 'IRON_WALL': return <Shield size={size} />;
+        case 'REBOUNDS': return <Shield size={size} />;
+        case 'CONSISTENCY': return <Activity size={size} />;
+        case 'SHARPSHOOTER': return <Target size={size} />;
         default: return <Award size={size} />;
     }
 };

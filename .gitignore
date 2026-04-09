@@ -50,3 +50,7 @@ Thumbs.db
 # Agents
 AGENTS.md
 
+# Playwright
+playwright-report/
+test-results/
+

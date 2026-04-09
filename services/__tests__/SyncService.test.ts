@@ -8,6 +8,8 @@ vi.mock('../../lib/supabase', () => ({
     upsert: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    single: vi.fn().mockReturnThis(),
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
   }
@@ -78,10 +80,11 @@ describe('SyncService', () => {
 
     it('should load matches from supabase', async () => {
       const mockRows = [{ data_json: { id: '1' } }, { data_json: { id: '2' } }];
-      (vi.mocked(supabase).order as any).mockResolvedValue({ data: mockRows, error: null } as any);
-      
+      // loadMatches terminates with .limit(), not .order()
+      (vi.mocked(supabase).limit as any).mockResolvedValue({ data: mockRows, error: null } as any);
+
       const results = await service.loadMatches();
-      
+
       expect(supabase.from).toHaveBeenCalledWith('matches');
       expect(results).toHaveLength(2);
       expect(results[0].id).toBe('1');
@@ -89,8 +92,8 @@ describe('SyncService', () => {
 
     it('should handle errors during load', async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
-      (vi.mocked(supabase).order as any).mockResolvedValue({ data: null, error: new Error('Load failed') } as any);
-      
+      (vi.mocked(supabase).limit as any).mockResolvedValue({ data: null, error: new Error('Load failed') } as any);
+
       const results = await service.loadMatches();
       expect(results).toEqual([]);
     });

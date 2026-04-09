@@ -3,11 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { useDialog } from '../hooks/useDialog';
 import { Club } from '../types/club';
 import { ClubService } from '../services/clubService';
-import { Plus, Trash2, Edit2, Users, ArrowLeft, Download, BarChart2, Brain } from 'lucide-react';
+import { Plus, Trash2, Edit2, Users, ArrowLeft, Download, BarChart2, Brain, Cloud } from 'lucide-react';
 import ClubEditor from './ClubEditor';
+import ClubSettingsPanel from './ClubSettingsPanel';
 import { MatchState } from '../types';
 import { calculateCareerStats } from '../utils/statsCalculator';
 import { generateUUID } from '../utils/uuid';
+
+type Tab = 'local' | 'cloud';
 
 interface ClubManagerProps {
     onBack: () => void;
@@ -20,6 +23,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [], on
     const { alert, confirm } = useDialog();
     const [clubs, setClubs] = useState<Club[]>([]);
     const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+    const [activeTab, setActiveTab] = useState<Tab>('local');
 
     useEffect(() => {
         loadClubs();
@@ -76,7 +80,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [], on
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
             <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
                         <button onClick={onBack} aria-label={t('common.back')} data-testid="back-button" className="p-2 hover:bg-white dark:hover:bg-gray-800 rounded-full transition-colors">
                             <ArrowLeft className="text-gray-600 dark:text-gray-300" />
@@ -86,15 +90,40 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [], on
                             {t('clubManager.title')}
                         </h1>
                     </div>
+                    {activeTab === 'local' && (
+                        <button
+                            onClick={handleImportLegacy}
+                            className="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium flex items-center gap-2"
+                        >
+                            <Download size={16} /> {t('clubManager.importLegacy')}
+                        </button>
+                    )}
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-fit">
                     <button
-                        onClick={handleImportLegacy}
-                        className="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium flex items-center gap-2"
+                        data-testid="tab-local"
+                        onClick={() => setActiveTab('local')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === 'local' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
                     >
-                        <Download size={16} /> {t('clubManager.importLegacy')}
+                        <Users size={14} /> Local Clubs
+                    </button>
+                    <button
+                        data-testid="tab-cloud"
+                        onClick={() => setActiveTab('cloud')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === 'cloud' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    >
+                        <Cloud size={14} /> Cloud Club
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Cloud tab */}
+                {activeTab === 'cloud' && (
+                    <ClubSettingsPanel />
+                )}
+
+                {activeTab === 'local' && <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div
                         onClick={handleCreate}
                         className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all flex flex-col items-center justify-center min-h-[200px] cursor-pointer group"
@@ -178,7 +207,7 @@ const ClubManager: React.FC<ClubManagerProps> = ({ onBack, savedMatches = [], on
                             )}
                         </div>
                     ))}
-                </div>
+                </div>}
             </div>
         </div>
     );

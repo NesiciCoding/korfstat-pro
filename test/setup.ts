@@ -30,24 +30,43 @@ vi.mock('@supabase/supabase-js', () => ({
         delete: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
         single: vi.fn().mockReturnThis(),
     })),
 }));
 
-// Mock SyncService
-vi.mock('../services/SyncService', () => ({
-    syncService: {
-        setUserId: vi.fn(),
-        syncMatch: vi.fn().mockResolvedValue({}),
-        loadMatches: vi.fn().mockResolvedValue([]),
-        deleteMatch: vi.fn().mockResolvedValue({}),
-    },
-    SyncService: vi.fn().mockImplementation(() => ({
-        setUserId: vi.fn(),
-        syncMatch: vi.fn().mockResolvedValue({}),
-        loadMatches: vi.fn().mockResolvedValue([]),
-        deleteMatch: vi.fn().mockResolvedValue({}),
+// Mock ClubContext
+vi.mock('../contexts/ClubContext', () => ({
+    ClubProvider: ({ children }: { children: any }) => children,
+    useClub: vi.fn(() => ({
+        activeClub: null,
+        clubId: null,
+        role: null,
+        plan: 'free',
+        isLoading: false,
+        hasFeature: vi.fn(() => true),
+        refreshClub: vi.fn().mockResolvedValue(undefined),
+        setActiveClub: vi.fn(),
     })),
+}));
+
+// Mock SyncService
+const mockSyncServiceInstance = {
+    setUserId: vi.fn(),
+    setClubId: vi.fn(),
+    onStatus: vi.fn(),
+    syncMatch: vi.fn().mockResolvedValue({}),
+    syncMatchDebounced: vi.fn(),
+    queueEvent: vi.fn(),
+    flushEventQueue: vi.fn().mockResolvedValue(undefined),
+    loadMatches: vi.fn().mockResolvedValue([]),
+    loadMatchSummaries: vi.fn().mockResolvedValue([]),
+    loadMatchDetail: vi.fn().mockResolvedValue(null),
+    deleteMatch: vi.fn().mockResolvedValue({}),
+};
+vi.mock('../services/SyncService', () => ({
+    syncService: mockSyncServiceInstance,
+    SyncService: vi.fn().mockImplementation(() => mockSyncServiceInstance),
 }));
 
 // Mock react-i18next

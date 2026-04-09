@@ -1,15 +1,23 @@
 import React, { useMemo } from 'react';
-import { 
-  PlayCircle, History, BarChart2, BrainCircuit, 
-  Monitor, Video, Tv, LayoutTemplate, Clock, Code, X, 
+import {
+  PlayCircle, History, BarChart2, BrainCircuit,
+  Monitor, Video, Tv, LayoutTemplate, Clock, Code, X,
   Wifi, Users, Activity, Play, Globe, Trophy, Watch,
-  Plus, Settings, Save, Edit2, ExternalLink
+  Plus, Settings, Save, Edit2, ExternalLink, Building2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { MatchState } from '../types';
 import DashboardWidget, { WidgetConfig } from './DashboardWidget';
 import { useSettings } from '../contexts/SettingsContext';
 import { generateUUID } from '../utils/uuid';
+import { useClub } from '../contexts/ClubContext';
+
+const PLAN_BADGE: Record<string, { label: string; className: string }> = {
+  free:    { label: 'Free',    className: 'bg-gray-700/60 text-gray-300' },
+  starter: { label: 'Starter', className: 'bg-blue-900/60 text-blue-300' },
+  pro:     { label: 'Pro',     className: 'bg-indigo-900/60 text-indigo-300' },
+  elite:   { label: 'Elite',   className: 'bg-yellow-900/60 text-yellow-300' },
+};
 
 interface HomePageProps {
   onNavigate: (view: any) => void;
@@ -34,7 +42,43 @@ const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: 'physical-testing', type: 'QUICK_LINK', targetView: 'PHYSICAL_TESTING', w: 1, h: 1 },
 ];
 
+const PRESETS: Record<string, Omit<WidgetConfig, 'id'>[]> = {
+  Coach: [
+    { type: 'HEADER', title: 'Training & Match Ops', w: 3, h: 1 },
+    { type: 'MATCH_CONTROL', w: 2, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'TRACK', w: 1, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'OVERALL_STATS', w: 1, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'MATCH_HISTORY', w: 1, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'TRAINING', w: 1, h: 1 },
+    { type: 'HEADER', title: 'Advanced Analysis', w: 3, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'SPOTTER', w: 1, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'STRATEGY', w: 1, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'PHYSICAL_TESTING', w: 1, h: 1 },
+  ],
+  Broadcaster: [
+    { type: 'HEADER', title: 'Live Broadcast Ops', w: 3, h: 1 },
+    { type: 'MATCH_CONTROL', w: 2, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'DIRECTOR', w: 1, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'STREAM_OVERLAY', w: 1, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'TICKER_CUSTOMIZER', w: 1, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'LIVESTREAM_STATS', w: 1, h: 1 },
+    { type: 'SESSIONS', w: 2, h: 1 },
+    { type: 'HEADER', title: 'Archive', w: 3, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'MATCH_HISTORY', w: 1, h: 1 },
+  ],
+  Admin: [
+    { type: 'HEADER', title: 'Organization', w: 3, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'CLUB_MANAGER', w: 1, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'SEASON_MANAGER', w: 1, h: 1 },
+    { type: 'HEADER', title: 'Match Management', w: 3, h: 1 },
+    { type: 'MATCH_CONTROL', w: 2, h: 1 },
+    { type: 'QUICK_LINK', targetView: 'JURY', w: 1, h: 1 },
+  ]
+};
+
+
 const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], matchState, onJoinMatch }) => {
+  const { activeClub, plan } = useClub();
   const [serverIp, setServerIp] = React.useState<string>('localhost');
   const [isTickerModalOpen, setIsTickerModalOpen] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
@@ -44,6 +88,11 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
   });
   const [isGalleryOpen, setIsGalleryOpen] = React.useState(false);
   const [activeMatches, setActiveMatches] = React.useState<MatchState[]>([]);
+  const [collapsedHeaders, setCollapsedHeaders] = React.useState<string[]>([]);
+
+  const toggleHeader = (id: string) => {
+    setCollapsedHeaders(prev => prev.includes(id) ? prev.filter(h => h !== id) : [...prev, id]);
+  };
 
   React.useEffect(() => {
     // Fetch active matches from server on mount
@@ -73,9 +122,9 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
       id: generateUUID(),
       type,
       targetView,
-      w: type === 'MATCH_CONTROL' ? 2 : 1,
+      w: type === 'MATCH_CONTROL' ? 2 : (type === 'HEADER' ? 3 : 1),
       h: 1,
-      title: targetView ? formatViewName(targetView) : undefined
+      title: type === 'HEADER' ? 'New Section' : (targetView ? formatViewName(targetView) : undefined)
     };
     saveWidgets([...widgets, newWidget]);
     setIsGalleryOpen(false);
@@ -147,8 +196,8 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
         if (data.localIp) {
           setServerIp(data.localIp);
         }
-      } catch (error) {
-        console.error('Failed to fetch local IP:', error);
+      } catch {
+        // Server not running locally — silently fall back to hostname
         if (window.location.hostname !== 'localhost') {
           setServerIp(window.location.hostname);
         }
@@ -184,7 +233,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
                 </div>
                 <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">{t('home.activeDiscovery')}</h1>
                 <p className="text-slate-500 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
-                  Before accessing your Dashboard Widgets, you must explicitly connect to a Live Match on the network, or start a new match.
+                  Start a new match to unlock your full dashboard, or join a live game already running on your network.
                 </p>
             </div>
             
@@ -224,7 +273,8 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
             ) : (
                 <div className="py-16 text-center text-slate-400 dark:text-slate-600 flex flex-col items-center">
                     <Wifi size={48} className="mb-4 opacity-50" />
-                    <p className="font-semibold">No external active matches discovered on port 3002.</p>
+                    <p className="font-semibold">No live matches found on the local network.</p>
+                    <p className="text-sm mt-1 opacity-70">Make sure the match server is running on the same network.</p>
                 </div>
             )}
             
@@ -250,11 +300,45 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Club badge */}
+            {activeClub && (
+              <button
+                data-testid="club-header-badge"
+                onClick={() => onNavigate('CLUB_MANAGER')}
+                className="hidden sm:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 px-3 py-1.5 rounded-lg transition-colors group"
+              >
+                <div
+                  className="w-4 h-4 rounded-sm shrink-0"
+                  style={{ backgroundColor: activeClub.primaryColor ?? '#4f46e5' }}
+                />
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate max-w-[120px] group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  {activeClub.name}
+                </span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${PLAN_BADGE[plan]?.className ?? PLAN_BADGE.free.className}`}>
+                  {PLAN_BADGE[plan]?.label ?? 'Free'}
+                </span>
+              </button>
+            )}
+
+            {isEditing && (
+              <div className="hidden lg:flex gap-2 mr-4">
+                <span className="text-[10px] uppercase font-bold text-slate-400 self-center">Presets:</span>
+                {(Object.keys(PRESETS)).map(preset => (
+                    <button key={preset} onClick={() => {
+                        const newLayout = PRESETS[preset].map(w => ({...w, id: generateUUID()})) as WidgetConfig[];
+                        saveWidgets(newLayout);
+                        setCollapsedHeaders([]);
+                    }} className="text-[10px] uppercase font-bold border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
+                        {preset}
+                    </button>
+                ))}
+              </div>
+            )}
             <button
               onClick={() => setIsEditing(!isEditing)}
               className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-xs font-bold
-                ${isEditing 
-                  ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-600/20' 
+                ${isEditing
+                  ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-600/20'
                   : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600'}`}
             >
               {isEditing ? <Save size={16} /> : <Edit2 size={16} />}
@@ -279,22 +363,35 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
 
         {/* DYNAMIC WIDGET GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] grid-flow-row-dense">
-          {widgets.map((widget) => (
-            <DashboardWidget
-              key={widget.id}
-              config={widget}
-              isEditing={isEditing}
-              onRemove={() => handleRemoveWidget(widget.id)}
-              onResize={handleResizeWidget}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onNavigate={onNavigate}
-              matchState={matchState}
-              uniqueSessions={uniqueSessions}
-            />
-          ))}
+          {(() => {
+            let isSkipping = false;
+            return widgets.map((widget) => {
+              if (widget.type === 'HEADER') {
+                isSkipping = collapsedHeaders.includes(widget.id);
+              } else if (isSkipping && !isEditing) {
+                return null;
+              }
+
+              return (
+                <DashboardWidget
+                  key={widget.id}
+                  config={widget}
+                  isEditing={isEditing}
+                  onRemove={() => handleRemoveWidget(widget.id)}
+                  onResize={handleResizeWidget}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onNavigate={onNavigate}
+                  matchState={matchState}
+                  uniqueSessions={uniqueSessions}
+                  isCollapsed={widget.type === 'HEADER' ? collapsedHeaders.includes(widget.id) : undefined}
+                  onToggleCollapse={toggleHeader}
+                />
+              );
+            });
+          })()}
           
           {isEditing && (
             <DashboardWidget 
@@ -323,6 +420,21 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, activeSessions = [], ma
               
               <div className="p-6 overflow-y-auto max-h-[70vh]">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Category Header */}
+                  <GalleryItem 
+                    title="Section Header"
+                    desc="Add a collapsible divider to organize your dashboard layouts"
+                    icon={<LayoutTemplate />}
+                    color="slate"
+                    onClick={() => {
+                        const title = prompt('Enter section title:');
+                        if (title) {
+                            const newWidget: WidgetConfig = { id: generateUUID(), type: 'HEADER', title, w: 3, h: 1 };
+                            saveWidgets([...widgets, newWidget]);
+                            setIsGalleryOpen(false);
+                        }
+                    }}
+                  />
                   {/* Core Widgets */}
                   <GalleryItem 
                     title={t('home.matchControl')}

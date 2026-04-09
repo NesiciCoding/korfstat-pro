@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MatchState } from '../types';
 import { aggregateTeamData, TeamScoutData } from '../services/scoutingService';
-import { generateScoutingReport } from '../services/geminiService';
+import { generateScoutingReport } from '../services/insightService';
 import { generateScoutingPDF } from '../services/reportGenerator';
 import { ArrowLeft, Brain, FileText, Loader2, Copy, Check, Info } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -59,7 +59,7 @@ const ScoutingReportView: React.FC<ScoutingReportViewProps> = ({ teamName, allMa
               <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
                 Smart Scout: <span className="text-indigo-600 dark:text-indigo-400">{teamName}</span>
               </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">AI-Powered Opponent Intelligence</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Statistical Opponent Analysis</p>
             </div>
           </div>
           
@@ -92,7 +92,7 @@ const ScoutingReportView: React.FC<ScoutingReportViewProps> = ({ teamName, allMa
             </div>
             <div className="text-center">
               <p className="text-xl font-bold dark:text-white italic">Aggregating historical patterns...</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Gemini is analyzing {scoutData?.matchCount || ''} match logs for tactical vulnerabilities</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Analyzing {scoutData?.matchCount || ''} match logs for tactical patterns</p>
             </div>
           </div>
         ) : (
@@ -151,15 +151,22 @@ const ScoutingReportView: React.FC<ScoutingReportViewProps> = ({ teamName, allMa
                 </div>
               </div>
 
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-2xl p-6 border border-yellow-100 dark:border-yellow-900/30">
-                <h3 className="text-xs font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                  <Brain size={14} />
-                  Coach Tip
-                </h3>
-                <p className="text-xs text-yellow-800 dark:text-yellow-400 leading-relaxed italic">
-                   "AI analysis indicates a trend. Review the Shot Map Insights carefully to decide if your defense needs to sag or stay tight on the posts."
-                </p>
-              </div>
+              {scoutData && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-2xl p-6 border border-yellow-100 dark:border-yellow-900/30">
+                  <h3 className="text-xs font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <Brain size={14} />
+                    Coach Tip
+                  </h3>
+                  <p className="text-xs text-yellow-800 dark:text-yellow-400 leading-relaxed italic">
+                    {scoutData.shootingEfficiency.near > scoutData.shootingEfficiency.far
+                      ? `"${scoutData.teamName} thrive near the post (${scoutData.shootingEfficiency.near}%). Tighten your defenders around the post area."`
+                      : scoutData.fouls.avgPerGame > 4
+                      ? `"${scoutData.teamName} average ${scoutData.fouls.avgPerGame.toFixed(1)} fouls per game — draw them into foul trouble early."`
+                      : `"${scoutData.teamName} score ${scoutData.avgGoals.toFixed(1)} goals per match. Deny their top scorer and disrupt their rhythm."`
+                    }
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

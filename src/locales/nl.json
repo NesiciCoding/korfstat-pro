@@ -146,7 +146,11 @@
     "ticker": "Live-Ticker",
     "ticker_desc": "Openbare embeddable live scores",
     "physical_testing": "Fysieke Testen",
-    "physical_testing_desc": "Standaard 20m Piepjestest"
+    "physical_testing_desc": "Standaard 20m Piepjestest",
+    "training": "Trainingsregistratie",
+    "training_desc": "Houd spelersaanwezigheid en oefeningen bij",
+    "ticker_customizer": "Broadcast Ticker",
+    "ticker_customizer_desc": "Professionele score overlays voor OBS & vMix"
   },
   "matchTracker": {
     "period": "Periode",
@@ -417,5 +421,30 @@
     "leaderboard": "Topscorers & Stats",
     "noPlayerData": "Geen spelersgegevens beschikbaar",
     "syncVideoAlert": "Synchroniseer de video eerst!"
+  },
+  "playerProfile": {
+    "rebounds": "Rebounds",
+    "turnovers": "Balverliezen",
+    "careerRating": "VAL Score",
+    "h1Goals": "1e Helft",
+    "h2Goals": "2e Helft",
+    "personalBest": "Persoonlijke Records",
+    "bestGame": "Beste Wedstrijd",
+    "shotBreakdown": "Schottype Overzicht",
+    "careerRecord": "Carrière Record",
+    "archetype": {
+      "SCORING_MACHINE": "Doelpuntenmachine",
+      "SCORING_MACHINE_desc": "Elite afmaker met uitzonderlijke consistentie",
+      "IRON_WALL": "IJzeren Muur",
+      "IRON_WALL_desc": "Dominante rebounder die de verdediging verankert",
+      "CLUTCH_PERFORMER": "Beslissende Speler",
+      "CLUTCH_PERFORMER_desc": "Presteert als het er écht op aankomt",
+      "PLAYMAKER": "Spelmaker",
+      "PLAYMAKER_desc": "Creëert positieve dynamiek met slimme keuzes",
+      "RISING_STAR": "Rijzende Ster",
+      "RISING_STAR_desc": "Speler in de beginfase met een explosieve start",
+      "VERSATILE": "Veelzijdig",
+      "VERSATILE_desc": "Consistente allround bijdrager"
+    }
   }
 }

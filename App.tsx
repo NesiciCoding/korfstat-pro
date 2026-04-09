@@ -32,11 +32,15 @@ const CompanionDashboard = lazy(() => import('./components/CompanionDashboard'))
 const TickerOverlay = lazy(() => import('./components/TickerOverlay'));
 const TickerCustomizer = lazy(() => import('./components/TickerCustomizer'));
 import LoginPage from './components/LoginPage';
+import ClubOnboarding from './components/ClubOnboarding';
 import AutoSaveIndicator from './components/AutoSaveIndicator';
+import { SyncStatusBadge } from './components/SyncStatusBadge';
 import { supabase } from './lib/supabase';
 import { User } from '@supabase/supabase-js';
-import { LogOut, Cloud, CloudOff, Settings } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import { syncService } from './services/SyncService';
+import { useSyncStatus } from './hooks/useSyncStatus';
+import { ClubProvider, useClub } from './contexts/ClubContext';
 import StaticPages from './components/StaticPages';
 
 import { MatchState, MatchEvent, TeamId, ShotType, Team, OverlayMessage } from './types';
@@ -54,6 +58,12 @@ function AppContent() {
     const viewParam = params.get('view');
     const validViews = ['LANDING', 'HOME', 'SETUP', 'TRACK', 'STATS', 'JURY', 'LIVE', 'MATCH_HISTORY', 'OVERALL_STATS', 'STRATEGY', 'LIVESTREAM_STATS', 'STREAM_OVERLAY', 'DIRECTOR', 'SHOT_CLOCK', 'SEASON_MANAGER', 'CLUB_MANAGER', 'SPOTTER', 'ANALYSIS', 'TICKER', 'TICKER_OVERLAY', 'TICKER_CUSTOMIZER', 'VOTING', 'SCOUTING_REPORT', 'PHYSICAL_TESTING', 'ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS', 'COMPANION_DASHBOARD', 'TRAINING'];
     if (viewParam && validViews.includes(viewParam)) return viewParam as any;
+    
+    // Support path-based rendering for public endpoints (like OBS Browser Sources)
+    const path = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+    if (path === 'ticker') return 'TICKER';
+    if (path === 'overlay') return 'TICKER_OVERLAY';
+
     return 'LANDING';
   });
 
@@ -61,7 +71,6 @@ function AppContent() {
   const { settings } = useSettings();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const { lastSaved } = useSettings();
 
   // --- SOCKET PROXIES (Break Circularity) ---
@@ -78,6 +87,8 @@ function AppContent() {
 
   const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const { clubId, activeClub, isLoading: isClubLoading } = useClub();
+  const syncStatus = useSyncStatus();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -93,6 +104,11 @@ function AppContent() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // Keep syncService club-aware whenever the active club changes
+  useEffect(() => {
+    syncService.setClubId(clubId);
+  }, [clubId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -133,7 +149,7 @@ function AppContent() {
   useEffect(() => {
     if (user && user.id !== 'guest') {
       setIsAuthLoading(true);
-      syncService.loadMatches().then(cloudMatches => {
+      syncService.loadMatchSummaries().then(cloudMatches => {
         if (cloudMatches.length > 0) {
           setSavedMatches(prev => {
              const existingIds = new Set(prev.map(m => m.id));
@@ -150,14 +166,33 @@ function AppContent() {
     localStorage.setItem('korfstat_matches', JSON.stringify(savedMatches));
   }, [savedMatches]);
 
+  // Tracks the last-seen (matchId, events.length) to detect newly added events.
+  const prevEventTracker = useRef<{ matchId: string; len: number }>({ matchId: '', len: 0 });
+
   useEffect(() => {
     if (matchState.isConfigured && matchState.id) {
        localStorage.setItem(`korfstat_match_${matchState.id}`, JSON.stringify(matchState));
        localStorage.setItem('korfstat_current_match_id', matchState.id);
        localStorage.setItem('korfstat_current_match', JSON.stringify(matchState));
+
        if (user && user.id !== 'guest') {
-         setIsSyncing(true);
-         syncService.syncMatch(matchState).finally(() => setIsSyncing(false));
+         const { matchId: prevId, len: prevLen } = prevEventTracker.current;
+         const matchId = matchState.id;
+         const events = matchState.events;
+         // Reset counter when switching to a different match
+         const effectivePrevLen = prevId === matchId ? prevLen : 0;
+
+         if (events.length > effectivePrevLen) {
+           // Queue each new discrete event individually (offline-safe, idempotent)
+           events.slice(effectivePrevLen).forEach((event, i) => {
+             syncService.queueEvent(matchId, event, effectivePrevLen + i);
+           });
+         }
+         prevEventTracker.current = { matchId, len: events.length };
+
+         // Full blob sync is debounced — keeps data_json consistent without
+         // hammering Supabase on every timer tick or possession change.
+         syncService.syncMatchDebounced(matchState);
        }
     }
   }, [matchState, user]);
@@ -255,6 +290,27 @@ function AppContent() {
     setSavedMatches(prev => prev.filter(m => m.id !== id));
   }, []);
 
+  /**
+   * Select a saved match for viewing. If the match is a cloud summary (players
+   * array is empty — loaded via loadMatchSummaries), fetch the full data_json
+   * blob before navigating to the stats view.
+   */
+  const handleSelectSavedMatch = useCallback(async (match: MatchState, targetView: 'STATS' | 'ANALYSIS' = 'STATS') => {
+    const isSummaryOnly = match.homeTeam.players.length === 0 && match.id;
+    if (isSummaryOnly) {
+      const detail = await syncService.loadMatchDetail(match.id!);
+      if (detail) {
+        setMatchState(detail);
+        setSavedMatches(prev => prev.map(m => m.id === detail.id ? detail : m));
+      } else {
+        setMatchState(match);
+      }
+    } else {
+      setMatchState(match);
+    }
+    setView(targetView);
+  }, []);
+
   const handleSpotterAction = useCallback((action: any) => {
     const actionType: string = action?.action ?? action;
     setMatchState(prev => {
@@ -347,7 +403,7 @@ function AppContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  if (isAuthLoading) {
+  if (isAuthLoading || (user && user.id !== 'guest' && activeClub === undefined)) {
     return (
       <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center">
         <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -356,17 +412,28 @@ function AppContent() {
     );
   }
 
-  if (!user && !['LANDING', 'ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS'].includes(view)) {
+  const publicViews = ['LANDING', 'ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS', 'TICKER', 'TICKER_OVERLAY'];
+
+  if (!user && !publicViews.includes(view)) {
     return <LoginPage onLoginSuccess={setUser} onBack={() => setView('LANDING')} />;
+  }
+
+  // Logged-in but not yet in a club — show onboarding wizard
+  if (user && user.id !== 'guest' && !activeClub && !publicViews.includes(view)) {
+    return <ClubOnboarding />;
   }
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 font-sans transition-colors duration-300">
       <button onClick={handleLogout} className="fixed bottom-4 left-16 z-[90] p-2 bg-white/10 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-full backdrop-blur-sm transition-all" title="Logout"><LogOut size={20} /></button>
       {user && user.id !== 'guest' && (
-        <div className="fixed bottom-4 left-28 z-[90] flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full backdrop-blur-sm transition-all text-[10px] font-bold tracking-widest uppercase">
-          {isSyncing ? <><Cloud size={12} className="text-blue-400 animate-pulse" /><span className="text-blue-400">Syncing...</span></> : <><Cloud size={12} className="text-green-500" /><span className="text-green-500">Cloud Active</span></>}
-        </div>
+        <SyncStatusBadge
+          state={syncStatus.state}
+          lastError={syncStatus.lastError}
+          lastSynced={syncStatus.lastSynced}
+          onRetry={() => syncStatus.retry(matchState)}
+          className="fixed bottom-4 left-28 z-[90]"
+        />
       )}
       <button onClick={() => setIsSettingsOpen(true)} className="fixed bottom-4 left-4 z-[90] p-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all" title="Settings"><Settings size={20} /></button>
       {view !== 'HOME' && view !== 'TICKER' && (
@@ -383,14 +450,14 @@ function AppContent() {
         <><SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onNavigate={setView} /><ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} /><AutoSaveIndicator lastSaved={lastSaved} className="fixed bottom-4 left-64 z-[90]" /></>
       )}
 
-      {view === 'LANDING' && <LandingGateway onNavigate={setView} onSelectMatch={(match) => { setMatchState(match); setView('STATS'); }} activeSessions={activeSessions} matchState={derivedMatchState} savedMatches={savedMatches} isAuthenticated={!!user} />}
+      {view === 'LANDING' && <LandingGateway onNavigate={setView} onSelectMatch={(match) => handleSelectSavedMatch(match)} activeSessions={activeSessions} matchState={derivedMatchState} savedMatches={savedMatches} isAuthenticated={!!user} />}
       {view === 'HOME' && <HomePage onNavigate={setView} activeSessions={activeSessions} matchState={derivedMatchState} onJoinMatch={(match) => { setMatchState(match); }} />}
       {view === 'SETUP' && <MatchSetup onStartMatch={handleStartMatch} onNavigate={setView} savedMatches={savedMatches} />}
       {view === 'TRACK' && <Suspense fallback={<div>Loading Match Tracker...</div>}><MatchTracker matchState={derivedMatchState} onUpdateMatch={handleUpdateMatch} onFinishMatch={handleFinishMatch} onViewChange={setView} socket={socket} onSpotterAction={handleSpotterAction} /></Suspense>}
       {view === 'STATS' && <Suspense fallback={<div>Loading Statistics...</div>}><StatsView matchState={derivedMatchState} savedMatches={savedMatches} onBack={handleBackNavigation} onHome={handleExitToHome} onAnalyze={() => setView('ANALYSIS')} /></Suspense>}
       {view === 'JURY' && <Suspense fallback={<div>Loading Jury View...</div>}><JuryView matchState={derivedMatchState} onUpdateMatch={handleUpdateMatch} onBack={handleBackNavigation} sendHapticSignal={sendHapticSignal} /></Suspense>}
       {view === 'LIVE' && <Suspense fallback={<div>Loading Live Stats...</div>}><LiveStatsView matchState={derivedMatchState} /></Suspense>}
-      {view === 'MATCH_HISTORY' && <Suspense fallback={<div>Loading History...</div>}><MatchHistory matches={savedMatches} onSelectMatch={(match) => { setMatchState(match); setView('STATS'); }} onAnalyzeMatch={(match) => { setMatchState(match); setView('ANALYSIS'); }} onScoutTeam={(team) => { setScoutingTeam(team); setView('SCOUTING_REPORT'); }} onDeleteMatch={handleDeleteMatch} onBack={() => setView('HOME')} /></Suspense>}
+      {view === 'MATCH_HISTORY' && <Suspense fallback={<div>Loading History...</div>}><MatchHistory matches={savedMatches} onSelectMatch={(match) => handleSelectSavedMatch(match)} onAnalyzeMatch={(match) => handleSelectSavedMatch(match, 'ANALYSIS')} onScoutTeam={(team) => { setScoutingTeam(team); setView('SCOUTING_REPORT'); }} onDeleteMatch={handleDeleteMatch} onBack={() => setView('HOME')} /></Suspense>}
       {view === 'OVERALL_STATS' && <OverallStats matches={savedMatches} onBack={() => setView('HOME')} />}
       {view === 'STRATEGY' && <StrategyPlanner matches={savedMatches} onBack={() => setView('HOME')} />}
       {view === 'LIVESTREAM_STATS' && <LivestreamView matchState={derivedMatchState} savedMatches={savedMatches} />}
@@ -414,13 +481,33 @@ function AppContent() {
   );
 }
 
+function AppWithClub() {
+  const [userId, setUserId] = React.useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  return (
+    <ClubProvider userId={userId}>
+      <AppContent />
+      <UpdateChecker />
+    </ClubProvider>
+  );
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
       <DialogProvider>
         <SettingsProvider>
-          <AppContent />
-          <UpdateChecker />
+          <AppWithClub />
         </SettingsProvider>
       </DialogProvider>
     </ErrorBoundary>

@@ -8,7 +8,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { MatchState } from '../types';
 
-export type WidgetType = 'MATCH_CONTROL' | 'SESSIONS' | 'QUICK_LINK' | 'PLACEHOLDER';
+export type WidgetType = 'MATCH_CONTROL' | 'SESSIONS' | 'QUICK_LINK' | 'PLACEHOLDER' | 'HEADER';
 
 export interface WidgetConfig {
   id: string;
@@ -33,6 +33,8 @@ interface DashboardWidgetProps {
   onDragEnd?: (e: React.DragEvent) => void;
   onDragOver?: (e: React.DragEvent, id: string) => void;
   onDrop?: (e: React.DragEvent, id: string) => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: (id: string) => void;
 }
 
 const DashboardWidget: React.FC<DashboardWidgetProps> = ({
@@ -47,12 +49,17 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   onDragStart,
   onDragEnd,
   onDragOver,
-  onDrop
+  onDrop,
+  isCollapsed,
+  onToggleCollapse
 }) => {
   const { t } = useTranslation();
 
   const getSpanClass = () => {
-    const { w, h } = config;
+    const { w, h, type } = config;
+    
+    if (type === 'HEADER') return 'col-span-1 md:col-span-2 lg:col-span-3 row-span-1';
+    
     let classes = '';
     if (w === 2 && h === 2) classes = 'col-span-1 md:col-span-2 row-span-2';
     else if (w === 2) classes = 'col-span-1 md:col-span-2 row-span-1';
@@ -87,6 +94,25 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
 
   const renderContent = () => {
     switch (config.type) {
+      case 'HEADER': {
+        return (
+          <div 
+            className={`flex items-center justify-between px-6 py-4 bg-slate-200/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm transition-all h-full ${!isEditing ? 'cursor-pointer hover:bg-slate-300/50 dark:hover:bg-slate-700/50' : ''}`}
+            onClick={() => !isEditing && onToggleCollapse?.(config.id)}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-8 bg-indigo-500 rounded-full"></div>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-widest">{config.title || 'Category'}</h2>
+            </div>
+            {!isEditing && (
+                <button className="p-2 rounded-full transition-colors text-slate-500 dark:text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+            )}
+          </div>
+        );
+      }
+
       case 'MATCH_CONTROL': {
         const hasActiveMatch = matchState?.isConfigured;
         const isLarge = config.w === 2 || config.h === 2;

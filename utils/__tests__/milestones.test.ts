@@ -1,12 +1,38 @@
 import { describe, it, expect } from 'vitest';
 import { calculatePlayerMilestones } from '../statsCalculator';
 import { MatchState } from '../../types';
+import { PlayerArchetype } from '../../types/stats';
+
+const baseExtendedStats = {
+    rebounds: 0,
+    turnovers: 0,
+    yellowCards: 0,
+    redCards: 0,
+    careerRating: 0,
+    goalsPerMatch: 0,
+    goalsFirstHalf: 0,
+    goalsSecondHalf: 0,
+    shotsByType: {
+        NEAR: { shots: 0, goals: 0 },
+        MEDIUM: { shots: 0, goals: 0 },
+        FAR: { shots: 0, goals: 0 },
+        RUNNING_IN: { shots: 0, goals: 0 },
+        PENALTY: { shots: 0, goals: 0 },
+        FREE_THROW: { shots: 0, goals: 0 },
+    },
+    bestMatch: null,
+    currentGoalStreak: 0,
+    longestGoalStreak: 0,
+    careerPlusMinus: 0,
+    archetype: 'VERSATILE' as PlayerArchetype,
+};
 
 describe('calculatePlayerMilestones', () => {
     const playerId = 'player-1';
 
     it('should identify goal milestones correctly', () => {
         const stats = {
+            ...baseExtendedStats,
             matchesPlayed: 10,
             goals: 120,
             shots: 300,
@@ -28,6 +54,7 @@ describe('calculatePlayerMilestones', () => {
 
     it('should identify diamond goal milestone for 1000+ goals', () => {
         const stats = {
+            ...baseExtendedStats,
             matchesPlayed: 100,
             goals: 1050,
             shots: 3000,
@@ -48,6 +75,7 @@ describe('calculatePlayerMilestones', () => {
 
     it('should identify accuracy milestones', () => {
         const stats = {
+            ...baseExtendedStats,
             matchesPlayed: 6, // Min 5 matches
             goals: 45,
             shots: 100,
@@ -85,6 +113,7 @@ describe('calculatePlayerMilestones', () => {
         };
 
         const stats = {
+            ...baseExtendedStats,
             matchesPlayed: 1,
             goals: 1,
             shots: 1,

@@ -151,7 +151,11 @@
     "ticker": "Live-Ticker",
     "ticker_desc": "Public embeddable live scores",
     "physical_testing": "Physical Testing",
-    "physical_testing_desc": "Standard 20m Beep Test"
+    "physical_testing_desc": "Standard 20m Beep Test",
+    "training": "Training Tracker",
+    "training_desc": "Track athlete attendance and drill performance",
+    "ticker_customizer": "Broadcast Ticker",
+    "ticker_customizer_desc": "Professional score overlays for OBS & vMix"
   },
   "matchTracker": {
     "period": "Period",
@@ -442,6 +446,31 @@
     "helpExample2": "\"Away 12 Miss\"",
     "helpExample3": "\"Home 3 Turnover\"",
     "commandRegistered": "Command Registered!"
+  },
+  "playerProfile": {
+    "rebounds": "Rebounds",
+    "turnovers": "Turnovers",
+    "careerRating": "VAL Rating",
+    "h1Goals": "1st Half",
+    "h2Goals": "2nd Half",
+    "personalBest": "Personal Bests",
+    "bestGame": "Best Game",
+    "shotBreakdown": "Shot Type Breakdown",
+    "careerRecord": "Career Record",
+    "archetype": {
+      "SCORING_MACHINE": "Scoring Machine",
+      "SCORING_MACHINE_desc": "Elite finisher with exceptional consistency",
+      "IRON_WALL": "Iron Wall",
+      "IRON_WALL_desc": "Dominant rebounder anchoring the defense",
+      "CLUTCH_PERFORMER": "Clutch Performer",
+      "CLUTCH_PERFORMER_desc": "Delivers when the match is on the line",
+      "PLAYMAKER": "Playmaker",
+      "PLAYMAKER_desc": "Creates positive momentum with smart decisions",
+      "RISING_STAR": "Rising Star",
+      "RISING_STAR_desc": "Early-career player with an explosive start",
+      "VERSATILE": "Versatile",
+      "VERSATILE_desc": "Consistent all-round contributor"
+    }
   },
   "auth": {
     "signIn": "Sign In",

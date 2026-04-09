@@ -12,7 +12,8 @@ import SocialGraphicGenerator from './SocialGraphicGenerator';
 import { calculateMatchPlusMinus, calculatePlayerMatchStats } from '../utils/statsCalculator';
 import { calculateLineupStats, formatTime as formatDuration, getTotalGoals } from '../utils/lineupUtils';
 import ShotTimeline from './ShotTimeline';
-import { Users, Clock } from 'lucide-react';
+import GhostSimPanel from './GhostSimPanel';
+import { Users, Clock, Ghost } from 'lucide-react';
 
 interface StatsViewProps {
   matchState: MatchState;
@@ -26,6 +27,7 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, savedMatches = [], on
   const { t } = useTranslation();
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
+  const [showGhost, setShowGhost] = useState(false);
   const [showSocialGraphic, setShowSocialGraphic] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<{ player: Player, teamId: TeamId } | null>(null);
 
@@ -136,6 +138,14 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, savedMatches = [], on
             >
               <span>📊</span>
               {showInsights ? t('stats.hideInsights') : t('stats.showInsights')}
+            </button>
+
+            <button
+              onClick={() => setShowGhost(!showGhost)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium border ${showGhost ? 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700'}`}
+            >
+              <Ghost size={16} />
+              Ghost Sim
             </button>
 
             <button
@@ -482,6 +492,13 @@ const StatsView: React.FC<StatsViewProps> = ({ matchState, savedMatches = [], on
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Ghost Simulation Panel */}
+        {showGhost && (
+          <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <GhostSimPanel matchState={matchState} historicalMatches={savedMatches} />
           </div>
         )}
 

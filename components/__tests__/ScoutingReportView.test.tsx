@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ScoutingReportView from '../ScoutingReportView';
 import { aggregateTeamData } from '../../services/scoutingService';
-import { generateScoutingReport } from '../../services/geminiService';
 import { generateScoutingPDF } from '../../services/reportGenerator';
 
 // Mock services
@@ -10,8 +9,8 @@ vi.mock('../../services/scoutingService', () => ({
   aggregateTeamData: vi.fn(),
 }));
 
-vi.mock('../../services/geminiService', () => ({
-  generateScoutingReport: vi.fn(),
+vi.mock('../../services/insightService', () => ({
+  generateScoutingReport: vi.fn().mockResolvedValue('Statistical Analysis Result'),
 }));
 
 vi.mock('../../services/reportGenerator', () => ({
@@ -43,14 +42,16 @@ describe('ScoutingReportView', () => {
     matchCount: 3,
     avgGoals: 15.5,
     shootingEfficiency: { total: 45, near: 50, medium: 40, far: 30, penalty: 80, freeThrow: 70, runningIn: 60 },
+    rebounds: { avgPerGame: 4.0, total: 12 },
+    fouls: { avgPerGame: 3.0, total: 9 },
+    momentum: { firstHalfGoals: 10, secondHalfGoals: 8 },
+    topPlayers: [],
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(aggregateTeamData).mockReturnValue(mockScoutData as any);
-    vi.mocked(generateScoutingReport).mockResolvedValue('Mock AI Analysis Result');
-    
-    // Mock clipboard
+
     Object.assign(navigator, {
       clipboard: {
         writeText: vi.fn().mockImplementation(() => Promise.resolve()),
@@ -61,62 +62,62 @@ describe('ScoutingReportView', () => {
   it('renders loading state initially', async () => {
     render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
     expect(screen.getByText(/Aggregating historical patterns/i)).toBeInTheDocument();
-    // Wait for loading to finish to avoid act warning
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
   });
 
   it('renders report data after loading', async () => {
     render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    
+
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
-    
+
     expect(await screen.findByText(mockTeamName)).toBeInTheDocument();
-    expect(await screen.findByText('Mock AI Analysis Result')).toBeInTheDocument();
+    expect(await screen.findByText('Statistical Analysis Result')).toBeInTheDocument();
     expect(await screen.findByText('3')).toBeInTheDocument();
     expect(await screen.findByText('45%')).toBeInTheDocument();
   });
 
   it('calls onBack when back button is clicked', async () => {
     render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    
+
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
-    
+
     const backBtn = (await screen.findByTestId('arrow-left')).parentElement;
     fireEvent.click(backBtn!);
-    
+
     expect(mockOnBack).toHaveBeenCalled();
   });
 
   it('handles copy to clipboard', async () => {
     render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    
+
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
-    
+
     const copyBtn = await screen.findByText(/Copy Text/i);
     fireEvent.click(copyBtn);
-    
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Mock AI Analysis Result');
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Statistical Analysis Result');
     expect(await screen.findByText(/Copied/i)).toBeInTheDocument();
   });
 
   it('triggers PDF generation', async () => {
     render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    
+
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
-    
+
     const exportBtn = await screen.findByText(/Export PDF/i);
     fireEvent.click(exportBtn);
-    
-    expect(generateScoutingPDF).toHaveBeenCalledWith(mockScoutData, 'Mock AI Analysis Result');
+
+    expect(generateScoutingPDF).toHaveBeenCalledWith(mockScoutData, 'Statistical Analysis Result');
   });
 
   it('handles error in report generation', async () => {
-    vi.mocked(generateScoutingReport).mockRejectedValue(new Error('AI Fail'));
-    
+    const { generateScoutingReport } = await import('../../services/insightService');
+    vi.mocked(generateScoutingReport).mockRejectedValueOnce(new Error('Service Error'));
+
     render(<ScoutingReportView teamName={mockTeamName} allMatches={mockMatches} onBack={mockOnBack} />);
-    
+
     await waitFor(() => expect(screen.queryByText(/Aggregating historical patterns/i)).not.toBeInTheDocument());
-    
+
     expect(await screen.findByText(/Failed to generate report/i)).toBeInTheDocument();
   });
 });

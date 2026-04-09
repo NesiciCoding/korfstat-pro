@@ -12,10 +12,6 @@ export interface Settings {
     defaultHalfDuration: number; // Minutes
     matchType: 'indoor' | 'beach';
 
-    // Integrations
-    geminiApiKey?: string;
-    geminiModel: string; // 'gemini-1.5-flash', etc.
-
     // UI Preferences
     showTimerInTitle: boolean;
     language: 'en' | 'nl';
@@ -58,7 +54,6 @@ const defaultSettings: Settings = {
     soundEnabled: true,
     defaultHalfDuration: 25,
     matchType: 'indoor',
-    geminiModel: 'gemini-2.0-flash',
     showTimerInTitle: false,
     language: 'en',
     defaultHomeName: 'Home',

@@ -1,5 +1,5 @@
 import { MatchState, MatchEvent, Player } from '../types';
-import { PlayerStats, TrendPoint, Milestone, MilestoneTier } from '../types/stats';
+import { PlayerStats, TrendPoint, Milestone, MilestoneTier, PlayerArchetype } from '../types/stats';
 
 export const calculatePlayerMilestones = (playerId: string, matches: MatchState[], currentStats: Omit<PlayerStats, 'milestones'>): Milestone[] => {
     const milestones: Milestone[] = [];
@@ -56,15 +56,12 @@ export const calculatePlayerMilestones = (playerId: string, matches: MatchState[
     matches.forEach(match => {
         const homeGoals = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'HOME').length;
         const awayGoals = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'AWAY').length;
-        
-        // Find if this specific player scored the goal that broke the tie and secured the win
-        // Simple logic: If team won by 1, find who scored the last goal. If won by more, it's more complex.
-        // For simplicity, let's count goals scored when score was tied or they were down by 1 in the last 5 mins.
+
         const playerGoals = match.events.filter(e => e.playerId === playerId && e.type === 'SHOT' && e.result === 'GOAL');
         playerGoals.forEach(g => {
             const goalsBeforeHome = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'HOME' && e.timestamp < g.timestamp).length;
             const goalsBeforeAway = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'AWAY' && e.timestamp < g.timestamp).length;
-            
+
             const isHome = match.homeTeam.players.some(p => p.id === playerId);
             if (isHome && goalsBeforeHome === goalsBeforeAway && homeGoals > awayGoals) {
                 gwgCount++;
@@ -80,11 +77,37 @@ export const calculatePlayerMilestones = (playerId: string, matches: MatchState[
 
     // 4. Iron Wall (Rebounds vs Fouls)
     const totalRebounds = matches.reduce((sum, match) => sum + match.events.filter(e => e.playerId === playerId && e.type === 'REBOUND').length, 0);
-    const totalFouls = matches.reduce((sum, match) => sum + match.events.filter(e => e.playerId === playerId && e.type === 'FOUL').length, 0);
-    
-    if (totalRebounds > 50 && totalFouls < 10) milestones.push({ id: 'wall-gold', type: 'IRON_WALL', tier: 'GOLD', value: totalRebounds, threshold: 50, achievedAt: now });
-    else if (totalRebounds > 30 && totalFouls < 15) milestones.push({ id: 'wall-silver', type: 'IRON_WALL', tier: 'SILVER', value: totalRebounds, threshold: 30, achievedAt: now });
-    else if (totalRebounds > 10 && totalFouls < 20) milestones.push({ id: 'wall-bronze', type: 'IRON_WALL', tier: 'BRONZE', value: totalRebounds, threshold: 10, achievedAt: now });
+    const totalFoulsForWall = matches.reduce((sum, match) => sum + match.events.filter(e => e.playerId === playerId && e.type === 'FOUL').length, 0);
+
+    if (totalRebounds > 50 && totalFoulsForWall < 10) milestones.push({ id: 'wall-gold', type: 'IRON_WALL', tier: 'GOLD', value: totalRebounds, threshold: 50, achievedAt: now });
+    else if (totalRebounds > 30 && totalFoulsForWall < 15) milestones.push({ id: 'wall-silver', type: 'IRON_WALL', tier: 'SILVER', value: totalRebounds, threshold: 30, achievedAt: now });
+    else if (totalRebounds > 10 && totalFoulsForWall < 20) milestones.push({ id: 'wall-bronze', type: 'IRON_WALL', tier: 'BRONZE', value: totalRebounds, threshold: 10, achievedAt: now });
+
+    // 5. Rebounds milestone
+    for (const { threshold, tier } of [{ threshold: 200, tier: 'GOLD' as const }, { threshold: 75, tier: 'SILVER' as const }, { threshold: 25, tier: 'BRONZE' as const }]) {
+        if (currentStats.rebounds >= threshold) {
+            milestones.push({ id: `rebounds-${threshold}`, type: 'REBOUNDS', tier, value: currentStats.rebounds, threshold, achievedAt: now });
+            break;
+        }
+    }
+
+    // 6. Consistency milestone (longestGoalStreak)
+    for (const { threshold, tier } of [{ threshold: 10, tier: 'GOLD' as const }, { threshold: 5, tier: 'SILVER' as const }, { threshold: 3, tier: 'BRONZE' as const }]) {
+        if (currentStats.longestGoalStreak >= threshold) {
+            milestones.push({ id: `consistency-${threshold}`, type: 'CONSISTENCY', tier, value: currentStats.longestGoalStreak, threshold, achievedAt: now });
+            break;
+        }
+    }
+
+    // 7. Sharpshooter milestone (min 10 matches, higher bar than ACCURACY)
+    if (currentStats.matchesPlayed >= 10) {
+        for (const { threshold, tier } of [{ threshold: 45, tier: 'GOLD' as const }, { threshold: 40, tier: 'SILVER' as const }, { threshold: 35, tier: 'BRONZE' as const }]) {
+            if (currentStats.shootingPercentage >= threshold) {
+                milestones.push({ id: `sharp-${threshold}`, type: 'SHARPSHOOTER', tier, value: currentStats.shootingPercentage, threshold, achievedAt: now });
+                break;
+            }
+        }
+    }
 
     return milestones;
 };
@@ -99,7 +122,29 @@ export const calculateCareerStats = (playerId: string, matches: MatchState[]): P
         freeKicks: { scored: 0, missed: 0, total: 0 },
         wins: 0,
         losses: 0,
-        draws: 0
+        draws: 0,
+        // Extended stats
+        rebounds: 0,
+        turnovers: 0,
+        yellowCards: 0,
+        redCards: 0,
+        careerRating: 0,
+        goalsPerMatch: 0,
+        goalsFirstHalf: 0,
+        goalsSecondHalf: 0,
+        shotsByType: {
+            NEAR: { shots: 0, goals: 0 },
+            MEDIUM: { shots: 0, goals: 0 },
+            FAR: { shots: 0, goals: 0 },
+            RUNNING_IN: { shots: 0, goals: 0 },
+            PENALTY: { shots: 0, goals: 0 },
+            FREE_THROW: { shots: 0, goals: 0 },
+        },
+        bestMatch: null,
+        currentGoalStreak: 0,
+        longestGoalStreak: 0,
+        careerPlusMinus: 0,
+        archetype: 'VERSATILE' as PlayerArchetype,
     };
 
     if (!matches || matches.length === 0) return { ...baseStats, milestones: [] };
@@ -126,9 +171,25 @@ export const calculateCareerStats = (playerId: string, matches: MatchState[]): P
         match.events.forEach(event => {
             if (event.playerId !== playerId) return;
 
+            if (event.type === 'REBOUND') baseStats.rebounds++;
+            if (event.type === 'TURNOVER') baseStats.turnovers++;
+            if (event.type === 'CARD') {
+                if (event.cardType === 'YELLOW') baseStats.yellowCards++;
+                if (event.cardType === 'RED') baseStats.redCards++;
+            }
+
             if (event.type === 'SHOT') {
                 baseStats.shots++;
-                if (event.result === 'GOAL') baseStats.goals++;
+                if (event.result === 'GOAL') {
+                    baseStats.goals++;
+                    if (event.half === 1) baseStats.goalsFirstHalf++;
+                    if (event.half === 2) baseStats.goalsSecondHalf++;
+                }
+
+                if (event.shotType) {
+                    baseStats.shotsByType[event.shotType].shots++;
+                    if (event.result === 'GOAL') baseStats.shotsByType[event.shotType].goals++;
+                }
 
                 if (event.shotType === 'PENALTY') {
                     baseStats.penalties.total++;
@@ -141,11 +202,108 @@ export const calculateCareerStats = (playerId: string, matches: MatchState[]): P
                 }
             }
         });
+
+        // Best match tracking
+        const matchGoals = match.events.filter(e => e.playerId === playerId && e.type === 'SHOT' && e.result === 'GOAL').length;
+        const matchShots = match.events.filter(e => e.playerId === playerId && e.type === 'SHOT').length;
+        if (baseStats.bestMatch === null || matchGoals > baseStats.bestMatch.goals) {
+            baseStats.bestMatch = {
+                goals: matchGoals,
+                accuracy: matchShots > 0 ? Math.round((matchGoals / matchShots) * 100) : 0,
+                opponent: isHome ? match.awayTeam.name : match.homeTeam.name,
+                date: match.date || 0,
+            };
+        }
+
+        // Career plus/minus accumulation
+        const pmMap = calculateMatchPlusMinus(match);
+        baseStats.careerPlusMinus += pmMap.get(playerId) || 0;
     });
 
     baseStats.shootingPercentage = baseStats.shots > 0
         ? Math.round((baseStats.goals / baseStats.shots) * 100)
         : 0;
+
+    // Derived rate stats
+    baseStats.goalsPerMatch = baseStats.matchesPlayed > 0
+        ? parseFloat((baseStats.goals / baseStats.matchesPlayed).toFixed(2))
+        : 0;
+
+    // VAL rating: (goals×5 + rebounds×2 - misses - turnovers×3 - fouls×2) / matchesPlayed
+    const totalFouls = matches.reduce((sum, m) =>
+        sum + m.events.filter(e => e.playerId === playerId && e.type === 'FOUL').length, 0);
+    const misses = baseStats.shots - baseStats.goals;
+    const rawVal = (baseStats.goals * 5) + (baseStats.rebounds * 2) - misses
+        - (baseStats.turnovers * 3) - (totalFouls * 2);
+    baseStats.careerRating = baseStats.matchesPlayed > 0
+        ? parseFloat((rawVal / baseStats.matchesPlayed).toFixed(1))
+        : 0;
+
+    // Streak calculation (two-pass, date-sorted)
+    const playerMatches = matches
+        .filter(m =>
+            m.homeTeam.players.some(p => p.id === playerId) ||
+            m.awayTeam.players.some(p => p.id === playerId)
+        )
+        .sort((a, b) => (a.date || 0) - (b.date || 0));
+
+    // Forward pass: longest streak
+    let longestStreak = 0;
+    let runningStreak = 0;
+    for (const m of playerMatches) {
+        if (m.events.some(e => e.playerId === playerId && e.type === 'SHOT' && e.result === 'GOAL')) {
+            runningStreak++;
+            if (runningStreak > longestStreak) longestStreak = runningStreak;
+        } else {
+            runningStreak = 0;
+        }
+    }
+    baseStats.longestGoalStreak = longestStreak;
+
+    // Backward pass: current streak
+    let currentStreak = 0;
+    for (let i = playerMatches.length - 1; i >= 0; i--) {
+        if (playerMatches[i].events.some(e => e.playerId === playerId && e.type === 'SHOT' && e.result === 'GOAL')) {
+            currentStreak++;
+        } else {
+            break;
+        }
+    }
+    baseStats.currentGoalStreak = currentStreak;
+
+    // Archetype determination (evaluated in strict priority order)
+    let gwgCount = 0;
+    matches.forEach(match => {
+        const homeGoals = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'HOME').length;
+        const awayGoals = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'AWAY').length;
+        const isHomeForGwg = match.homeTeam.players.some(p => p.id === playerId);
+        match.events
+            .filter(e => e.playerId === playerId && e.type === 'SHOT' && e.result === 'GOAL')
+            .forEach(g => {
+                const gbh = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'HOME' && e.timestamp < g.timestamp).length;
+                const gba = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'AWAY' && e.timestamp < g.timestamp).length;
+                if (isHomeForGwg && gbh === gba && homeGoals > awayGoals) gwgCount++;
+                else if (!isHomeForGwg && gba === gbh && awayGoals > homeGoals) gwgCount++;
+            });
+    });
+
+    const turnoversPerTen = baseStats.matchesPlayed > 0
+        ? (baseStats.turnovers / baseStats.matchesPlayed) * 10
+        : 0;
+
+    let archetype: PlayerArchetype = 'VERSATILE';
+    if (baseStats.goals >= 30 && baseStats.shootingPercentage >= 35) {
+        archetype = 'SCORING_MACHINE';
+    } else if (baseStats.rebounds >= 40 && baseStats.rebounds > baseStats.goals * 2) {
+        archetype = 'IRON_WALL';
+    } else if (gwgCount >= 3) {
+        archetype = 'CLUTCH_PERFORMER';
+    } else if (baseStats.careerPlusMinus > 10 && turnoversPerTen < 5) {
+        archetype = 'PLAYMAKER';
+    } else if (baseStats.matchesPlayed <= 8 && baseStats.goalsPerMatch >= 1.0) {
+        archetype = 'RISING_STAR';
+    }
+    baseStats.archetype = archetype;
 
     const milestones = calculatePlayerMilestones(playerId, matches, baseStats);
 
@@ -165,9 +323,19 @@ export const getPlayerTrend = (playerId: string, matches: MatchState[]): TrendPo
             const isHome = match.homeTeam.players.some(p => p.id === playerId);
             const opponentName = isHome ? match.awayTeam.name : match.homeTeam.name;
 
-            const events = match.events.filter(e => e.playerId === playerId && e.type === 'SHOT');
-            const goals = events.filter(e => e.result === 'GOAL').length;
-            const accuracy = events.length > 0 ? Math.round((goals / events.length) * 100) : 0;
+            const shotEvents = match.events.filter(e => e.playerId === playerId && e.type === 'SHOT');
+            const goals = shotEvents.filter(e => e.result === 'GOAL').length;
+            const shots = shotEvents.length;
+            const accuracy = shots > 0 ? Math.round((goals / shots) * 100) : 0;
+
+            const rebounds = match.events.filter(e => e.playerId === playerId && e.type === 'REBOUND').length;
+            const matchFouls = match.events.filter(e => e.playerId === playerId && e.type === 'FOUL').length;
+            const matchTurnovers = match.events.filter(e => e.playerId === playerId && e.type === 'TURNOVER').length;
+            const matchMisses = shots - goals;
+            const rating = parseFloat(((goals * 5) + (rebounds * 2) - matchMisses - (matchTurnovers * 3) - (matchFouls * 2)).toFixed(1));
+
+            const pmMap = calculateMatchPlusMinus(match);
+            const plusMinus = pmMap.get(playerId) || 0;
 
             const homeScore = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'HOME').length;
             const awayScore = match.events.filter(e => e.type === 'SHOT' && e.result === 'GOAL' && e.teamId === 'AWAY').length;
@@ -179,9 +347,13 @@ export const getPlayerTrend = (playerId: string, matches: MatchState[]): TrendPo
             trend.push({
                 date: match.date || 0,
                 goals,
+                shots,
+                rebounds,
+                plusMinus,
+                rating,
                 opponent: opponentName,
                 result,
-                accuracy
+                accuracy,
             });
         });
 

@@ -249,33 +249,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onNaviga
                         <div className="space-y-3">
                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{t('settings.integrations')}</label>
 
-                            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
-                                <div>
-                                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('settings.geminiApiKey')}</label>
-                                    <input
-                                        type="password"
-                                        value={settings.geminiApiKey || ''}
-                                        onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
-                                        className="w-full bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg p-2"
-                                        placeholder={t('settings.aiStudioKey')}
-                                    />
-                                    <p className="text-[10px] text-gray-400 mt-1">{t('settings.geminiDesc')}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('settings.aiModel')}</label>
-                                    <select
-                                        value={settings.geminiModel}
-                                        onChange={(e) => updateSettings({ geminiModel: e.target.value })}
-                                        className="w-full bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-900 dark:text-white text-sm rounded-lg p-2"
-                                    >
-                                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
-                                        <option value="gemini-2.0-flash">Gemini 2.0 Flash (Stable)</option>
-                                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fallback)</option>
-                                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (High Intelligence)</option>
-                                    </select>
-                                </div>
-                            </div>
-
                             {/* Companion / Button-Box Integration */}
                             <div>
                                 <button
