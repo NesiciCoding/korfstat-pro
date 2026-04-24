@@ -104,33 +104,33 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
 
 
     return (
-        <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
+        <div className="min-h-screen bg-[var(--surface-1)] text-slate-100 flex flex-col font-sans">
             {/* Header / Tabs */}
-            <div className="bg-slate-800 border-b border-slate-700 p-4 flex justify-between items-center shadow-md z-10">
+            <div className="bg-[var(--surface-2)] border-b border-slate-700 p-4 flex justify-between items-center shadow-md z-10">
                 <div className="flex items-center gap-4">
                     <div className="text-xl font-black italic tracking-tighter text-indigo-400">LIVESTREAM STATS</div>
-                    <div className="h-8 w-px bg-slate-600 mx-2"></div>
+                    <div className="h-8 w-px bg-[var(--surface-2)] mx-2"></div>
                     <div className="text-sm font-bold text-slate-400">
                         {matchState.homeTeam.name} vs {matchState.awayTeam.name}
                     </div>
                 </div>
 
-                <div className="flex bg-slate-900 rounded-lg p-1 gap-1">
+                <div className="flex bg-[var(--surface-1)] rounded-lg p-1 gap-1">
                     <button
                         onClick={() => setActiveTab('HEATMAP')}
-                        className={`px-4 py-2 rounded font-bold text-sm flex items-center gap-2 transition-all ${activeTab === 'HEATMAP' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}
+                        className={`px-4 py-2 rounded font-bold text-sm flex items-center gap-2 transition-all ${activeTab === 'HEATMAP' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200 hover:bg-[var(--surface-2)]'}`}
                     >
                         <Target size={16} /> Shot Analysis
                     </button>
                     <button
                         onClick={() => setActiveTab('CURRENT_STATS')}
-                        className={`px-4 py-2 rounded font-bold text-sm flex items-center gap-2 transition-all ${activeTab === 'CURRENT_STATS' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}
+                        className={`px-4 py-2 rounded font-bold text-sm flex items-center gap-2 transition-all ${activeTab === 'CURRENT_STATS' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200 hover:bg-[var(--surface-2)]'}`}
                     >
                         <TrendingUp size={16} /> Current Match
                     </button>
                     <button
                         onClick={() => setActiveTab('HISTORIC_STATS')}
-                        className={`px-4 py-2 rounded font-bold text-sm flex items-center gap-2 transition-all ${activeTab === 'HISTORIC_STATS' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}
+                        className={`px-4 py-2 rounded font-bold text-sm flex items-center gap-2 transition-all ${activeTab === 'HISTORIC_STATS' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200 hover:bg-[var(--surface-2)]'}`}
                     >
                         <History size={16} /> Historic / Career
                     </button>
@@ -139,7 +139,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
 
             <div className="flex-1 overflow-hidden relative flex">
                 {/* Commentary Sidebar */}
-                <div className="w-80 border-r border-slate-700 bg-slate-800 p-4 hidden xl:block overflow-y-auto">
+                <div className="w-80 border-r border-slate-700 bg-[var(--surface-2)] p-4 hidden xl:block overflow-y-auto">
                     <CommentaryFeed matchState={matchState} />
                 </div>
 
@@ -149,7 +149,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                     {activeTab === 'HEATMAP' && (
                         <div className="absolute inset-0 flex flex-col lg:flex-row p-6 gap-6 animate-in fade-in duration-300">
                             {/* Controls Sidebar */}
-                            <div className="w-full lg:w-64 bg-slate-800 rounded-xl p-4 border border-slate-700 h-fit">
+                            <div className="w-full lg:w-64 bg-[var(--surface-2)] rounded-xl p-4 border border-slate-700 h-fit">
                                 <h3 className="font-bold text-slate-400 uppercase tracking-widest text-xs mb-4 flex items-center gap-2"><Filter size={14} /> Filters</h3>
 
                                 <div className="space-y-4">
@@ -158,7 +158,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                         <select
                                             value={filterPlayerId}
                                             onChange={(e) => setFilterPlayerId(e.target.value)}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200 focus:ring-1 focus:ring-indigo-500 outline-none"
+                                            className="w-full bg-[var(--surface-1)] border border-slate-700 rounded p-2 text-sm text-slate-200 focus:ring-1 focus:ring-indigo-500 outline-none"
                                         >
                                             <option value="ALL">All Players</option>
                                             <optgroup label={matchState.homeTeam.name}>
@@ -175,7 +175,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                         <select
                                             value={filterShotType}
                                             onChange={(e) => setFilterShotType(e.target.value as any)}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200 focus:ring-1 focus:ring-indigo-500 outline-none"
+                                            className="w-full bg-[var(--surface-1)] border border-slate-700 rounded p-2 text-sm text-slate-200 focus:ring-1 focus:ring-indigo-500 outline-none"
                                         >
                                             <option value="ALL">All Types</option>
                                             <option value="NEAR">Short</option>
@@ -186,7 +186,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                         </select>
                                     </div>
 
-                                    <div className="flex bg-slate-900 p-1 rounded gap-1">
+                                    <div className="flex bg-[var(--surface-1)] p-1 rounded gap-1">
                                         <button
                                             onClick={() => { setHeatmapMode(false); setShowZoneStats(false); }}
                                             className={`flex-1 py-1.5 text-xs font-bold rounded transition-colors ${!heatmapMode && !showZoneStats ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
@@ -227,13 +227,13 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                     const stats = getCurrentPlayerStats(teamId as TeamId);
 
                                     return (
-                                        <div key={teamId} className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-xl">
+                                        <div key={teamId} className="bg-[var(--surface-2)] rounded-xl overflow-hidden border border-slate-700 shadow-xl">
                                             <div className="p-4 border-b border-slate-700 flex justify-between items-center" style={{ borderLeft: `6px solid ${team.color}` }}>
                                                 <h3 className="font-bold text-xl">{team.name}</h3>
                                                 <span className="text-slate-500 text-sm font-bold">CURRENT MATCH</span>
                                             </div>
                                             <table className="w-full text-left text-sm">
-                                                <thead className="bg-slate-900/50 text-slate-400 font-bold uppercase text-xs">
+                                                <thead className="bg-[var(--surface-1)]/50 text-slate-400 font-bold uppercase text-xs">
                                                     <tr>
                                                         <th className="px-4 py-3"># Name</th>
                                                         <th className="px-4 py-3 text-center">G / S</th>
@@ -248,7 +248,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                                     {stats.map(p => (
                                                         <tr
                                                             key={p.id}
-                                                            className="hover:bg-slate-700/50 transition-colors cursor-pointer"
+                                                            className="hover:bg-[var(--surface-2)]/50 transition-colors cursor-pointer"
                                                             onClick={() => setSelectedPlayer({ player: p, teamId: teamId as TeamId })}
                                                         >
                                                             <td className="px-4 py-3 font-bold">
@@ -283,14 +283,14 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                     {/* 3. HISTORIC STATS VIEW */}
                     {activeTab === 'HISTORIC_STATS' && (
                         <div className="absolute inset-0 overflow-y-auto p-6 animate-in fade-in duration-300">
-                            <div className="max-w-5xl mx-auto bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-xl">
-                                <div className="p-6 border-b border-slate-700 bg-slate-900/30">
+                            <div className="max-w-5xl mx-auto bg-[var(--surface-2)] rounded-xl overflow-hidden border border-slate-700 shadow-xl">
+                                <div className="p-6 border-b border-slate-700 bg-[var(--surface-1)]/30">
                                     <h3 className="font-bold text-2xl text-indigo-400 mb-1">Career Statistics</h3>
                                     <p className="text-slate-400 text-sm">Aggregated stats for players currently on the roster (including this match)</p>
                                 </div>
 
                                 <table className="w-full text-left text-sm">
-                                    <thead className="bg-slate-900 text-slate-400 font-bold uppercase text-xs tracking-wider">
+                                    <thead className="bg-[var(--surface-1)] text-slate-400 font-bold uppercase text-xs tracking-wider">
                                         <tr>
                                             <th className="px-6 py-4">Player</th>
                                             <th className="px-6 py-4">Team</th>
@@ -312,7 +312,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                             return (
                                                 <tr
                                                     key={i}
-                                                    className="hover:bg-slate-700/50 transition-colors cursor-pointer"
+                                                    className="hover:bg-[var(--surface-2)]/50 transition-colors cursor-pointer"
                                                     onClick={() => {
                                                         if (playerObj) setSelectedPlayer({ player: playerObj, teamId: teamId as TeamId });
                                                     }}
@@ -332,7 +332,7 @@ const LivestreamView: React.FC<LivestreamViewProps> = ({ matchState, savedMatche
                                                                     {Math.round((stat.goals / stat.shots) * 100)}%
                                                                 </span>
                                                                 {/* Simple bar for visual */}
-                                                                <div className="w-16 h-1 bg-slate-700 rounded-full mt-1 overflow-hidden">
+                                                                <div className="w-16 h-1 bg-[var(--surface-2)] rounded-full mt-1 overflow-hidden">
                                                                     <div
                                                                         className="h-full bg-indigo-500"
                                                                         style={{ width: `${Math.min(100, (stat.goals / stat.shots) * 100)}%` }}

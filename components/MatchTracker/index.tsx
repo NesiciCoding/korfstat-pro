@@ -56,6 +56,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({
   const [pendingShortcutAction, setPendingShortcutAction] = useState<PendingAction>(null);
   const [shortcutBuffer, setShortcutBuffer] = useState<string[]>([]);
   const [refWatchMode, setRefWatchMode] = useState(false);
+  const [showLog, setShowLog] = useState(false);
   const [serverIp, setServerIp] = useState<string>(window.location.hostname);
   const bufferTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -412,7 +413,15 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({
     if (refWatchMode) {
       setContextMenu({ visible: true, x, y, step: 'SELECT_REF_TYPE' });
     } else {
-      setContextMenu({ visible: true, x, y, step: 'SELECT_TEAM', calculatedShotType: getShotDistanceType(x, y) || 'NEAR' });
+      // Skip team selection when possession is already known (~80% of interactions).
+      // The SELECT_PLAYER step shows a "Switch" button for the remaining cases.
+      const defaultTeam = (matchState.possession || 'HOME') as TeamId;
+      setContextMenu({
+        visible: true, x, y,
+        step: 'SELECT_PLAYER',
+        selectedTeam: defaultTeam,
+        calculatedShotType: getShotDistanceType(x, y) || 'NEAR',
+      });
     }
   };
 
@@ -458,9 +467,9 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({
 
     return (
       <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm" data-testid="context-menu-overlay" onClick={() => setContextMenu(null)}>
-        <div className="bg-white rounded-xl shadow-2xl p-6 w-[90%] max-w-md animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+        <div className="bg-[var(--surface-1)] rounded-xl shadow-2xl p-6 w-[90%] max-w-md animate-in fade-in zoom-in duration-200 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-800">
+            <h3 className="text-xl font-bold text-[var(--text-primary)]">
               {contextMenu.step === 'SELECT_PLAYER' && t('matchTracker.selectPlayer')}
               {contextMenu.step === 'SELECT_ACTION' && t('matchTracker.action')}
               {contextMenu.step === 'SELECT_SHOT_TYPE' && t('matchTracker.shotDetails')}
@@ -474,7 +483,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({
               {contextMenu.step === 'SELECT_PLAYER' && pendingShortcutAction && (
                 <span className="px-2 py-1 bg-indigo-600 text-white text-xs font-bold rounded animate-pulse">{t('matchTracker.selectPlayerFor', { action: pendingShortcutAction })}</span>
               )}
-              <button onClick={() => setContextMenu(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+              <button onClick={() => setContextMenu(null)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">✕</button>
             </div>
           </div>
 
@@ -505,7 +514,23 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({
             )}
             {contextMenu.step === 'SELECT_PLAYER' && (
               <div data-testid="select-player-modal">
-                <div className="grid grid-cols-4 gap-3 mb-4">
+                {/* Switch team button — quick correction when possession default is wrong */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: activeTeam?.color }} />
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{activeTeam?.name}</span>
+                  </div>
+                  <button
+                    onClick={() => setContextMenu(prev => prev ? {
+                      ...prev,
+                      selectedTeam: prev.selectedTeam === 'HOME' ? 'AWAY' : 'HOME',
+                    } : null)}
+                    className="text-xs px-2 py-1 rounded-lg bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1"
+                  >
+                    <ArrowRightLeft size={11} /> Switch
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-4">
                   {onFieldPlayers.length === 0 && <div className="col-span-4 text-center py-4 text-gray-500 italic">{t('matchTracker.noPlayersOnField')}</div>}
                   {onFieldPlayers.map((p, idx) => (
                     <button key={p.id} data-testid={`player-btn-${p.id}`} onClick={() => {
@@ -521,7 +546,7 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({
                         else if (pendingShortcutAction === 'CARD') { setContextMenu(prev => prev ? { ...prev, selectedPlayerId: p.id, step: 'SELECT_CARD_TYPE' as any } : null); return; }
                         setPendingShortcutAction(null); setContextMenu(null);
                       } else { setContextMenu({ ...contextMenu, selectedPlayerId: p.id, step: 'SELECT_ACTION' }); }
-                    }} className="aspect-square rounded-full bg-gray-100 hover:bg-gray-200 border-2 border-transparent hover:border-indigo-500 flex flex-col items-center justify-center font-bold text-gray-700 transition-all shadow-sm relative">
+                    }} className="aspect-square min-w-[52px] min-h-[52px] rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border-2 border-transparent hover:border-indigo-500 flex flex-col items-center justify-center font-bold text-gray-700 dark:text-gray-200 transition-all shadow-sm relative">
                       <span className="text-lg">{p.number}</span>
                       <span className="text-[10px] text-gray-500">{p.gender}</span>
                       <div className="absolute -top-1 -right-1"><span className={`px-1 rounded text-[8px] font-bold text-white ${getPlayerRole(p, totalGoals) === 'ATTACK' ? 'bg-orange-500' : 'bg-blue-500'}`}>{getPlayerRole(p, totalGoals) === 'ATTACK' ? 'ATT' : 'DEF'}</span></div>
@@ -649,7 +674,9 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({
       />
 
       <div className="flex-1 max-w-7xl mx-auto w-full p-4 flex flex-col lg:flex-row gap-6">
-        <MatchLog matchState={matchState} />
+        <div className="hidden lg:flex lg:flex-none lg:w-64 lg:h-[calc(100vh-160px)]">
+          <MatchLog matchState={matchState} />
+        </div>
         <div className="flex-1 flex flex-col">
           <FieldPanel matchState={matchState} onFieldClick={handleFieldClick} />
           <PlayerGrid matchState={matchState} onPlayerClick={(teamId, playerId) => setContextMenu({ visible: true, x: 0, y: 0, step: 'SELECT_ACTION', selectedTeam: teamId, selectedPlayerId: playerId })} />
@@ -660,7 +687,26 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({
         refWatchMode={refWatchMode}
         onAction={handleShortcutAction as any}
         onOpenRefWatch={() => setContextMenu({ visible: true, x: window.innerWidth / 2, y: window.innerHeight / 2, step: 'SELECT_REF_TYPE' })}
+        onToggleLog={() => setShowLog(v => !v)}
+        showLog={showLog}
       />
+
+      {/* Mobile event log drawer — visible on <lg when toggled */}
+      {showLog && (
+        <div className="fixed inset-0 z-[55] lg:hidden" onClick={() => setShowLog(false)}>
+          <div
+            className="absolute inset-x-0 bottom-0 bg-[var(--surface-1)] rounded-t-2xl shadow-2xl h-[60vh] flex flex-col animate-in slide-in-from-bottom duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-center py-2">
+              <div className="w-10 h-1 bg-[var(--border-strong)] rounded-full" />
+            </div>
+            <div className="flex-1 overflow-hidden px-2 pb-2">
+              <MatchLog matchState={matchState} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Timeout overlay */}
       {matchState.timeout.isActive && (

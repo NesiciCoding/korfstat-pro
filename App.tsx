@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef } from 'react';
-import { Home as HomeIcon } from 'lucide-react';
+import AppShell from './components/layout/AppShell';
+import GatedView from './components/layout/GatedView';
 import LandingGateway from './components/LandingGateway';
 import UpdateChecker from './components/UpdateChecker';
 import HomePage from './components/HomePage';
@@ -33,11 +34,8 @@ const TickerOverlay = lazy(() => import('./components/TickerOverlay'));
 const TickerCustomizer = lazy(() => import('./components/TickerCustomizer'));
 import LoginPage from './components/LoginPage';
 import ClubOnboarding from './components/ClubOnboarding';
-import AutoSaveIndicator from './components/AutoSaveIndicator';
-import { SyncStatusBadge } from './components/SyncStatusBadge';
 import { supabase } from './lib/supabase';
 import { User } from '@supabase/supabase-js';
-import { LogOut, Settings } from 'lucide-react';
 import { syncService } from './services/SyncService';
 import { useSyncStatus } from './hooks/useSyncStatus';
 import { ClubProvider, useClub } from './contexts/ClubContext';
@@ -68,10 +66,20 @@ function AppContent() {
   });
 
   const [scoutingTeam, setScoutingTeam] = useState<string>('');
-  const { settings } = useSettings();
+  const { settings, lastSaved } = useSettings();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
-  const { lastSaved } = useSettings();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('korfstat_sidebar_collapsed') === 'true';
+  });
+
+  const handleToggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('korfstat_sidebar_collapsed', String(next));
+      return next;
+    });
+  }, []);
 
   // --- SOCKET PROXIES (Break Circularity) ---
   const broadcastUpdateRef = useRef<((state: MatchState) => void) | null>(null);
@@ -405,9 +413,9 @@ function AppContent() {
 
   if (isAuthLoading || (user && user.id !== 'guest' && activeClub === undefined)) {
     return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-gray-400 mt-4 font-bold tracking-widest text-sm uppercase">KorfStat Pro</p>
+      <div className="min-h-screen bg-[var(--surface-0)] flex flex-col items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-[var(--text-muted)] mt-4 font-bold tracking-widest text-sm uppercase">KorfStat Pro</p>
       </div>
     );
   }
@@ -424,31 +432,19 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 font-sans transition-colors duration-300">
-      <button onClick={handleLogout} className="fixed bottom-4 left-16 z-[90] p-2 bg-white/10 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-full backdrop-blur-sm transition-all" title="Logout"><LogOut size={20} /></button>
-      {user && user.id !== 'guest' && (
-        <SyncStatusBadge
-          state={syncStatus.state}
-          lastError={syncStatus.lastError}
-          lastSynced={syncStatus.lastSynced}
-          onRetry={() => syncStatus.retry(matchState)}
-          className="fixed bottom-4 left-28 z-[90]"
-        />
-      )}
-      <button onClick={() => setIsSettingsOpen(true)} className="fixed bottom-4 left-4 z-[90] p-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all" title="Settings"><Settings size={20} /></button>
-      {view !== 'HOME' && view !== 'TICKER' && (
-        <button 
-          onClick={() => setView('HOME')} 
-          className="fixed bottom-4 right-4 z-[90] flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white rounded-full backdrop-blur-sm transition-all text-sm font-medium" 
-          title="Go to Home"
-          data-testid="home-nav-btn"
-        >
-          <HomeIcon size={16} /><span>Home</span>
-        </button>
-      )}
-      {view !== 'TICKER' && (
-        <><SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onNavigate={setView} /><ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} /><AutoSaveIndicator lastSaved={lastSaved} className="fixed bottom-4 left-64 z-[90]" /></>
-      )}
+    <AppShell
+      view={view}
+      setView={setView as (v: string) => void}
+      onOpenSettings={() => setIsSettingsOpen(true)}
+      onLogout={handleLogout}
+      syncStatus={syncStatus}
+      lastSaved={user && user.id !== 'guest' ? lastSaved : null}
+      onSyncRetry={() => syncStatus.retry(matchState)}
+      isCollapsed={sidebarCollapsed}
+      onToggleCollapsed={handleToggleSidebar}
+    >
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} onNavigate={setView} />
+      <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
 
       {view === 'LANDING' && <LandingGateway onNavigate={setView} onSelectMatch={(match) => handleSelectSavedMatch(match)} activeSessions={activeSessions} matchState={derivedMatchState} savedMatches={savedMatches} isAuthenticated={!!user} />}
       {view === 'HOME' && <HomePage onNavigate={setView} activeSessions={activeSessions} matchState={derivedMatchState} onJoinMatch={(match) => { setMatchState(match); }} />}
@@ -459,25 +455,25 @@ function AppContent() {
       {view === 'LIVE' && <Suspense fallback={<div>Loading Live Stats...</div>}><LiveStatsView matchState={derivedMatchState} /></Suspense>}
       {view === 'MATCH_HISTORY' && <Suspense fallback={<div>Loading History...</div>}><MatchHistory matches={savedMatches} onSelectMatch={(match) => handleSelectSavedMatch(match)} onAnalyzeMatch={(match) => handleSelectSavedMatch(match, 'ANALYSIS')} onScoutTeam={(team) => { setScoutingTeam(team); setView('SCOUTING_REPORT'); }} onDeleteMatch={handleDeleteMatch} onBack={() => setView('HOME')} /></Suspense>}
       {view === 'OVERALL_STATS' && <OverallStats matches={savedMatches} onBack={() => setView('HOME')} />}
-      {view === 'STRATEGY' && <StrategyPlanner matches={savedMatches} onBack={() => setView('HOME')} />}
-      {view === 'LIVESTREAM_STATS' && <LivestreamView matchState={derivedMatchState} savedMatches={savedMatches} />}
+      {view === 'STRATEGY' && <GatedView feature="STRATEGY" featureLabel="Strategy Planner" onBack={() => setView('HOME')}><StrategyPlanner matches={savedMatches} onBack={() => setView('HOME')} /></GatedView>}
+      {view === 'LIVESTREAM_STATS' && <GatedView feature="BROADCASTING" featureLabel="Livestream Statistics" onBack={() => setView('HOME')}><LivestreamView matchState={derivedMatchState} savedMatches={savedMatches} /></GatedView>}
       {view === 'STREAM_OVERLAY' && <StreamOverlay matchState={derivedMatchState} socket={socket} />}
-      {view === 'DIRECTOR' && <DirectorDashboard matchState={derivedMatchState} setMatchState={handleUpdateMatch} broadcastUpdate={broadcastUpdate} socket={socket} />}
+      {view === 'DIRECTOR' && <GatedView feature="BROADCASTING" featureLabel="Director Dashboard" onBack={() => setView('HOME')}><DirectorDashboard matchState={derivedMatchState} setMatchState={handleUpdateMatch} broadcastUpdate={broadcastUpdate} socket={socket} /></GatedView>}
       {view === 'SHOT_CLOCK' && <ShotClockView matchState={derivedMatchState} />}
       {view === 'SEASON_MANAGER' && <SeasonManager matches={savedMatches} onBack={() => setView('HOME')} />}
       {view === 'CLUB_MANAGER' && <ClubManager onBack={() => setView('HOME')} savedMatches={savedMatches} onScoutTeam={(team) => { setScoutingTeam(team); setView('SCOUTING_REPORT'); }} />}
       {view === 'SPOTTER' && <SpotterView matchState={derivedMatchState} onBack={() => setView('HOME')} />}
-      {view === 'ANALYSIS' && <MatchAnalysis match={matchState} onBack={() => setView('MATCH_HISTORY')} />}
+      {view === 'ANALYSIS' && <GatedView feature="ANALYSIS" featureLabel="Match Analysis" onBack={() => setView('MATCH_HISTORY')}><MatchAnalysis match={matchState} onBack={() => setView('MATCH_HISTORY')} /></GatedView>}
       {view === 'TICKER' && <Suspense fallback={<div>Loading Ticker...</div>}><LiveTicker /></Suspense>}
       {view === 'TICKER_OVERLAY' && <Suspense fallback={<div>Loading Overlay...</div>}><TickerOverlay /></Suspense>}
       {view === 'TICKER_CUSTOMIZER' && <Suspense fallback={<div>Loading Customizer...</div>}><TickerCustomizer /></Suspense>}
       {view === 'VOTING' && <Suspense fallback={<div>Loading Voting...</div>}><SpectatorVoting /></Suspense>}
-      {view === 'SCOUTING_REPORT' && <ScoutingReportView teamName={scoutingTeam} allMatches={savedMatches} onBack={() => setView('MATCH_HISTORY')} />}
-      {view === 'PHYSICAL_TESTING' && <PhysicalTesting onBack={() => setView('HOME')} />}
-      {view === 'COMPANION_DASHBOARD' && <Suspense fallback={<div>Loading Dashboard...</div>}><CompanionDashboard socket={socket} onBack={() => setView('HOME')} /></Suspense>}
-      {view === 'TRAINING' && <Suspense fallback={<div>Loading Training Tracker...</div>}><TrainingManager onBack={() => setView('HOME')} /></Suspense>}
+      {view === 'SCOUTING_REPORT' && <GatedView feature="SCOUTING" featureLabel="Scouting Report" onBack={() => setView('MATCH_HISTORY')}><ScoutingReportView teamName={scoutingTeam} allMatches={savedMatches} onBack={() => setView('MATCH_HISTORY')} /></GatedView>}
+      {view === 'PHYSICAL_TESTING' && <GatedView feature="PHYSICAL_TESTING" featureLabel="Physical Testing" onBack={() => setView('HOME')}><PhysicalTesting onBack={() => setView('HOME')} /></GatedView>}
+      {view === 'COMPANION_DASHBOARD' && <GatedView feature="COMPANION" featureLabel="Companion Dashboard" onBack={() => setView('HOME')}><Suspense fallback={<div>Loading Dashboard...</div>}><CompanionDashboard socket={socket} onBack={() => setView('HOME')} /></Suspense></GatedView>}
+      {view === 'TRAINING' && <GatedView feature="TRAINING" featureLabel="Training Manager" onBack={() => setView('HOME')}><Suspense fallback={<div>Loading Training Tracker...</div>}><TrainingManager onBack={() => setView('HOME')} /></Suspense></GatedView>}
       {['ABOUT', 'PRIVACY', 'SUPPORT', 'API_DOCS'].includes(view) && <StaticPages view={view as any} onBack={() => setView('LANDING')} />}
-    </div>
+    </AppShell>
   );
 }
 

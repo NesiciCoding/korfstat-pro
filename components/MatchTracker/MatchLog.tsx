@@ -8,7 +8,7 @@ interface MatchLogProps {
 }
 
 const MatchLog: React.FC<MatchLogProps> = ({ matchState }) => (
-  <div className="hidden lg:flex flex-col w-64 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden h-[calc(100vh-160px)] transition-colors">
+  <div className="flex flex-col w-full lg:w-64 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden h-full transition-colors">
     <div className="p-3 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600 font-bold text-gray-700 dark:text-gray-200 flex items-center gap-2">
       <Clock size={16} /> Match Log
     </div>

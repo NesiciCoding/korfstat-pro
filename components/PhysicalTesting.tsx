@@ -268,11 +268,11 @@ export default function PhysicalTesting({ onBack }: { onBack: () => void }) {
     const activeCount = participants.filter(p => p.active).length;
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-6 flex flex-col font-sans transition-colors duration-300">
+        <div className="min-h-screen bg-[var(--surface-2)] dark:bg-[var(--surface-1)] text-slate-900 dark:text-slate-100 p-6 flex flex-col font-sans transition-colors duration-300">
             {/* Header */}
-            <header className="flex items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+            <header className="flex items-center justify-between bg-white dark:bg-[var(--surface-2)] p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
                 <div className="flex items-center gap-4">
-                    <button onClick={onBack} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                    <button onClick={onBack} className="p-2 hover:bg-[var(--surface-2)] dark:hover:bg-[var(--surface-2)] rounded-full transition-colors">
                         <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
                     </button>
                     <div>
@@ -285,7 +285,7 @@ export default function PhysicalTesting({ onBack }: { onBack: () => void }) {
                 </div>
 
                 <div className="flex gap-3">
-                    <button disabled={participants.length === 0} onClick={() => { /* Export Results logic */ }} className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors disabled:opacity-50">
+                    <button disabled={participants.length === 0} onClick={() => { /* Export Results logic */ }} className="flex items-center gap-2 px-4 py-2 bg-[var(--surface-2)] hover:bg-[var(--surface-2)] dark:bg-[var(--surface-2)] dark:hover:bg-[var(--surface-2)] rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors disabled:opacity-50">
                         <Download size={16} /> Export
                     </button>
                 </div>
@@ -297,7 +297,7 @@ export default function PhysicalTesting({ onBack }: { onBack: () => void }) {
                 <div className="lg:col-span-1 space-y-6">
                     
                     {/* Master Control */}
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 text-center relative overflow-hidden">
+                    <div className="bg-white dark:bg-[var(--surface-2)] rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 text-center relative overflow-hidden">
                         
                         {/* Status Backing */}
                         <div className={`absolute inset-0 opacity-10 transition-colors ${isRunning ? 'bg-indigo-500' : 'bg-transparent'}`} />
@@ -315,14 +315,14 @@ export default function PhysicalTesting({ onBack }: { onBack: () => void }) {
                                 {currentLevelData.speedKmh.toFixed(1)} km/h • {currentLevelData.shuttles} Shuttles
                             </p>
 
-                            <div className="bg-slate-100 dark:bg-slate-900 rounded-xl p-4 mb-6 border border-slate-200 dark:border-slate-700">
+                            <div className="bg-[var(--surface-2)] dark:bg-[var(--surface-1)] rounded-xl p-4 mb-6 border border-slate-200 dark:border-slate-700">
                                 <div className="text-[10px] font-bold text-slate-500 uppercase">Next Beep In</div>
                                 <div className={`text-4xl font-mono font-bold mt-1 ${shuttleTimeLeft < 2 ? 'text-red-500' : 'text-slate-800 dark:text-slate-200'}`}>
                                     {Math.max(0, shuttleTimeLeft).toFixed(1)}s
                                 </div>
                                 
                                 {/* Progress Bar */}
-                                <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full mt-3 overflow-hidden">
+                                <div className="w-full h-2 bg-[var(--surface-2)] dark:bg-[var(--surface-2)] rounded-full mt-3 overflow-hidden">
                                      <div 
                                         className="h-full bg-indigo-500 transition-all ease-linear"
                                         style={{ width: `${(shuttleTimeLeft / currentLevelData.shuttleDuration) * 100}%` }}
@@ -354,7 +354,7 @@ export default function PhysicalTesting({ onBack }: { onBack: () => void }) {
                     </div>
 
                     {/* Add Player Form */}
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div className="bg-white dark:bg-[var(--surface-2)] rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
                         <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2"><Users size={16} /> Add Participant</h3>
                         <form onSubmit={handleAddPlayer} className="space-y-4">
                             <div className="flex gap-2">
@@ -363,20 +363,20 @@ export default function PhysicalTesting({ onBack }: { onBack: () => void }) {
                                     placeholder="#" 
                                     value={newPlayerNumber} 
                                     onChange={e => setNewPlayerNumber(e.target.value)}
-                                    className="w-16 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-16 px-3 py-2 bg-[var(--surface-2)] dark:bg-[var(--surface-1)] border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                                 />
                                 <input 
                                     type="text" 
                                     placeholder="Player Name" 
                                     value={newPlayerName} 
                                     onChange={e => setNewPlayerName(e.target.value)}
-                                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="flex-1 px-3 py-2 bg-[var(--surface-2)] dark:bg-[var(--surface-1)] border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                                 />
                             </div>
                             <button 
                                 type="submit" 
                                 disabled={!newPlayerName.trim()}
-                                className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                                className="w-full py-2 bg-[var(--surface-2)] hover:bg-[var(--surface-2)] dark:bg-[var(--surface-2)] dark:hover:bg-[var(--surface-2)] text-slate-800 dark:text-slate-200 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                             >
                                 <Plus size={16} /> Add to Roster
                             </button>
@@ -386,7 +386,7 @@ export default function PhysicalTesting({ onBack }: { onBack: () => void }) {
                 </div>
 
                 {/* Right Panel: Player Grid */}
-                <div className="lg:col-span-3 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col">
+                <div className="lg:col-span-3 bg-white dark:bg-[var(--surface-2)] rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">Test Roster</h2>
                         {participants.length > 0 && (
@@ -414,10 +414,10 @@ export default function PhysicalTesting({ onBack }: { onBack: () => void }) {
                                     disabled={!player.active}
                                     className={`relative text-left p-4 rounded-xl border-2 transition-all overflow-hidden group ${
                                         !player.active 
-                                            ? 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-60' 
+                                            ? 'bg-[var(--surface-2)] dark:bg-[var(--surface-1)] border-slate-200 dark:border-slate-800 opacity-60' 
                                             : player.warnings === 1 
                                                 ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400 dark:border-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900/40' 
-                                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-400 shadow-sm hover:shadow-md cursor-pointer'
+                                                : 'bg-white dark:bg-[var(--surface-2)] border-slate-200 dark:border-slate-700 hover:border-indigo-400 shadow-sm hover:shadow-md cursor-pointer'
                                     }`}
                                 >
                                     {/* Edit / Undo Button */}
@@ -425,7 +425,7 @@ export default function PhysicalTesting({ onBack }: { onBack: () => void }) {
                                         <div 
                                             onClick={(e) => handleUndoWarning(player.id, e)}
                                             title="Undo Warning/Elimination"
-                                            className="absolute top-2 right-2 p-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-md text-slate-600 dark:text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+                                            className="absolute top-2 right-2 p-1.5 bg-[var(--surface-2)] dark:bg-[var(--surface-2)] hover:bg-[var(--surface-2)] dark:hover:bg-[var(--surface-2)] rounded-md text-slate-600 dark:text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
                                         >
                                             <X size={12} />
                                         </div>
@@ -433,8 +433,8 @@ export default function PhysicalTesting({ onBack }: { onBack: () => void }) {
 
                                     <div className="flex items-center gap-3 mb-3">
                                         <div className={`w-8 h-8 rounded-full flex flex-shrink-0 items-center justify-center text-xs font-bold ${
-                                            !player.active ? 'bg-slate-200 dark:bg-slate-700 text-slate-500' : 
-                                            player.warnings === 1 ? 'bg-orange-200 dark:bg-orange-700 text-orange-800 dark:text-orange-200' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                                            !player.active ? 'bg-[var(--surface-2)] dark:bg-[var(--surface-2)] text-slate-500' : 
+                                            player.warnings === 1 ? 'bg-orange-200 dark:bg-orange-700 text-orange-800 dark:text-orange-200' : 'bg-[var(--surface-2)] dark:bg-[var(--surface-2)] text-slate-700 dark:text-slate-300'
                                         }`}>
                                             {player.number}
                                         </div>

@@ -44,7 +44,7 @@ const BroadcasterSettingsView: React.FC = () => {
             </div>
 
             {/* Main Toggle */}
-            <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm">
+            <div className="flex items-center justify-between p-4 bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm">
                 <div className="flex items-center gap-3">
                     <Radio className="text-slate-400" size={20} />
                     <div>
@@ -75,7 +75,7 @@ const BroadcasterSettingsView: React.FC = () => {
                                 className={`p-4 rounded-xl border transition-all flex flex-col items-center gap-2 group ${
                                     broadcaster.type === type 
                                     ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-400 dark:text-indigo-300 shadow-md' 
-                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'
+                                    : 'bg-white dark:bg-[var(--surface-2)] border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'
                                 }`}
                             >
                                 <span className={`text-[10px] font-black tracking-[0.2em] uppercase ${broadcaster.type === type ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>
@@ -89,7 +89,7 @@ const BroadcasterSettingsView: React.FC = () => {
                     </div>
 
                     {broadcaster.type !== 'NONE' && (
-                        <div className="space-y-4 bg-white dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div className="space-y-4 bg-white dark:bg-[var(--surface-2)]/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{t('broadcaster.ip', 'IP Address')}</label>
@@ -97,7 +97,7 @@ const BroadcasterSettingsView: React.FC = () => {
                                         type="text" 
                                         value={broadcaster.ip} 
                                         onChange={(e) => handleUpdate({ ip: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
+                                        className="w-full bg-[var(--surface-2)] dark:bg-[var(--surface-1)] border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
                                         placeholder="localhost"
                                     />
                                 </div>
@@ -107,7 +107,7 @@ const BroadcasterSettingsView: React.FC = () => {
                                         type="number" 
                                         value={broadcaster.port} 
                                         onChange={(e) => handleUpdate({ port: parseInt(e.target.value) })}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
+                                        className="w-full bg-[var(--surface-2)] dark:bg-[var(--surface-1)] border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
                                         placeholder={broadcaster.type === 'OBS' ? '4455' : '8088'}
                                     />
                                 </div>
@@ -122,7 +122,7 @@ const BroadcasterSettingsView: React.FC = () => {
                                         type="password" 
                                         value={broadcaster.password || ''} 
                                         onChange={(e) => handleUpdate({ password: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
+                                        className="w-full bg-[var(--surface-2)] dark:bg-[var(--surface-1)] border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
                                         placeholder="••••••••"
                                     />
                                 </div>
@@ -136,7 +136,7 @@ const BroadcasterSettingsView: React.FC = () => {
                                         type="number" 
                                         value={broadcaster.preRollSeconds} 
                                         onChange={(e) => handleUpdate({ preRollSeconds: parseInt(e.target.value) })}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
+                                        className="w-full bg-[var(--surface-2)] dark:bg-[var(--surface-1)] border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -145,7 +145,7 @@ const BroadcasterSettingsView: React.FC = () => {
                                         type="number" 
                                         value={broadcaster.postRollSeconds} 
                                         onChange={(e) => handleUpdate({ postRollSeconds: parseInt(e.target.value) })}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
+                                        className="w-full bg-[var(--surface-2)] dark:bg-[var(--surface-1)] border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
                                     />
                                 </div>
                             </div>
@@ -183,7 +183,7 @@ const BroadcasterSettingsView: React.FC = () => {
                                     disabled={testStatus.loading}
                                     className={`w-full py-3 rounded-xl font-black uppercase text-xs tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${
                                         testStatus.loading 
-                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                                        ? 'bg-[var(--surface-2)] text-slate-400 cursor-not-allowed' 
                                         : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 active:scale-[0.98]'
                                     }`}
                                 >
@@ -214,7 +214,7 @@ const BroadcasterSettingsView: React.FC = () => {
             )}
 
             {/* Help Section */}
-            <div className="bg-slate-100 dark:bg-slate-900 p-4 rounded-xl space-y-2 border border-slate-200 dark:border-slate-800">
+            <div className="bg-[var(--surface-2)] dark:bg-[var(--surface-1)] p-4 rounded-xl space-y-2 border border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-black uppercase text-[10px] tracking-widest">
                     <HelpCircle size={14} /> {t('common.help', 'Setup Guide')}
                 </div>

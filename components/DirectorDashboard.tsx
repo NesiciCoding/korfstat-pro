@@ -107,12 +107,12 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
     const currentFont = matchState.broadcastTheme?.font || 'inter';
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col font-sans">
+        <div className="min-h-screen bg-[var(--surface-0)] text-slate-200 flex flex-col font-sans">
             {/* Header */}
-            <div className="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-md">
+            <div className="bg-[var(--surface-1)] border-b border-slate-800 p-4 flex justify-between items-center shadow-md">
                 <div className="flex items-center gap-3">
                     <div className="bg-red-600 text-white px-3 py-1 rounded font-black tracking-tighter animate-pulse">LIVE</div>
-                    <div className="h-6 w-px bg-slate-700"></div>
+                    <div className="h-6 w-px bg-[var(--surface-2)]"></div>
                     <h1 className="font-bold text-lg text-slate-100 italic">DIRECTOR CONSOLE</h1>
                 </div>
 
@@ -123,7 +123,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                     >
                         <Video size={18} /> Social Graphic
                     </button>
-                    <div className="text-sm font-mono text-slate-400 bg-slate-800 px-3 py-1 rounded border border-slate-700">
+                    <div className="text-sm font-mono text-slate-400 bg-[var(--surface-2)] px-3 py-1 rounded border border-slate-700">
                         {matchState?.isConfigured && matchState?.timer ? (
                             <>Half {matchState.currentHalf} • {Math.floor(matchState.timer.elapsedSeconds / 60)}:{(Math.floor(matchState.timer.elapsedSeconds % 60)).toString().padStart(2, '0')}</>
                         ) : (
@@ -136,7 +136,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
             <div className="flex-1 flex overflow-hidden">
 
                 {/* LEFT: CONTROLS */}
-                <div className="w-1/3 min-w-[400px] border-r border-slate-800 bg-slate-900/50 flex flex-col p-6 gap-6 overflow-y-auto">
+                <div className="w-1/3 min-w-[400px] border-r border-slate-800 bg-[var(--surface-1)]/50 flex flex-col p-6 gap-6 overflow-y-auto">
 
                     {/* AI Commentary Feed */}
                     <div className="mb-2">
@@ -144,7 +144,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                     </div>
 
                     {/* Live Status Card */}
-                    <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg relative overflow-hidden group">
+                    <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-slate-700 shadow-lg relative overflow-hidden group">
                         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                             <Zap size={14} className={matchState.overlayOverride ? "text-red-500" : "text-slate-600"} />
                             Current On-Air Status
@@ -166,14 +166,14 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                             </div>
                         ) : (
                             <div className="text-slate-500 italic flex items-center gap-2">
-                                <div className="w-2 h-2 bg-slate-600 rounded-full"></div>
+                                <div className="w-2 h-2 bg-[var(--surface-2)] rounded-full"></div>
                                 Running Auto-Pilot (Event based)
                             </div>
                         )}
                     </div>
 
                     {/* Tab Navigation */}
-                    <div className="flex bg-slate-900 p-1 rounded-lg gap-1">
+                    <div className="flex bg-[var(--surface-1)] p-1 rounded-lg gap-1">
                         <button
                             onClick={() => setActiveTab('QUICK')}
                             className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${activeTab === 'QUICK' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
@@ -196,7 +196,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
 
                     {/* Quick Actions */}
                     {activeTab === 'QUICK' && (
-                        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg animate-in fade-in duration-200">
+                        <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-slate-700 shadow-lg animate-in fade-in duration-200">
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><Zap size={14} /> Quick Triggers (6s)</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 <button onClick={() => triggerQuickPopup('GOAL', 'HOME')} className="bg-indigo-900/50 hover:bg-indigo-600 border border-indigo-700 hover:border-indigo-500 text-indigo-100 py-3 rounded font-bold transition-all text-sm flex items-center justify-center gap-2">
@@ -215,7 +215,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                             <div className="mt-4 pt-4 border-t border-slate-700">
                                 <button
                                     onClick={toggleVotingOverlay}
-                                    className={`w-full py-4 rounded-xl font-black uppercase tracking-tighter flex items-center justify-center gap-3 transition-all ${matchState.overlayOverride?.type === 'VOTING' ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/40' : 'bg-slate-700 hover:bg-slate-600 text-slate-200'}`}
+                                    className={`w-full py-4 rounded-xl font-black uppercase tracking-tighter flex items-center justify-center gap-3 transition-all ${matchState.overlayOverride?.type === 'VOTING' ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/40' : 'bg-[var(--surface-2)] hover:bg-[var(--surface-2)] text-slate-200'}`}
                                 >
                                     <Trophy size={20} fill="currentColor" />
                                     {matchState.overlayOverride?.type === 'VOTING' ? 'HIDE VOTING RESULTS' : 'SHOW LIVE VOTING RESULTS'}
@@ -226,7 +226,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
 
                     {/* Theme & Style Panel */}
                     {activeTab === 'THEME' && (
-                        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg flex-1 overflow-y-auto animate-in fade-in duration-200">
+                        <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-slate-700 shadow-lg flex-1 overflow-y-auto animate-in fade-in duration-200">
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><Palette size={14} /> Broadcast Theme</h3>
 
                             <div className="space-y-6">
@@ -242,7 +242,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                                                     onClick={() => updateTheme({ theme: themeKey })}
                                                     className={`p-4 rounded-lg border-2 transition-all text-left ${currentTheme === themeKey
                                                         ? 'border-indigo-500 bg-indigo-900/30'
-                                                        : 'border-slate-700 hover:border-slate-600 bg-slate-900'
+                                                        : 'border-slate-700 hover:border-slate-600 bg-[var(--surface-1)]'
                                                         }`}
                                                 >
                                                     <div className="font-bold text-sm mb-1">{preset.name}</div>
@@ -259,7 +259,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                                     <select
                                         value={currentFont}
                                         onChange={(e) => updateTheme({ font: e.target.value as any })}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded p-3 text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        className="w-full bg-[var(--surface-1)] border border-slate-700 rounded p-3 text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                                     >
                                         {(Object.keys(FONT_OPTIONS) as Array<keyof typeof FONT_OPTIONS>).map(fontKey => (
                                             <option key={fontKey} value={fontKey}>{FONT_OPTIONS[fontKey].name}</option>
@@ -275,7 +275,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                                             type="checkbox"
                                             checked={matchState.broadcastTheme?.showShotClock !== false}
                                             onChange={(e) => updateTheme({ showShotClock: e.target.checked })}
-                                            className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
+                                            className="w-5 h-5 rounded border-slate-700 bg-[var(--surface-1)] text-indigo-600 focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </label>
                                 </div>
@@ -291,12 +291,12 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
 
                     {/* Custom Builder */}
                     {activeTab === 'CUSTOM' && (
-                        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg flex-1 animate-in fade-in duration-200">
+                        <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-slate-700 shadow-lg flex-1 animate-in fade-in duration-200">
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><Type size={14} /> Custom Message Builder</h3>
 
                             <div className="space-y-4">
                                 {/* Type Selector */}
-                                <div className="flex bg-slate-900 p-1 rounded-lg">
+                                <div className="flex bg-[var(--surface-1)] p-1 rounded-lg">
                                     <button
                                         onClick={() => setPreviewMessage({ ...previewMessage, type: 'POPUP' })}
                                         className={`flex-1 py-2 text-xs font-bold rounded flex items-center justify-center gap-2 transition-colors ${previewMessage.type === 'POPUP' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
@@ -323,7 +323,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                                     <input
                                         value={previewMessage.text}
                                         onChange={(e) => setPreviewMessage({ ...previewMessage, text: e.target.value })}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none font-bold"
+                                        className="w-full bg-[var(--surface-1)] border border-slate-700 rounded p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none font-bold"
                                         placeholder={previewMessage.type === 'SCROLL' ? "Breaking News..." : "GOAL!"}
                                     />
                                 </div>
@@ -333,7 +333,7 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
                                     <input
                                         value={previewMessage.subText || ''}
                                         onChange={(e) => setPreviewMessage({ ...previewMessage, subText: e.target.value })}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        className="w-full bg-[var(--surface-1)] border border-slate-700 rounded p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                         placeholder={previewMessage.type === 'SCROLL' ? "Additional details..." : "Player Name"}
                                     />
                                 </div>
@@ -377,10 +377,10 @@ const DirectorDashboard: React.FC<DirectorDashboardProps> = ({ matchState, setMa
 
                 {/* RIGHT: PREVIEW */}
                 <div className="flex-1 bg-black flex flex-col relative w-full h-[56.25vw] max-h-screen">
-                    <div className="absolute top-4 left-4 bg-slate-800/80 backdrop-blur rounded px-3 py-1 text-xs font-bold text-slate-400 border border-slate-700 z-50 flex items-center gap-2">
+                    <div className="absolute top-4 left-4 bg-[var(--surface-2)]/80 backdrop-blur rounded px-3 py-1 text-xs font-bold text-slate-400 border border-slate-700 z-50 flex items-center gap-2">
                         <Monitor size={14} /> PREVIEW MONITOR
                     </div>
-                    <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-slate-900">
+                    <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-[var(--surface-1)]">
                         {/* Container for proper 16:9 aspect ratio scaling */}
                         <div className="relative w-full h-full">
                             <div className="absolute inset-0 flex items-center justify-center">

@@ -66,7 +66,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
           {/* Home */}
           <div className={`flex flex-col items-center p-2 md:p-3 rounded-lg transition-colors ${matchState.possession === 'HOME' ? 'bg-gray-800 ring-2 ring-yellow-500' : ''}`}>
             <div className="w-3 h-3 rounded-full mb-1" style={{ backgroundColor: matchState.homeTeam.color }} />
-            <h2 className="font-bold text-gray-400 text-[10px] md:text-sm uppercase truncate max-w-[80px] md:max-w-none">{matchState.homeTeam.name}</h2>
+            <h2 className="font-bold text-gray-400 text-[10px] md:text-sm uppercase truncate max-w-[120px] sm:max-w-none">{matchState.homeTeam.name}</h2>
             <div className="text-4xl md:text-5xl font-black font-mono text-white leading-none">{getScore(matchState, 'HOME')}</div>
           </div>
 
@@ -96,7 +96,7 @@ const MatchHeader: React.FC<MatchHeaderProps> = ({
           {/* Away */}
           <div className={`flex flex-col items-center p-2 md:p-3 rounded-lg transition-colors ${matchState.possession === 'AWAY' ? 'bg-gray-800 ring-2 ring-yellow-500' : ''}`}>
             <div className="w-3 h-3 rounded-full mb-1" style={{ backgroundColor: matchState.awayTeam.color }} />
-            <h2 className="font-bold text-gray-400 text-[10px] md:text-sm uppercase truncate max-w-[80px] md:max-w-none">{matchState.awayTeam.name}</h2>
+            <h2 className="font-bold text-gray-400 text-[10px] md:text-sm uppercase truncate max-w-[120px] sm:max-w-none">{matchState.awayTeam.name}</h2>
             <div className="text-4xl md:text-5xl font-black font-mono text-white leading-none">{getScore(matchState, 'AWAY')}</div>
           </div>
         </div>

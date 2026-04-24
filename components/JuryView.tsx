@@ -114,10 +114,10 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
 
 
     return (
-        <div className="min-h-screen bg-slate-900 text-slate-100 p-6">
+        <div className="min-h-screen bg-[var(--surface-1)] text-slate-100 p-6">
             <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-4 mb-8 border-b border-slate-700 pb-4">
-                    <button onClick={onBack} className="p-2 bg-slate-800 rounded hover:bg-slate-700" aria-label="Back"><ArrowLeft /></button>
+                    <button onClick={onBack} className="p-2 bg-[var(--surface-2)] rounded hover:bg-[var(--surface-2)]" aria-label="Back"><ArrowLeft /></button>
                     <h1 className="text-2xl font-bold">Jury / Table Officials Interface</h1>
                 </div>
 
@@ -125,7 +125,7 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
 
                     <div className="space-y-6">
                         {/* Game Clock */}
-                        <div className="bg-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700">
+                        <div className="bg-[var(--surface-2)] p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700">
                             <div className="text-slate-400 font-bold uppercase tracking-widest mb-2">Game Clock</div>
                             <div className={`text-7xl font-black font-mono ${matchState.timer.isRunning ? 'text-green-500' : 'text-red-500'}`}>
                                 {formatTime(Math.max(0, matchState.halfDurationSeconds - matchState.timer.elapsedSeconds))}
@@ -146,19 +146,19 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
                             }} className="text-sm font-bold text-slate-500 hover:text-slate-300 flex items-center gap-2"><Edit size={14} /> ADJUST GAME CLOCK</button>
 
                             {showGameClockEdit && (
-                                <div className="absolute inset-0 bg-slate-800 rounded-2xl flex flex-col items-center justify-center p-4 z-20">
+                                <div className="absolute inset-0 bg-[var(--surface-2)] rounded-2xl flex flex-col items-center justify-center p-4 z-20">
                                     <h4 className="mb-4 font-bold">Set Game Clock (Remaining)</h4>
                                     <div className="flex gap-4 mb-6 items-center">
                                         <div className="flex flex-col items-center">
-                                            <button onClick={() => setNewGameClockTime({ ...newGameClockTime, m: newGameClockTime.m + 1 })} className="p-2 bg-slate-700 rounded mb-1">▲</button>
+                                            <button onClick={() => setNewGameClockTime({ ...newGameClockTime, m: newGameClockTime.m + 1 })} className="p-2 bg-[var(--surface-2)] rounded mb-1">▲</button>
                                             <span className="text-4xl font-mono">{newGameClockTime.m.toString().padStart(2, '0')}</span>
-                                            <button onClick={() => setNewGameClockTime({ ...newGameClockTime, m: Math.max(0, newGameClockTime.m - 1) })} className="p-2 bg-slate-700 rounded mt-1">▼</button>
+                                            <button onClick={() => setNewGameClockTime({ ...newGameClockTime, m: Math.max(0, newGameClockTime.m - 1) })} className="p-2 bg-[var(--surface-2)] rounded mt-1">▼</button>
                                         </div>
                                         <span className="text-4xl font-mono">:</span>
                                         <div className="flex flex-col items-center">
-                                            <button onClick={() => setNewGameClockTime({ ...newGameClockTime, s: (newGameClockTime.s + 1) % 60 })} className="p-2 bg-slate-700 rounded mb-1">▲</button>
+                                            <button onClick={() => setNewGameClockTime({ ...newGameClockTime, s: (newGameClockTime.s + 1) % 60 })} className="p-2 bg-[var(--surface-2)] rounded mb-1">▲</button>
                                             <span className="text-4xl font-mono">{newGameClockTime.s.toString().padStart(2, '0')}</span>
-                                            <button onClick={() => setNewGameClockTime({ ...newGameClockTime, s: Math.max(0, newGameClockTime.s - 1) })} className="p-2 bg-slate-700 rounded mt-1">▼</button>
+                                            <button onClick={() => setNewGameClockTime({ ...newGameClockTime, s: Math.max(0, newGameClockTime.s - 1) })} className="p-2 bg-[var(--surface-2)] rounded mt-1">▼</button>
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
@@ -174,13 +174,13 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
                                             });
                                             setShowGameClockEdit(false);
                                         }} className="px-4 py-2 bg-green-600 rounded font-bold">Save</button>
-                                        <button onClick={() => setShowGameClockEdit(false)} className="px-4 py-2 bg-slate-600 rounded font-bold">Cancel</button>
+                                        <button onClick={() => setShowGameClockEdit(false)} className="px-4 py-2 bg-[var(--surface-2)] rounded font-bold">Cancel</button>
                                     </div>
                                 </div>
                             )}
                         </div>
                         {/* Shot Clock */}
-                        <div className="bg-slate-800 p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700 relative">
+                        <div className="bg-[var(--surface-2)] p-8 rounded-2xl flex flex-col items-center justify-center border border-slate-700 relative">
                             <div className="text-slate-400 font-bold uppercase tracking-widest mb-2">Shot Clock</div>
                             <div className={`text-7xl font-black font-mono mb-6 ${matchState.shotClock.seconds <= 5 ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`}>
                                 {Math.ceil(matchState.shotClock.seconds)}
@@ -194,25 +194,25 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
                                     {matchState.shotClock.isRunning ? <Pause size={20} /> : <Play size={20} />}
                                     {matchState.shotClock.isRunning ? 'STOP' : 'START'} <kbd className="hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded">S</kbd>
                                 </button>
-                                <button onClick={() => resetShotClock(25)} className="py-3 bg-slate-600 hover:bg-slate-500 rounded-lg font-bold flex items-center justify-center gap-2">
+                                <button onClick={() => resetShotClock(25)} className="py-3 bg-[var(--surface-2)] hover:bg-[var(--surface-2)] rounded-lg font-bold flex items-center justify-center gap-2">
                                     <RotateCcw size={20} /> RESET 25 <kbd className="hidden lg:inline ml-1 text-[10px] opacity-70 border border-white/30 px-1 rounded">R</kbd>
                                 </button>
-                                <button onClick={() => setShowShotClockEdit(true)} className="col-span-2 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+                                <button onClick={() => setShowShotClockEdit(true)} className="col-span-2 py-2 bg-[var(--surface-2)] hover:bg-[var(--surface-2)] rounded-lg text-sm font-bold flex items-center justify-center gap-2">
                                     <Edit size={16} /> CHANGE TIME
                                 </button>
                             </div>
 
                             {showShotClockEdit && (
-                                <div className="absolute inset-0 bg-slate-800 rounded-2xl flex flex-col items-center justify-center p-4 z-10">
+                                <div className="absolute inset-0 bg-[var(--surface-2)] rounded-2xl flex flex-col items-center justify-center p-4 z-10">
                                     <h4 className="mb-4 font-bold">Set Shot Clock</h4>
                                     <div className="flex gap-4 mb-4">
-                                        <button onClick={() => setNewShotClockTime(Math.max(0, newShotClockTime - 1))} className="p-3 bg-slate-700 rounded">-</button>
+                                        <button onClick={() => setNewShotClockTime(Math.max(0, newShotClockTime - 1))} className="p-3 bg-[var(--surface-2)] rounded">-</button>
                                         <span className="text-4xl font-mono">{newShotClockTime}</span>
-                                        <button onClick={() => setNewShotClockTime(newShotClockTime + 1)} className="p-3 bg-slate-700 rounded">+</button>
+                                        <button onClick={() => setNewShotClockTime(newShotClockTime + 1)} className="p-3 bg-[var(--surface-2)] rounded">+</button>
                                     </div>
                                     <div className="flex gap-2">
                                         <button onClick={updateShotClockTime} className="px-4 py-2 bg-green-600 rounded font-bold">Save</button>
-                                        <button onClick={() => setShowShotClockEdit(false)} className="px-4 py-2 bg-slate-600 rounded font-bold">Cancel</button>
+                                        <button onClick={() => setShowShotClockEdit(false)} className="px-4 py-2 bg-[var(--surface-2)] rounded font-bold">Cancel</button>
                                     </div>
                                 </div>
                             )}
@@ -221,9 +221,9 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
 
                     {/* Administrative Actions */}
                     <div className="space-y-6">
-                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                        <div className="bg-[var(--surface-2)] p-6 rounded-xl border border-slate-700">
                             <h3 className="font-bold text-slate-300 mb-4 flex items-center gap-2"><AlertOctagon /> Disciplinary</h3>
-                            <div className="flex justify-between text-sm mb-4 text-slate-400 font-mono bg-slate-900/50 p-2 rounded">
+                            <div className="flex justify-between text-sm mb-4 text-slate-400 font-mono bg-[var(--surface-1)]/50 p-2 rounded">
                                 <span className="text-red-400">Home Fouls: {matchState.events.filter(e => e.teamId === matchState.homeTeam.id && e.type === 'FOUL').length}</span>
                                 <span className="text-blue-400">Away Fouls: {matchState.events.filter(e => e.teamId === matchState.awayTeam.id && e.type === 'FOUL').length}</span>
                             </div>
@@ -243,7 +243,7 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
                             </div>
                         </div>
 
-                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                        <div className="bg-[var(--surface-2)] p-6 rounded-xl border border-slate-700">
                             <h3 className="font-bold text-slate-300 mb-4 flex items-center gap-2"><Repeat /> Match Status</h3>
                             <div className="flex justify-between text-sm mb-4 text-slate-400">
                                 <span>{matchState.homeTeam.name}: {matchState.homeTeam.substitutionCount}/8 Subs</span>
@@ -253,27 +253,27 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
                             <div className="grid grid-cols-2 gap-2">
                                 <button
                                     onClick={() => onUpdateMatch({ ...matchState, possession: 'HOME' })}
-                                    className={`p-2 rounded font-bold border transition-all ${matchState.possession === 'HOME' ? 'border-blue-500 bg-blue-500/20 text-blue-400' : 'border-slate-700 bg-slate-900/50 text-slate-500'}`}
+                                    className={`p-2 rounded font-bold border transition-all ${matchState.possession === 'HOME' ? 'border-blue-500 bg-blue-500/20 text-blue-400' : 'border-slate-700 bg-[var(--surface-1)]/50 text-slate-500'}`}
                                 >
                                     {matchState.homeTeam.name}
                                 </button>
                                 <button
                                     onClick={() => onUpdateMatch({ ...matchState, possession: 'AWAY' })}
-                                    className={`p-2 rounded font-bold border transition-all ${matchState.possession === 'AWAY' ? 'border-red-500 bg-red-500/20 text-red-400' : 'border-slate-700 bg-slate-900/50 text-slate-500'}`}
+                                    className={`p-2 rounded font-bold border transition-all ${matchState.possession === 'AWAY' ? 'border-red-500 bg-red-500/20 text-red-400' : 'border-slate-700 bg-[var(--surface-1)]/50 text-slate-500'}`}
                                 >
                                     {matchState.awayTeam.name}
                                 </button>
                             </div>
                         </div>
 
-                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                        <div className="bg-[var(--surface-2)] p-6 rounded-xl border border-slate-700">
                             <h3 className="font-bold text-slate-300 mb-4 flex items-center gap-2"><Clock /> Time-out</h3>
                             {matchState.timeout.isActive ? (
                                 <div className="flex flex-col items-center">
                                     <div className="text-4xl font-mono text-purple-400 font-bold mb-4">{Math.ceil(matchState.timeout.remainingSeconds)}s</div>
                                     <button
                                         onClick={() => onUpdateMatch({ ...matchState, timeout: { ...matchState.timeout, isActive: false } })}
-                                        className="w-full p-4 bg-slate-700 hover:bg-slate-600 rounded-lg font-bold text-white"
+                                        className="w-full p-4 bg-[var(--surface-2)] hover:bg-[var(--surface-2)] rounded-lg font-bold text-white"
                                     >
                                         RESUME MATCH
                                     </button>
@@ -289,7 +289,7 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
                         </div>
                         
                         {/* Referee Comm Signals */}
-                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                        <div className="bg-[var(--surface-2)] p-6 rounded-xl border border-slate-700">
                             <h3 className="font-bold text-slate-300 mb-4 flex items-center gap-2">⌚ Referee Signals</h3>
                             <div className="grid grid-cols-2 gap-2 text-sm font-bold">
                                 <button onClick={() => sendHapticSignal('TIMEOUT_PING')} className="p-3 bg-purple-600/20 text-purple-400 border border-purple-500/50 rounded-lg hover:bg-purple-600/30">
@@ -314,7 +314,7 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
             {/* Disciplinary Modal */}
             {disciplinaryFlow.step !== 'CLOSED' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in duration-200">
+                    <div className="bg-[var(--surface-2)] border border-slate-700 rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold flex items-center gap-2">
                                 {disciplinaryFlow.cardType === 'YELLOW' ? <AlertTriangle className="text-yellow-500" /> : <AlertOctagon className="text-red-500" />}
@@ -353,7 +353,7 @@ const JuryView: React.FC<JuryViewProps> = ({ matchState, onUpdateMatch, onBack, 
                                         <button
                                             key={p.id}
                                             onClick={() => handleCard(p.id)}
-                                            className="aspect-square bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-full flex flex-col items-center justify-center font-bold text-white transition-all"
+                                            className="aspect-square bg-[var(--surface-2)] hover:bg-[var(--surface-2)] border border-slate-600 rounded-full flex flex-col items-center justify-center font-bold text-white transition-all"
                                         >
                                             <span className="text-lg">{p.number}</span>
                                             <span className="text-[10px] opacity-50">{p.gender}</span>

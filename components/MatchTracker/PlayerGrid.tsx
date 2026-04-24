@@ -19,13 +19,13 @@ const PlayerGrid: React.FC<PlayerGridProps> = ({ matchState, onPlayerClick }) =>
               <Shirt size={16} fill={team.color} />
               <span className="text-sm font-bold uppercase">{team.name}</span>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {team.players.filter(p => p.onField).map(p => (
                 <button
                   key={p.id}
                   data-testid={`player-btn-${p.id}`}
                   onClick={() => onPlayerClick(tId, p.id)}
-                  className="bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 text-xs py-2 rounded-lg flex flex-col items-center transition-colors"
+                  className="bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 text-xs py-2 rounded-lg flex flex-col items-center transition-colors min-h-[44px]"
                 >
                   <span className="font-black text-sm">{p.number}</span>
                   <span className="text-[10px] text-gray-400">{p.gender}</span>

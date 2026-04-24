@@ -49,6 +49,28 @@
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
 
+  /* ── Typography scale ──────────────────────────────────────
+     Usage: text-[length:var(--text-h1)] or via Tailwind
+     Weights: display→900, h1→700, h2→600, h3→500, body→400
+     ────────────────────────────────────────────────────────── */
+  --text-display: 2.25rem;  /* 36px — match scores, big numbers */
+  --text-h1:      1.5rem;   /* 24px — view titles */
+  --text-h2:      1.125rem; /* 18px — section headings */
+  --text-h3:      0.875rem; /* 14px — card headings, labels */
+  --text-body:    0.875rem; /* 14px */
+  --text-sm:      0.75rem;  /* 12px */
+  --text-xs:      0.625rem; /* 10px — badges, kbd hints */
+
+  /* ── Spacing conventions ───────────────────────────────────
+     View container:      p-6 desktop / p-4 mobile
+     Card internal:       p-4
+     Form element gap:    gap-4 fields / gap-2 label–input
+     Button row gap:      gap-2 sm / gap-3 md
+     Section gap:         space-y-6
+     Inline icon-text:    gap-2
+     Min touch target:    min-w-[44px] min-h-[44px] (WCAG 2.5.5)
+     ────────────────────────────────────────────────────────── */
+
   /* Sync status colours */
   --sync-syncing: #60a5fa;  /* blue-400 */
   --sync-success: #4ade80;  /* green-400 */
