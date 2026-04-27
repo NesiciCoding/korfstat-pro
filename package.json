@@ -26,10 +26,10 @@
     "tauri:build:all": "node scripts/build.js --target all"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.103.0",
+    "@supabase/supabase-js": "^2.104.1",
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-updater": "^2.10.1",
-    "better-sqlite3": "^12.8.0",
+    "better-sqlite3": "^12.9.0",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
